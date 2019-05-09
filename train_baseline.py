@@ -29,18 +29,25 @@ args = parser.parse_args()
 
 
 def main():
-    global args
+    global args # The arguments from the Terminal.
 
     set_random_seed(args.seed)
+
+    # Decide which processor (CPU or GPU) to use.
     if not args.use_avai_gpus:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
     use_gpu = torch.cuda.is_available()
     if args.use_cpu:
         use_gpu = False
+
+    # Start logger.
     log_name = 'test.log' if args.evaluate else 'train.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
+
+    # Print out the arguments taken from Terminal (or defaults).
     print('==========\nArgs:{}\n=========='.format(args))
 
+    # Warn if not using GPU.
     if use_gpu:
         print('Currently using GPU {}'.format(args.gpu_devices))
         cudnn.benchmark = True
@@ -56,11 +63,14 @@ def main():
                               pretrained=not args.no_pretrained, use_gpu=use_gpu)
     print('Model size: {:.3f} M'.format(count_num_param(model)))
 
+    # Load pretrained weights if specified in args.
     if args.load_weights and check_isfile(args.load_weights):
         load_pretrained_weights(model, args.load_weights)
 
+    # ?
     model = nn.DataParallel(model).cuda() if use_gpu else model
 
+    # ?
     criterion = SigmoidCrossEntropyLoss(num_classes=dm.num_attributes, use_gpu=use_gpu)
     optimizer = init_optimizer(model, **optimizer_kwargs(args))
     scheduler = init_lr_scheduler(optimizer, **lr_scheduler_kwargs(args))
@@ -68,20 +78,24 @@ def main():
     #if args.resume and check_isfile(args.resume):
     #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
+    # TODO: Purpose unclear. Causes error when evaluate == True.
+    """
     if args.evaluate:
         print('Evaluate only')
 
-        for name in args.target_names:
+        for name in args.target_names:  # target_names does not exist. Probably a call to image_dataset_kwargs() 
+                                        # missing somewhere. 
             print('Evaluating {} ...'.format(name))
             queryloader = testloader_dict[name]['query']
             galleryloader = testloader_dict[name]['gallery']
             acc, acc_atts = test(model, queryloader, galleryloader, use_gpu)
         return
-
+    """
     time_start = time.time()
     ranklogger = RankLogger(args.source_datasets, args.target_datasets)
     print('=> Start training')
 
+    # Train Fixbase epochs.
     if args.fixbase_epoch > 0:
         print('Train {} for {} epochs while keeping other layers frozen'.format(args.open_layers, args.fixbase_epoch))
         initial_optim_state = optimizer.state_dict()
@@ -92,6 +106,7 @@ def main():
         print('Done. All layers are open to train for {} epochs'.format(args.max_epoch))
         optimizer.load_state_dict(initial_optim_state)
 
+    # Train non-fixbase epochs.
     for epoch in range(args.start_epoch, args.max_epoch):
         train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu)
 
