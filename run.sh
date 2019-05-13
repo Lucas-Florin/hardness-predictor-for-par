@@ -3,5 +3,5 @@ python train_baseline.py \
     -s market1501 \
     -t market1501 \
     --gpu-devices 3 \
-    --max-epoch 2 \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/test_training_market
+    --max-epoch 1 \
+    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/test_training_market/

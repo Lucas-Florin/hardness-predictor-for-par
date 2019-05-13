@@ -129,8 +129,9 @@ def main():
                 'epoch': epoch + 1,
                 'model': args.model,
                 'optimizer': optimizer.state_dict(),
-            }, args.save_experiment)
+            }, args.save_experiment + 'checkpoint' + time.strftime("_%d-%m-%Y_%H-%M-%S") + '.pth.tar')
 
+    # Calculate elapsed time.
     elapsed = round(time.time() - time_start)
     elapsed = str(datetime.timedelta(seconds=elapsed))
     print('Elapsed {}'.format(elapsed))
@@ -138,6 +139,18 @@ def main():
 
 
 def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, fixbase=False):
+    """
+    Train the model for an epoch.
+    :param epoch: Number of current epoch (zero indexed).
+    :param model: the model to be trained.
+    :param criterion:
+    :param optimizer:
+    :param trainloader:
+    :param attributes:
+    :param use_gpu:
+    :param fixbase: Is this a fixbase epoch?
+    :return: Time of execution end.
+    """
     losses = AverageMeter()
     accs = AverageMeter()
     accs_atts = AverageMeter()
@@ -194,6 +207,15 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
 
 
 def test(model, testloader, logits, attributes, use_gpu):
+    """
+
+    :param model:
+    :param testloader:
+    :param logits:
+    :param attributes:
+    :param use_gpu:
+    :return:
+    """
     batch_time = AverageMeter()
     model.eval()
 

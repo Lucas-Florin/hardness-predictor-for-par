@@ -38,7 +38,7 @@ def write_json(obj, fpath):
         json.dump(obj, f, indent=4, separators=(',', ': '))
 
 
-def save_checkpoint(state, is_best=False, fpath='checkpoint.pth.tar'):
+def save_checkpoint(state, fpath='checkpoint.pth.tar', is_best=False):
     if len(osp.dirname(fpath)) != 0:
         mkdir_if_missing(osp.dirname(fpath))
     # remove 'module.' in state_dict's keys if necessary
