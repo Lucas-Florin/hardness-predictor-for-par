@@ -41,7 +41,8 @@ def main():
         use_gpu = False
 
     # Start logger.
-    log_name = 'test.log' if args.evaluate else 'train.log'
+    ts = time.strftime("_%d-%m-%Y_%H-%M-%S")
+    log_name = 'test' + ts + '.log' if args.evaluate else 'train' + ts + '.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
 
     # Print out the arguments taken from Terminal (or defaults).
@@ -121,7 +122,7 @@ def main():
                 testloader = testloader_dict[name]['test']
                 acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
                 ranklogger.write(name, epoch + 1, acc)
-
+            ts = time.strftime("_%d-%m-%Y_%H-%M-%S")
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'acc': acc,
@@ -129,7 +130,7 @@ def main():
                 'epoch': epoch + 1,
                 'model': args.model,
                 'optimizer': optimizer.state_dict(),
-            }, args.save_experiment + 'checkpoint' + time.strftime("_%d-%m-%Y_%H-%M-%S") + '.pth.tar')
+            }, args.save_experiment + 'checkpoint' + ts + '.pth.tar')
 
     # Calculate elapsed time.
     elapsed = round(time.time() - time_start)
