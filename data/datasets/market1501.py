@@ -1,8 +1,11 @@
 # encoding: utf-8
 """
-@author:  sherlock
-@contact: sherlockliao01@gmail.com
+@author: Lucas Florin
+@contact: lucasflorin4@gmail.com
 """
+
+
+
 
 import glob
 import re
@@ -32,6 +35,8 @@ class Market1501Attributes(BaseDataset):
 
     def __init__(self, root, verbose=True, **kwargs):
         super(Market1501Attributes, self).__init__(root)
+
+        # parse directories.
         self.dataset_dir = osp.join(self. root, self.dataset_dir)
         self.train_dir = osp.join(self.dataset_dir, 'bounding_box_train')
         self.query_dir = osp.join(self.dataset_dir, 'query')
@@ -41,11 +46,17 @@ class Market1501Attributes(BaseDataset):
         self.test_attributes_path = osp.join(self.attribute_dir, 'gallery_market.mat')
 
         self._check_before_run()
+        # Load data from .mat file
         data = MatlabMatrix.loadmat(self.attributes_path)['market_attribute']
+
         train_data = data['train']
+        # generate numpy array with labels.
         train_labels = np.array([train_data[k] for k in sorted(train_data.keys()) if k != 'image_index']).T
+        # a list with the identity indexes.
         train_idx = train_data['image_index']
+        # generate dictionary with identity indexes as keys and labels as values.
         train_labels = {int(i): l for i, l in zip(train_idx, self.binarize_labels(train_labels))}
+        # a list of the attribute names.
         train_attributes = sorted(list(train_data.keys()))
 
         test_data = data['test']
@@ -55,6 +66,8 @@ class Market1501Attributes(BaseDataset):
         test_attributes = sorted(list(test_data.keys()))
         assert test_attributes == train_attributes
         assert 0 == len(set(test_labels.keys()) & set(train_labels.keys()))
+
+        # join training and testing label data in one dict.
         labels = dict(train_labels)
         labels.update(test_labels)
 
@@ -93,14 +106,22 @@ class Market1501Attributes(BaseDataset):
 
     @staticmethod
     def _process_dir(dir_path, labels):
+        """
+        Generate a list of the images in a directory. Ignores background and distractor images.
+        :param dir_path: Path to the directory.
+        :param labels: dict with the labels for each identity.
+        :return: a list of tuples. The first element in the tuple is the path to the image, the second is a the labels
+                    of the identity on the image.
+        """
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))
         pattern = re.compile(r'([-\d]+)_c(\d)')
 
         dataset = []
         for img_path in img_paths:
+            # get the identity pictured in the image.
             pid, _ = map(int, pattern.search(img_path).groups())
             if pid <= 0:
-                continue  # junk images are just ignored
+                continue  # junk and background images are just ignored
             assert 1 <= pid <= 1501
 
             dataset.append((img_path, labels[pid]))
