@@ -1,9 +1,7 @@
-from .market1501 import Market1501
-#from .dukemtmcreid import DukeMTMCreID
+from .market1501 import Market1501Attributes
 
 __imgreid_factory = {
-    'market1501': Market1501,
-    #'dukemtmcreid': DukeMTMCreID,
+    'market1501': Market1501Attributes,
 }
 
 

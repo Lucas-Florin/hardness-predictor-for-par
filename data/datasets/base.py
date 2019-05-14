@@ -10,21 +10,24 @@ class BaseDataset(object):
 
     def __init__(self, root):
         self.root = osp.expanduser(root)
-    """
-    def get_imagedata_info(self, data):
-        #pids, cams = [], []
-        #for _, pid, camid in data:
-        #    pids += [pid]
-        #    cams += [camid]
-        #pids = set(pids)
-        #cams = set(cams)
-        #num_pids = len(pids)
-        #num_cams = len(cams)
-        #num_imgs = len(data)
-        num_attributes = data[]
-        #return num_imgs
-    """
-    def print_dataset_statistics(self, train, val, test, attributes):
+
+    @staticmethod
+    def binarize_labels(labels):
+        max_values = np.max(labels, axis=0)
+        bin_labels = np.zeros([len(labels), 0])
+        for i, v in enumerate(max_values):
+            if v > 2:
+                # binarize attribute if more than two values
+                loc = np.zeros([len(labels), v], dtype=int)
+                loc[(np.arange(len(labels)), labels[:, i] - 1)] = 1
+
+            else:
+                loc = (labels[:, i] - 1)[:, None]
+            bin_labels = np.concatenate([bin_labels, loc], axis=1)
+        return bin_labels.astype(int)
+
+    @staticmethod
+    def print_dataset_statistics(train, val, test, attributes):
         att_names = '{}: {}\n'.format(1, attributes[0])
         for i, a in enumerate(attributes[1:]):
             att_names += '  {}: {}\n'.format(i+2, a)
@@ -42,7 +45,8 @@ class BaseDataset(object):
         print('  test     | {:8d} '.format(len(test)))
         print('  ---------------------')
 
-    def load_from_file(self, file):
+    @staticmethod
+    def load_from_file(file):
         """
         Load attributes, files and labels from csv file
 
