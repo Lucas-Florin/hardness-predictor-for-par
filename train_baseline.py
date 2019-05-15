@@ -4,6 +4,7 @@ import time
 import datetime
 import os.path as osp
 import numpy as np
+import matplotlib.pyplot as plt
 import warnings
 
 import torch
@@ -22,6 +23,7 @@ from utils.generaltools import set_random_seed
 from evaluation.metrics import *
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
+from utils.plot import plot_epoch_losses
 
 # global variables
 parser = argument_parser()
@@ -41,8 +43,8 @@ def main():
         use_gpu = False
 
     # Start logger.
-    ts = time.strftime("_%Y-%m-%d_%H-%M-%S")
-    log_name = 'test' + ts + '.log' if args.evaluate else 'train' + ts + '.log'
+    ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
+    log_name = ts + 'test' + '.log' if args.evaluate else ts + 'train' + '.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
 
     # Print out the arguments taken from Terminal (or defaults).
@@ -80,7 +82,6 @@ def main():
     #if args.resume and check_isfile(args.resume):
     #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
-    # TODO: Test.
     if args.evaluate:
         print('Evaluate only')
         split = args.eval_split
@@ -93,6 +94,7 @@ def main():
     ranklogger = AccLogger()
     print('=> Start training')
     # TODO: Plot loss over epochs.
+    epoch_losses = np.zeros(shape=(args.max_epoch, ))
 
     # Train Fixbase epochs.
     if args.fixbase_epoch > 0:
@@ -100,15 +102,19 @@ def main():
         initial_optim_state = optimizer.state_dict()
 
         for epoch in range(args.fixbase_epoch):
-            train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu, fixbase=True)
+            epoch_losses[epoch] = train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu,
+                                        fixbase=True)
+
 
         print('Done. All layers are open to train for {} epochs'.format(args.max_epoch))
         optimizer.load_state_dict(initial_optim_state)
 
     # Train non-fixbase epochs.
     for epoch in range(args.start_epoch, args.max_epoch):
-        train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu)
-
+        print("start epoch")
+        loss = train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu)
+        print("end epoch")
+        epoch_losses[epoch] = loss
         scheduler.step()
 
         if (epoch + 1) > args.start_eval and args.eval_freq > 0 and (epoch + 1) % args.eval_freq == 0 or (
@@ -118,8 +124,7 @@ def main():
             testloader = testloader_dict[split]
             acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
             ranklogger.write(epoch + 1, acc)
-            ts = time.strftime("_%Y-%m-%d_%H-%M-%S")
-            filename = 'checkpoint' + ts + '.pth.tar'
+            filename = ts + 'checkpoint' + '.pth.tar'
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'acc': acc,
@@ -127,6 +132,7 @@ def main():
                 'epoch': epoch + 1,
                 'model': args.model,
                 'optimizer': optimizer.state_dict(),
+                'losses': epoch_losses,
             }, osp.join(args.save_experiment, filename))
             print("Saved model checkpoint at " + filename)
 
@@ -135,6 +141,11 @@ def main():
     elapsed = str(datetime.timedelta(seconds=elapsed))
     print('Elapsed {}'.format(elapsed))
     ranklogger.show_summary()
+
+    # Plot loss over epochs.
+    plot_epoch_losses(epoch_losses, args.save_experiment, ts)
+
+
 
 
 def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, fixbase=False):
@@ -203,6 +214,8 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
             ))
 
         end = time.time()
+        return losses.avg
+
 
 
 def test(model, testloader, logits, attributes, use_gpu):
