@@ -111,9 +111,8 @@ def main():
 
     # Train non-fixbase epochs.
     for epoch in range(args.start_epoch, args.max_epoch):
-        print("start epoch")
         loss = train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu)
-        print("end epoch")
+
         epoch_losses[epoch] = loss
         scheduler.step()
 
@@ -212,9 +211,8 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
                 best_att=attributes[best_idx], best_acc=accs_atts.avg[best_idx],
                 worst_att=attributes[worst_idx], worst_acc=accs_atts.avg[worst_idx]
             ))
-
         end = time.time()
-        return losses.avg
+    return losses.avg
 
 
 
