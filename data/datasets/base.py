@@ -12,25 +12,32 @@ class BaseDataset(object):
         self.root = osp.expanduser(root)
 
     @staticmethod
-    def binarize_labels(labels):
+    def binarize_labels(labels, attributes):
         """
         Exchange each non-binary attribute in a dataset with the corresponding number of binary attributes.
         :param labels: a numpy array with the labels for all the datapoints in the dataset.
-        :return: a numpy array with only binary attributes.
+        :param attributes: a list of the names of the attributes in the order they appear in labels.
+        :return: a numpy array with only binary attributes and the corresponding attribute name list.
         """
-        # TODO: return binary to non-binary mapping.
+
+        binary_attributes = list()
         max_values = np.max(labels, axis=0)
         bin_labels = np.zeros([len(labels), 0])
         for i, v in enumerate(max_values):
+            attribute_name = attributes[i]
             if v > 2:
                 # binarize attribute if more than two values
                 loc = np.zeros([len(labels), v], dtype=int)
                 loc[(np.arange(len(labels)), labels[:, i] - 1)] = 1
 
+                for j in range(v):
+                    binary_attributes.append(attribute_name + str(v + 1))
+
             else:
                 loc = (labels[:, i] - 1)[:, None]
+                binary_attributes.append(attribute_name)
             bin_labels = np.concatenate([bin_labels, loc], axis=1)
-        return bin_labels.astype(int)
+        return bin_labels.astype(int), binary_attributes
 
     @staticmethod
     def print_dataset_statistics(train, val, test, attributes):

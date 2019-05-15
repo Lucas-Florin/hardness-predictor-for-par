@@ -52,27 +52,34 @@ class Market1501Attributes(BaseDataset):
         train_data = data['train']
         # generate numpy array with labels.
         train_labels = np.array([train_data[k] for k in sorted(train_data.keys()) if k != 'image_index']).T
-        # a list with the identity indexes.
-        train_idx = train_data['image_index']
-        # generate dictionary with identity indexes as keys and labels as values.
-        train_labels = {int(i): l for i, l in zip(train_idx, self.binarize_labels(train_labels))}
         # a list of the attribute names.
         train_attributes = sorted(list(train_data.keys()))
+        # Binarize attributes
+        train_labels_bin, train_attributes_bin = self.binarize_labels(train_labels, train_attributes)
+        # a list with the identity indexes.
+        train_idx = train_data['image_index']
+
+        # generate dictionary with identity indexes as keys and labels as values.
+        train_labels_bin_dict = {int(i): l for i, l in zip(train_idx, train_labels_bin)}
+
 
         test_data = data['test']
         test_labels = np.array([test_data[k] for k in sorted(test_data.keys()) if k != 'image_index']).T
-        test_idx = test_data['image_index']
-        test_labels = {int(i): l for i, l in zip(test_idx, self.binarize_labels(test_labels))}
         test_attributes = sorted(list(test_data.keys()))
-        assert test_attributes == train_attributes
-        assert 0 == len(set(test_labels.keys()) & set(train_labels.keys()))
+        test_labels_bin, test_attributes_bin = self.binarize_labels(test_labels, test_attributes)
+        test_idx = test_data['image_index']
+        test_labels_bin_dict = {int(i): l for i, l in zip(test_idx, test_labels_bin)}
+        assert test_attributes_bin == train_attributes_bin
+        attributes_bin = test_attributes_bin
+        assert 0 == len(set(test_labels_bin_dict.keys()) & set(train_labels_bin_dict.keys()))
 
         # join training and testing label data in one dict.
-        labels = dict(train_labels)
-        labels.update(test_labels)
+        labels = dict(train_labels_bin_dict)
+        labels.update(test_labels_bin_dict)
 
-        self.attributes = train_attributes
-        self.num_attributes = list(train_labels.values())[0].size
+        self.attributes = attributes_bin
+        self.num_attributes = test_labels_bin.shape[1]
+        assert len(self.attributes) == self.num_attributes
 
         train = self._process_dir(self.train_dir, labels)
         query = self._process_dir(self.query_dir, labels)
@@ -80,7 +87,7 @@ class Market1501Attributes(BaseDataset):
 
         if verbose:
             print("=> Market1501 Attributes loaded")
-            self.print_dataset_statistics(train, query, gallery, train_attributes)
+            self.print_dataset_statistics(train, query, gallery, attributes_bin)
 
         self.train = train
         self.query = query
