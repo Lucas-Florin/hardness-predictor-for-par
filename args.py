@@ -108,6 +108,8 @@ def argument_parser():
                         help='evaluation frequency (set to -1 to test only in the end)')
     parser.add_argument('--start-eval', type=int, default=0,
                         help='start to evaluate after a specific epoch')
+    parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val'],
+                        help='name of the desired evaluation split (test/val)')
 
     # ************************************************************
     # Miscs

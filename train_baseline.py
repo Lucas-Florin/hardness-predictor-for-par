@@ -41,7 +41,7 @@ def main():
         use_gpu = False
 
     # Start logger.
-    ts = time.strftime("_%d-%m-%Y_%H-%M-%S")
+    ts = time.strftime("_%Y-%m-%d_%H-%M-%S")
     log_name = 'test' + ts + '.log' if args.evaluate else 'train' + ts + '.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
 
@@ -79,20 +79,15 @@ def main():
     #if args.resume and check_isfile(args.resume):
     #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
-    # TODO: Purpose unclear. Causes error when evaluate == True.
-    # Solution: standarize train/val/test splits in datasets.
-    """
+    # TODO: Test.
     if args.evaluate:
         print('Evaluate only')
+        split = args.eval_split
+        print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
+        testloader = testloader_dict[split]
+        acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
 
-        for name in args.target_names:  # target_names does not exist. Probably a call to image_dataset_kwargs() 
-                                        # missing somewhere. 
-            print('Evaluating {} ...'.format(name))
-            queryloader = testloader_dict[name]['query']
-            galleryloader = testloader_dict[name]['gallery']
-            acc, acc_atts = test(model, queryloader, galleryloader, use_gpu)
         return
-    """
     time_start = time.time()
     ranklogger = AccLogger()
     print('=> Start training')
@@ -117,13 +112,13 @@ def main():
 
         if (epoch + 1) > args.start_eval and args.eval_freq > 0 and (epoch + 1) % args.eval_freq == 0 or (
                 epoch + 1) == args.max_epoch:
-            print('=> Test')
-
-            print('Evaluating {} ...'.format(args.dataset_name))
-            testloader = testloader_dict['test']
+            split = args.eval_split
+            print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
+            testloader = testloader_dict[split]
             acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
             ranklogger.write(epoch + 1, acc)
-            ts = time.strftime("_%d-%m-%Y_%H-%M-%S")
+            ts = time.strftime("_%Y-%m-%d_%H-%M-%S")
+            filename = 'checkpoint' + ts + '.pth.tar'
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'acc': acc,
@@ -131,7 +126,8 @@ def main():
                 'epoch': epoch + 1,
                 'model': args.model,
                 'optimizer': optimizer.state_dict(),
-            }, args.save_experiment + 'checkpoint' + ts + '.pth.tar')
+            }, osp.join(args.save_experiment, filename))
+            print("Saved model checkpoint at " + filename)
 
     # Calculate elapsed time.
     elapsed = round(time.time() - time_start)
@@ -220,10 +216,11 @@ def test(model, testloader, logits, attributes, use_gpu):
     """
     batch_time = AverageMeter()
     model.eval()
-
+    print(len(testloader))
     with torch.no_grad():
         predictions, gt = list(), list()
         for batch_idx, (imgs, labels, _) in enumerate(testloader):
+            print(batch_idx)
             if use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
 

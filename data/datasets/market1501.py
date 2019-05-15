@@ -40,7 +40,7 @@ class Market1501Attributes(BaseDataset):
         self.dataset_dir = osp.join(self. root, self.dataset_dir)
         self.train_dir = osp.join(self.dataset_dir, 'bounding_box_train')
         self.query_dir = osp.join(self.dataset_dir, 'query')
-        self.gallery_dir = osp.join(self.dataset_dir, 'bounding_box_test')
+        self.test_dir = osp.join(self.dataset_dir, 'bounding_box_test')
         self.attribute_dir = osp.join(self.dataset_dir, 'attributes')
         self.attributes_path = osp.join(self.attribute_dir, 'market_attribute.mat')
         self.test_attributes_path = osp.join(self.attribute_dir, 'gallery_market.mat')
@@ -82,16 +82,15 @@ class Market1501Attributes(BaseDataset):
         assert len(self.attributes) == self.num_attributes
 
         train = self._process_dir(self.train_dir, labels)
-        query = self._process_dir(self.query_dir, labels)
-        gallery = self._process_dir(self.gallery_dir, labels)
+        val = self._process_dir(self.query_dir, labels)
+        gallery = self._process_dir(self.test_dir, labels)
 
         if verbose:
             print("=> Market1501 Attributes loaded")
-            self.print_dataset_statistics(train, query, gallery, attributes_bin)
+            self.print_dataset_statistics(train, val, gallery, attributes_bin)
 
         self.train = train
-        self.val = query
-        self.gallery = gallery  # Can probably go
+        self.val = val
         self.test = gallery
 
     def _check_before_run(self):
@@ -102,8 +101,8 @@ class Market1501Attributes(BaseDataset):
             raise RuntimeError("'{}' is not available".format(self.train_dir))
         if not osp.exists(self.query_dir):
             raise RuntimeError("'{}' is not available".format(self.query_dir))
-        if not osp.exists(self.gallery_dir):
-            raise RuntimeError("'{}' is not available".format(self.gallery_dir))
+        if not osp.exists(self.test_dir):
+            raise RuntimeError("'{}' is not available".format(self.test_dir))
         if not osp.exists(self.attribute_dir):
             raise RuntimeError("'{}' is not available".format(self.attribute_dir))
         if not osp.exists(self.attributes_path):

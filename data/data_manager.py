@@ -94,7 +94,7 @@ class ImageDataManager(BaseDataManager):
         print('=> Initializing VAL dataset')
         val = list()
         for img_path, label in dataset.val:
-            test.append((img_path, torch.tensor(label.astype(np.float32))))
+            val.append((img_path, torch.tensor(label.astype(np.float32))))
         self.testloader_dict['val'] = DataLoader(
             ImageDataset(val, transform=self.transform_test),
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,

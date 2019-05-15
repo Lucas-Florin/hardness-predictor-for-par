@@ -3,4 +3,5 @@ python train_baseline.py \
     -d market1501 \
     --gpu-devices 3 \
     --max-epoch 1 \
+    --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/test_training_market/
