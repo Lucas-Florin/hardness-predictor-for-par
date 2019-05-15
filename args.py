@@ -9,10 +9,8 @@ def argument_parser():
     # ************************************************************
     parser.add_argument('--root', type=str, default='data',
                         help='root path to data directory')
-    parser.add_argument('-s', '--source-datasets', type=str, required=True, nargs='+',
-                        help='source datasets (delimited by space)')
-    parser.add_argument('-t', '--target-datasets', type=str, required=True, nargs='+',
-                        help='target datasets (delimited by space)')
+    parser.add_argument('-d', '--dataset-name', type=str, required=True,
+                        help='name of the desired dataset')
     parser.add_argument('-j', '--workers', default=4, type=int,
                         help='number of data loading workers (tips: 4 or 8 times number of gpus)')
     parser.add_argument('--height', type=int, default=256,
@@ -139,8 +137,7 @@ def image_dataset_kwargs(parsed_args):
     the parsed command-line arguments.
     """
     return {
-        'source_names': parsed_args.source_datasets,
-        'target_names': parsed_args.target_datasets,
+        'dataset_name': parsed_args.dataset_name,
         'root': parsed_args.root,
         'height': parsed_args.height,
         'width': parsed_args.width,

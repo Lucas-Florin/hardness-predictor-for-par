@@ -45,29 +45,20 @@ class Logger(object):
             self.file.close()
 
 
-class RankLogger(object):
+class AccLogger(object):
     """
-    RankLogger records the rank1 matching accuracy obtained for each
-    test dataset at specified evaluation steps and provides a function
+    RankLogger records the accuracy obtained specified evaluation steps and provides a function
     to show the summarized results, which are convenient for analysis.
-
-    Args:
-    - source_names (list): list of strings (names) of source datasets.
-    - target_names (list): list of strings (names) of target datasets.
     """
-    def __init__(self, source_names, target_names):
-        self.source_names = source_names
-        self.target_names = target_names
-        self.logger = {name: {'epoch': [], 'rank1': []} for name in self.target_names}
+    def __init__(self):
+        self.logger = {'epoch': [], 'acc': []}
 
-    def write(self, name, epoch, rank1):
-        self.logger[name]['epoch'].append(epoch)
-        self.logger[name]['rank1'].append(rank1)
+    def write(self, epoch, acc):
+        self.logger['epoch'].append(epoch)
+        self.logger['acc'].append(acc)
 
     def show_summary(self):
         print('=> Show summary')
-        for name in self.target_names:
-            from_where = 'source' if name in self.source_names else 'target'
-            print('{} ({})'.format(name, from_where))
-            for epoch, rank1 in zip(self.logger[name]['epoch'], self.logger[name]['rank1']):
-                print('- epoch {}\t accuracy {:.1%}'.format(epoch, rank1))
+
+        for epoch, acc in zip(self.logger['epoch'], self.logger['acc']):
+            print('- epoch {}\t accuracy {:.2%}'.format(epoch, acc))

@@ -90,8 +90,8 @@ class Market1501Attributes(BaseDataset):
             self.print_dataset_statistics(train, query, gallery, attributes_bin)
 
         self.train = train
-        self.query = query
-        self.gallery = gallery
+        self.val = query
+        self.gallery = gallery  # Can probably go
         self.test = gallery
 
     def _check_before_run(self):

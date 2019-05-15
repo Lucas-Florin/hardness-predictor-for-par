@@ -31,7 +31,7 @@ class BaseDataset(object):
                 loc[(np.arange(len(labels)), labels[:, i] - 1)] = 1
 
                 for j in range(v):
-                    binary_attributes.append(attribute_name + str(v + 1))
+                    binary_attributes.append(attribute_name + str(j + 1))
 
             else:
                 loc = (labels[:, i] - 1)[:, None]

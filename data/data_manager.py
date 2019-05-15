@@ -11,8 +11,7 @@ class BaseDataManager(object):
 
     def __init__(self,
                  use_gpu,
-                 source_names,
-                 target_names,
+                 dataset_name,
                  root='data',
                  height=256,
                  width=128,
@@ -26,8 +25,7 @@ class BaseDataManager(object):
                  **kwargs
                  ):
         self.use_gpu = use_gpu
-        self.source_names = source_names
-        self.target_names = target_names
+        self.source_names = dataset_name
         self.root = root
         self.height = height
         self.width = width
@@ -52,12 +50,6 @@ class BaseDataManager(object):
         """
         return self.trainloader, self.testloader_dict
 
-    def return_testdataset_by_name(self, name):
-        """
-        Return query and gallery, each containing a list of (img_path, pid, camid).
-        """
-        return self.testdataset_dict[name]['query'], self.testdataset_dict[name]['gallery']
-
 
 class ImageDataManager(BaseDataManager):
     """
@@ -66,18 +58,17 @@ class ImageDataManager(BaseDataManager):
 
     def __init__(self,
                  use_gpu,
-                 source_names,
-                 target_names,
+                 dataset_name,
                  **kwargs
                  ):
-        super(ImageDataManager, self).__init__(use_gpu, source_names, target_names, **kwargs)
+        super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
 
-        print('=> Initializing TRAIN (source) datasets')
+        print('=> Initializing TRAIN dataset')
         train = list()
-        for name in self.source_names:
-            dataset = init_img_dataset(root=self.root, name=name)
 
-            for img_path, label in dataset.train:
+        dataset = init_img_dataset(root=self.root, name=dataset_name)
+
+        for img_path, label in dataset.train:
                 train.append((img_path, torch.tensor(label.astype(np.float32))))
         self.attributes = dataset.attributes
         self.num_attributes = dataset.num_attributes
@@ -87,32 +78,31 @@ class ImageDataManager(BaseDataManager):
             pin_memory=self.use_gpu, drop_last=True
         )
 
-        print('=> Initializing TEST (target) datasets')
-        self.testloader_dict = {name: {'test': None} for name in target_names}
-        self.testdataset_dict = {name: {'test': None} for name in target_names}
+        print('=> Initializing TEST dataset')
+        self.testloader_dict = dict()
+        #self.testdataset_dict = {name: {'test': None} for name in target_names}
 
-        for name in self.target_names:
-            dataset = init_img_dataset(
-                root=self.root, name=name)
+        test = list()
+        for img_path, label in dataset.test:
+            test.append((img_path, torch.tensor(label.astype(np.float32))))
+        self.testloader_dict['test'] = DataLoader(
+            ImageDataset(test, transform=self.transform_test),
+            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
+            pin_memory=self.use_gpu, drop_last=False
+        )
 
-            test = list()
-            for img_path, label in dataset.test:
-                test.append((img_path, torch.tensor(label.astype(np.float32))))
-            self.testloader_dict[name]['test'] = DataLoader(
-                ImageDataset(test, transform=self.transform_test),
-                batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-                pin_memory=self.use_gpu, drop_last=False
-            )
+        print('=> Initializing VAL dataset')
+        val = list()
+        for img_path, label in dataset.val:
+            test.append((img_path, torch.tensor(label.astype(np.float32))))
+        self.testloader_dict['val'] = DataLoader(
+            ImageDataset(val, transform=self.transform_test),
+            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
+            pin_memory=self.use_gpu, drop_last=False
+        )
 
-            self.testdataset_dict[name]['test'] = dataset.test
+        #self.testdataset_dict[name]['test'] = dataset.test
 
-        print('\n')
-        print('  **************** Summary ****************')
-        print('  train names      : {}'.format(self.source_names))
-        print('  # train datasets : {}'.format(len(self.source_names)))
-        print('  # train images   : {}'.format(len(train)))
-        print('  test names       : {}'.format(self.target_names))
-        print('  *****************************************')
-        print('\n')
+
 
 

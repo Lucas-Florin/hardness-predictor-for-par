@@ -16,7 +16,7 @@ import models
 from training.losses import SigmoidCrossEntropyLoss
 from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
-from utils.loggers import Logger, RankLogger
+from utils.loggers import Logger, AccLogger
 from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, load_pretrained_weights
 from utils.generaltools import set_random_seed
 from evaluation.metrics import *
@@ -94,8 +94,9 @@ def main():
         return
     """
     time_start = time.time()
-    ranklogger = RankLogger(args.source_datasets, args.target_datasets)
+    ranklogger = AccLogger()
     print('=> Start training')
+    # TODO: Plot loss over epochs.
 
     # Train Fixbase epochs.
     if args.fixbase_epoch > 0:
@@ -118,11 +119,10 @@ def main():
                 epoch + 1) == args.max_epoch:
             print('=> Test')
 
-            for name in args.target_datasets:
-                print('Evaluating {} ...'.format(name))
-                testloader = testloader_dict[name]['test']
-                acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
-                ranklogger.write(name, epoch + 1, acc)
+            print('Evaluating {} ...'.format(args.dataset_name))
+            testloader = testloader_dict['test']
+            acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
+            ranklogger.write(epoch + 1, acc)
             ts = time.strftime("_%d-%m-%Y_%H-%M-%S")
             save_checkpoint({
                 'state_dict': model.state_dict(),
