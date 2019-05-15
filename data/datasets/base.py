@@ -13,6 +13,12 @@ class BaseDataset(object):
 
     @staticmethod
     def binarize_labels(labels):
+        """
+        Exchange each non-binary attribute in a dataset with the corresponding number of binary attributes.
+        :param labels: a numpy array with the labels for all the datapoints in the dataset.
+        :return: a numpy array with only binary attributes.
+        """
+        # TODO: return binary to non-binary mapping.
         max_values = np.max(labels, axis=0)
         bin_labels = np.zeros([len(labels), 0])
         for i, v in enumerate(max_values):
