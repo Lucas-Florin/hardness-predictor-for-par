@@ -80,6 +80,7 @@ def main():
     #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
     # TODO: Purpose unclear. Causes error when evaluate == True.
+    # Solution: standarize train/val/test splits in datasets.
     """
     if args.evaluate:
         print('Evaluate only')
