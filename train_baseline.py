@@ -65,8 +65,9 @@ def main():
     print('Model size: {:.3f} M'.format(count_num_param(model)))
 
     # Load pretrained weights if specified in args.
-    if args.load_weights and check_isfile(args.load_weights):
-        load_pretrained_weights(model, args.load_weights)
+    load_file = osp.join(args.save_experiment, args.load_weights)
+    if args.load_weights and check_isfile(load_file):
+        load_pretrained_weights(model, load_file)
 
     # ?
     model = nn.DataParallel(model).cuda() if use_gpu else model
@@ -216,11 +217,9 @@ def test(model, testloader, logits, attributes, use_gpu):
     """
     batch_time = AverageMeter()
     model.eval()
-    print(len(testloader))
     with torch.no_grad():
         predictions, gt = list(), list()
         for batch_idx, (imgs, labels, _) in enumerate(testloader):
-            print(batch_idx)
             if use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
 
