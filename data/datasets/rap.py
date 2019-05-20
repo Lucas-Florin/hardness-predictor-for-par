@@ -39,8 +39,8 @@ class RAPv2(BaseDataset):
         # Load data from .mat file
         data = MatlabMatrix.loadmat(self.attributes_path)['RAP_annotation']
         attributes = data["attribute"]  # List of all annotated attributes.
-        # List of the idxs of the attributes selected for PAR.
-        selected_attributes = np.array(data["selected_attribute"])
+        # List of the indexes of the attributes selected for PAR.
+        selected_attributes = np.array(data["selected_attribute"]) - 1
         attributes = [attributes[i] for i in selected_attributes]
         labels = np.array(data["data"])  # The labels for each image.
         labels = labels[:, selected_attributes]  # Discard the labels not used for PAR.

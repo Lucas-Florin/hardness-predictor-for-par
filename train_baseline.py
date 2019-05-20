@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 def main():
     global args # The arguments from the Terminal.
-
+    time_start = time.time()
     set_random_seed(args.seed)
 
     # Decide which processor (CPU or GPU) to use.
@@ -90,10 +90,12 @@ def main():
         acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
 
         return
+    elapsed = round(time.time() - time_start)
+    elapsed = str(datetime.timedelta(seconds=elapsed))
+    print('Loading Time: {}'.format(elapsed))
     time_start = time.time()
     ranklogger = AccLogger()
     print('=> Start training')
-    # TODO: Plot loss over epochs.
     epoch_losses = np.zeros(shape=(args.max_epoch, ))
 
     # Train Fixbase epochs.
@@ -138,7 +140,7 @@ def main():
     # Calculate elapsed time.
     elapsed = round(time.time() - time_start)
     elapsed = str(datetime.timedelta(seconds=elapsed))
-    print('Elapsed {}'.format(elapsed))
+    print('Training Time {}'.format(elapsed))
     ranklogger.show_summary()
 
     # Plot loss over epochs.
