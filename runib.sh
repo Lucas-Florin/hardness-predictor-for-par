@@ -1,1 +1,1 @@
-setsid ./run.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_market/log.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_market/log.txt &
+setsid ./run.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_market/log1.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_market/log1.txt &

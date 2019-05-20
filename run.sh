@@ -1,10 +1,9 @@
 python train_baseline.py \
     --root datasets \
-    -d market1501 \
-    --gpu-devices 2 \
-    --max-epoch 120 \
-    --eval-split test \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
+    -d rap \
+    --gpu-devices 0 \
+    --max-epoch 60 \
+    --eval-split val \
+    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
     --lr-scheduler single_step \
-    --fixbase-epoch 60
-
+    --print-freq 100

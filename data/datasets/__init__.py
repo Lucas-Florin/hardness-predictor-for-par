@@ -1,9 +1,10 @@
 from .market1501 import Market1501Attributes
+from .rap import RAPv2
 
 # Map the dataset names to the corresponding dataset classes.
 __imgreid_factory = {
     'market1501': Market1501Attributes,
-}
+    'rap': RAPv2}
 
 
 def init_img_dataset(name, **kwargs):
