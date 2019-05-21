@@ -53,7 +53,7 @@ class Market1501Attributes(BaseDataset):
         # generate numpy array with labels.
         train_labels = np.array([train_data[k] for k in sorted(train_data.keys()) if k != 'image_index']).T
         # a list of the attribute names.
-        train_attributes = sorted(list(train_data.keys()))
+        train_attributes = [k for k in sorted(train_data.keys()) if k != 'image_index']
         # Binarize attributes
         train_labels_bin, train_attributes_bin = self.binarize_labels(train_labels, train_attributes)
         # a list with the identity indexes.
@@ -65,7 +65,7 @@ class Market1501Attributes(BaseDataset):
 
         test_data = data['test']
         test_labels = np.array([test_data[k] for k in sorted(test_data.keys()) if k != 'image_index']).T
-        test_attributes = sorted(list(test_data.keys()))
+        test_attributes = [k for k in sorted(test_data.keys()) if k != 'image_index']
         test_labels_bin, test_attributes_bin = self.binarize_labels(test_labels, test_attributes)
         test_idx = test_data['image_index']
         test_labels_bin_dict = {int(i): l for i, l in zip(test_idx, test_labels_bin)}
