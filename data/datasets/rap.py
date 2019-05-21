@@ -44,7 +44,6 @@ class RAPv2(BaseDataset):
         attributes = [attributes[i] for i in selected_attributes]
         labels = np.array(data["data"])  # The labels for each image.
         labels = labels[:, selected_attributes]  # Discard the labels not used for PAR.
-        print(labels.shape)
         img_file_names = data["name"]  # Filenames for the images.
         partitions = data["partition_attribute"][self.split_idx]  # Dataset partition.
         train_idx = np.array(partitions["train_index"]) - 1
@@ -65,6 +64,10 @@ class RAPv2(BaseDataset):
         self.test = test
         self.attributes = attributes
         self.num_attributes = len(attributes)
+        self.labels = labels
+        self.train_idx = train_idx
+        self.val_idx = val_idx
+        self.test_idx = test_idx
 
         if verbose:
             print("=> RAPv2.0 Attributes loaded")

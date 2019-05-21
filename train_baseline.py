@@ -68,8 +68,11 @@ def main():
 
     # Load pretrained weights if specified in args.
     load_file = osp.join(args.save_experiment, args.load_weights)
-    if args.load_weights and check_isfile(load_file):
-        load_pretrained_weights(model, load_file)
+    if args.load_weights:
+        if check_isfile(load_file):
+            load_pretrained_weights(model, load_file)
+        else:
+            print("WARNING: Could not load pretraining weights")
 
     # ?
     model = nn.DataParallel(model).cuda() if use_gpu else model
@@ -89,6 +92,9 @@ def main():
         testloader = testloader_dict[split]
         acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
 
+        elapsed = round(time.time() - time_start)
+        elapsed = str(datetime.timedelta(seconds=elapsed))
+        print('Testing Time: {}'.format(elapsed))
         return
     elapsed = round(time.time() - time_start)
     elapsed = str(datetime.timedelta(seconds=elapsed))
@@ -241,24 +247,31 @@ def test(model, testloader, logits, attributes, use_gpu):
             outputs = logits(outputs)
             batch_time.update(time.time() - end)
 
-            predictions.extend((outputs > 0.5).tolist())
+            predictions.extend(outputs.tolist())
             gt.extend(labels.tolist())
 
     print('=> BatchTime(s)/BatchSize(img): {:.3f}/{}'.format(batch_time.avg, args.test_batch_size))
 
     # compute test accuracies
-    correct = np.array(predictions) == np.array(gt)
-    acc = np.mean(correct)
-    acc_atts = np.mean(correct, axis=0)
+    predictions = np.array(predictions)
+    gt = np.array(gt, dtype="bool")
+
+    mean_acc_atts = attribute_accuracies(predictions, gt)
+    mean_acc, acc, prec, rec, f1 = get_metrics(predictions, gt)
 
     print('Results ----------')
+    print('Mean Accuracy: {:.2%}'.format(mean_acc))
     print('Accuracy: {:.2%}'.format(acc))
-    print('Attribute accuracies:')
+    print('Precision: {:.2%}'.format(prec))
+    print('Recall: {:.2%}'.format(rec))
+    print('F1: {:.2%}'.format(f1))
+    print('------------------')
+    print('Mean Attribute accuracies:')
     for i in range(len(attributes)):
-        print('{}: {:.2%}'.format(attributes[i], acc_atts[i]))
+        print('{}: {:.2%}'.format(attributes[i], mean_acc_atts[i]))
     print('------------------')
 
-    return acc, acc_atts
+    return mean_acc, mean_acc_atts
 
 
 if __name__ == '__main__':
