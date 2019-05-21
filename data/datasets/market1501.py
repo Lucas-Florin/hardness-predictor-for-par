@@ -79,6 +79,7 @@ class Market1501Attributes(BaseDataset):
 
         self.attributes = attributes_bin
         self.num_attributes = test_labels_bin.shape[1]
+        self.labels = np.concatenate((train_labels_bin, test_labels_bin), axis=0)
         assert len(self.attributes) == self.num_attributes
 
         train = self._process_dir(self.train_dir, labels)
