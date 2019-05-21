@@ -29,11 +29,15 @@ def attribute_accuracies(output, target):
     with torch.no_grad():
         prediction = output > 0.5
         p = (target == 1).sum(0)  # Number of positive samples.
+        p[p == 0] = 1  # Prevent division by zero
         tp = np.logical_and(target == 1, prediction == 1).sum(0)  # Number of true positives.
         n = (target == 0).sum(0)  # Number of negative samples.
+        n[n == 0] = 1  # Prevent division by zero
         tn = np.logical_and(target == 0, prediction == 0).sum(0)  # Number of true negatives.
 
-        return (tp.astype("float64") / p + tn.astype("float64") / n) / 2
+        m_acc = (tp.astype("float64") / p + tn.astype("float64") / n) / 2
+
+        return m_acc
 
 
 def accuracy(output, target):

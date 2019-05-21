@@ -258,7 +258,7 @@ def test(model, testloader, logits, attributes, use_gpu):
     gt = np.array(gt, dtype="bool")
 
     mean_acc_atts = metrics.attribute_accuracies(predictions, gt)
-    mean_acc, acc, prec, rec, f1 = metrics.get_metrics(predictions, gt)
+    #mean_acc, acc, prec, rec, f1 = metrics.get_metrics(predictions, gt)
 
     print('Results ----------')
     print(metrics.get_metrics_table(predictions, gt))
@@ -268,7 +268,7 @@ def test(model, testloader, logits, attributes, use_gpu):
     print(table)
     print('------------------')
 
-    return mean_acc, mean_acc_atts
+    return mean_acc_atts.mean(), mean_acc_atts
 
 
 if __name__ == '__main__':
