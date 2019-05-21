@@ -24,11 +24,8 @@ args = parser.parse_args()
 def main():
     global args
     dataset = init_img_dataset(args.dataset_name, **image_dataset_kwargs(args))
-    labels = dataset.labels
     attributes = dataset.attributes
-    num_datapoints = labels.shape[0]
-    total_positive = labels.sum(0)#.reshape((1, labels.shape[1]))
-    total_positive_quota = total_positive / num_datapoints
+    total_positive_quota = dataset.get_positive_quota()
     table = tab.tabulate(zip(attributes, total_positive_quota), floatfmt='.2%')
     print("----------------------")
     print("Analyzing Dataset: " + args.dataset_name)

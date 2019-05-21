@@ -79,3 +79,11 @@ class BaseDataset(object):
             raise Exception('Number of attributes and number of labels aren\'t equal: {} != {}'.format(labels.shape[1],
                                                                                                        len(attributes)))
         return dataset, attributes
+
+    def get_positive_quota(self):
+        labels = self.labels
+        attributes = self.attributes
+        num_datapoints = labels.shape[0]
+        total_positive = labels.sum(0)
+        total_positive_quota = total_positive / num_datapoints
+        return total_positive_quota
