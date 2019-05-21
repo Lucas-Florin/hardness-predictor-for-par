@@ -7,6 +7,7 @@ https://arxiv.org/abs/1901.07474v1
 
 import numpy as np
 import torch
+import tabulate as tab
 
 
 def _get_conf_mat(output, target):
@@ -70,4 +71,18 @@ def get_metrics(output, target):
         recall(output, target),
         f1measure(output, target)
     )
+
+
+def get_metrics_table(output, target):
+    metrics = get_metrics(output, target)
+    metric_names = [
+        "Mean Accuracy",
+        "Accuracy",
+        "Precision",
+        "Recall",
+        "F1"
+    ]
+    table = tab.tabulate(zip(metric_names, metrics), floatfmt='.2%')
+    return table
+
 

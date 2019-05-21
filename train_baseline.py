@@ -20,10 +20,11 @@ from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
 from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, load_pretrained_weights
 from utils.generaltools import set_random_seed
-from evaluation.metrics import *
+import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
 from utils.plot import plot_epoch_losses
+import tabulate as tab
 
 # global variables
 parser = argument_parser()
@@ -256,19 +257,15 @@ def test(model, testloader, logits, attributes, use_gpu):
     predictions = np.array(predictions)
     gt = np.array(gt, dtype="bool")
 
-    mean_acc_atts = attribute_accuracies(predictions, gt)
-    mean_acc, acc, prec, rec, f1 = get_metrics(predictions, gt)
+    mean_acc_atts = metrics.attribute_accuracies(predictions, gt)
+    mean_acc, acc, prec, rec, f1 = metrics.get_metrics(predictions, gt)
 
     print('Results ----------')
-    print('Mean Accuracy: {:.2%}'.format(mean_acc))
-    print('Accuracy: {:.2%}'.format(acc))
-    print('Precision: {:.2%}'.format(prec))
-    print('Recall: {:.2%}'.format(rec))
-    print('F1: {:.2%}'.format(f1))
+    print(metrics.get_metrics_table(predictions, gt))
     print('------------------')
     print('Mean Attribute accuracies:')
-    for i in range(len(attributes)):
-        print('{}: {:.2%}'.format(attributes[i], mean_acc_atts[i]))
+    table = tab.tabulate(zip(attributes, mean_acc_atts), floatfmt='.2%')
+    print(table)
     print('------------------')
 
     return mean_acc, mean_acc_atts

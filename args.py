@@ -7,7 +7,7 @@ def argument_parser():
     # ************************************************************
     # Datasets (general)
     # ************************************************************
-    parser.add_argument('--root', type=str, default='data',
+    parser.add_argument('--root', type=str, default='datasets',
                         help='root path to data directory')
     parser.add_argument('-d', '--dataset-name', type=str, required=True,
                         help='name of the desired dataset')
@@ -114,7 +114,7 @@ def argument_parser():
     # ************************************************************
     # Miscs
     # ************************************************************
-    parser.add_argument('--print-freq', type=int, default=10,
+    parser.add_argument('--print-freq', type=int, default=100,
                         help='print frequency')
     parser.add_argument('--seed', type=int, default=1,
                         help='manual seed')
