@@ -104,6 +104,10 @@ def argument_parser():
                         help='load pretrained weights but ignore layers that don\'t match in size')
     parser.add_argument('--evaluate', action='store_true',
                         help='evaluate only')
+    parser.add_argument('--group-atts', action='store_true',
+                        help='group binary attributes into non-binary ones')
+    parser.add_argument('--use-macc', action='store_true',
+                        help='use mean accuracy instead of normal accuracy')
     parser.add_argument('--eval-freq', type=int, default=-1,
                         help='evaluation frequency (set to -1 to test only in the end)')
     parser.add_argument('--start-eval', type=int, default=0,

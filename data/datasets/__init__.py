@@ -17,3 +17,15 @@ def init_img_dataset(name, **kwargs):
     if name not in list(__imgreid_factory.keys()):
         raise KeyError('Invalid dataset, got "{}", but expected to be one of {}'.format(name, list(__imgreid_factory.keys())))
     return __imgreid_factory[name](**kwargs)
+
+
+def get_img_dataset(name):
+    """
+    Get a reference to the class of the dataset corresponding to the name.
+    :param name: A string describing the name of the dataset.
+    :return: A reference to the class of the dataset.
+    """
+    if name not in list(__imgreid_factory.keys()):
+        raise KeyError('Invalid dataset, got "{}", but expected to be one of {}'.format(name, list(__imgreid_factory.keys())))
+    return __imgreid_factory[name]
+

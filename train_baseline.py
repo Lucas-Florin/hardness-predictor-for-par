@@ -13,6 +13,7 @@ import torch.backends.cudnn as cudnn
 
 from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_scheduler_kwargs
 from data.data_manager import ImageDataManager
+from data.datasets import get_img_dataset
 import models
 from training.losses import SigmoidCrossEntropyLoss
 from utils.iotools import check_isfile, save_checkpoint
@@ -235,6 +236,7 @@ def test(model, testloader, logits, attributes, use_gpu):
     :param use_gpu:
     :return:
     """
+    global args
     batch_time = AverageMeter()
     model.eval()
     with torch.no_grad():
@@ -256,19 +258,27 @@ def test(model, testloader, logits, attributes, use_gpu):
     # compute test accuracies
     predictions = np.array(predictions)
     gt = np.array(gt, dtype="bool")
-
-    mean_acc_atts = metrics.attribute_accuracies(predictions, gt)
+    if args.group_atts:
+        attribute_grouping = get_img_dataset(args.dataset_name).attribute_grouping
+        predictions = metrics.group_attributes(predictions, attribute_grouping)
+    if args.use_macc:
+        acc_atts = metrics.mean_attribute_accuracies(predictions, gt)
+        acc_name = 'Mean Attribute Accuracies'
+    else:
+        acc_atts = metrics.attribute_accuracies(predictions, gt)
+        acc_name = 'Attribute Accuracies'
     #mean_acc, acc, prec, rec, f1 = metrics.get_metrics(predictions, gt)
 
     print('Results ----------')
     print(metrics.get_metrics_table(predictions, gt))
     print('------------------')
-    print('Mean Attribute accuracies:')
-    table = tab.tabulate(zip(attributes, mean_acc_atts), floatfmt='.2%')
+    print(acc_name + ':')
+    table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%')
     print(table)
+    print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
     print('------------------')
 
-    return mean_acc_atts.mean(), mean_acc_atts
+    return acc_atts.mean(), acc_atts
 
 
 if __name__ == '__main__':

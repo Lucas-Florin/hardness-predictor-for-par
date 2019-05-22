@@ -32,6 +32,7 @@ class Market1501Attributes(BaseDataset):
     # images: 12936 (train) + 3368 (query) + 15913 (gallery)
     """
     dataset_dir = 'market'
+    attribute_grouping = [0] * 4 + list(range(1, 5)) + [5] * 9 + list(range(6, 11)) + [11] * 8
 
     def __init__(self, root, verbose=True, **kwargs):
         super(Market1501Attributes, self).__init__(root)

@@ -22,10 +22,16 @@ def _get_conf_mat(output, target):
 
 
 def mean_accuracy(output, target):
-    return attribute_accuracies(output, target).mean()
+    return mean_attribute_accuracies(output, target).mean()
 
 
-def attribute_accuracies(output, target):
+def mean_attribute_accuracies(output, target):
+    """
+    Get the average between the positive and negative accuracy for each attribute. As proposed in RAPv2.0 Paper
+    :param output:
+    :param target:
+    :return:
+    """
     with torch.no_grad():
         prediction = output > 0.5
         p = (target == 1).sum(0)  # Number of positive samples.
@@ -38,6 +44,19 @@ def attribute_accuracies(output, target):
         m_acc = (tp.astype("float64") / p + tn.astype("float64") / n) / 2
 
         return m_acc
+
+
+def attribute_accuracies(output, target):
+    """
+    Get the raw accuracy for each attribute. (not mean over positive and negative accuracy)
+    :param output:
+    :param target:
+    :return:
+    """
+    with torch.no_grad():
+        prediction = output > 0.5
+
+    return (prediction == target).mean(0)
 
 
 def accuracy(output, target):
@@ -88,5 +107,31 @@ def get_metrics_table(output, target):
     ]
     table = tab.tabulate(zip(metric_names, metrics), floatfmt='.2%')
     return table
+
+
+def group_attributes(output, attribute_grouping):
+    """
+    Group binary attributes into non-binary ones. As proposed in Market1501-Attribute Paper.
+    :param output:
+    :param attribute_grouping:
+    :return:
+    """
+    with torch.no_grad():
+        attg = np.array(attribute_grouping, dtype='int16')
+        num_grouped_atts = attg.max() + 1
+        grouped_output = np.zeros(output.shape, dtype='bool')
+        num_datapoints = output.shape[0]
+        for i in range(num_grouped_atts):
+            idxs = np.argwhere(attg == i).flatten()
+            starting_idx = idxs[0]
+            if len(idxs) == 1:
+                grouped_output[:, idxs] = output[:, idxs] > 0.5
+            else:
+                att_max = output[:, idxs].argmax(1) + starting_idx
+                grouped_output[range(num_datapoints), att_max] = True
+    return grouped_output
+
+
+
 
 

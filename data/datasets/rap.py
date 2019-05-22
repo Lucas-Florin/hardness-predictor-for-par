@@ -64,6 +64,7 @@ class RAPv2(BaseDataset):
         self.test = test
         self.attributes = attributes
         self.num_attributes = len(attributes)
+        self.attribute_grouping = list(range(self.num_attributes))
         self.labels = labels
         self.train_idx = train_idx
         self.val_idx = val_idx
