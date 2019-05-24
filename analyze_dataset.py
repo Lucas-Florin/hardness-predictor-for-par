@@ -25,7 +25,7 @@ def main():
     global args
     dataset = init_img_dataset(args.dataset_name, **image_dataset_kwargs(args))
     attributes = dataset.attributes
-    total_positive_quota = dataset.get_positive_quota()
+    total_positive_quota = dataset.get_positive_attribute_ratio()
     table = tab.tabulate(zip(attributes, total_positive_quota), floatfmt='.2%')
     print("----------------------")
     print("Analyzing Dataset: " + args.dataset_name)

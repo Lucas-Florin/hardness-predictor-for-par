@@ -15,7 +15,7 @@ from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_sch
 from data.data_manager import ImageDataManager
 from data.datasets import get_img_dataset
 import models
-from training.losses import SigmoidCrossEntropyLoss
+from training.losses import SigmoidCrossEntropyLoss, DeepMARLoss
 from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
@@ -80,7 +80,11 @@ def main():
     model = nn.DataParallel(model).cuda() if use_gpu else model
 
     # ?
-    criterion = SigmoidCrossEntropyLoss(num_classes=dm.num_attributes, use_gpu=use_gpu)
+    if args.deepmar_loss:
+        pos_ratio = get_img_dataset(args.dataset_name).get_positive_attribute_ratio()
+        criterion = DeepMARLoss(pos_ratio, use_gpu=use_gpu)
+    else:
+        criterion = SigmoidCrossEntropyLoss(num_classes=dm.num_attributes, use_gpu=use_gpu)
     optimizer = init_optimizer(model, **optimizer_kwargs(args))
     scheduler = init_lr_scheduler(optimizer, **lr_scheduler_kwargs(args))
 

@@ -80,6 +80,9 @@ def argument_parser():
     parser.add_argument('--base-lr-mult', type=float, default=0.1,
                         help='learning rate multiplier for base layers')
 
+    parser.add_argument('--deepmar-loss', action='store_true',
+                        help='use DeepMAR loss')
+
     # ************************************************************
     # Learning rate scheduler options
     # ************************************************************

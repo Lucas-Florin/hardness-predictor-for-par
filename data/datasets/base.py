@@ -80,10 +80,14 @@ class BaseDataset(object):
                                                                                                        len(attributes)))
         return dataset, attributes
 
-    def get_positive_quota(self):
+    def get_positive_attribute_ratio(self):
+        """
+        For each Attribute get the ratio of positive samples to total number of datapoints in the dataset.
+        :return: A numpy array with the ratio for each attribute.
+        """
         labels = self.labels
         attributes = self.attributes
         num_datapoints = labels.shape[0]
         total_positive = labels.sum(0)
-        total_positive_quota = total_positive / num_datapoints
+        total_positive_quota = (total_positive / num_datapoints).astype(np.float32)
         return total_positive_quota
