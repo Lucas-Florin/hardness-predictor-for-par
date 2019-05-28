@@ -67,6 +67,7 @@ class ImageDataManager(BaseDataManager):
         train = list()
 
         dataset = init_img_dataset(root=self.root, name=dataset_name)
+        self.dataset = dataset
 
         for img_path, label in dataset.train:
                 train.append((img_path, torch.tensor(label.astype(np.float32))))
@@ -80,7 +81,6 @@ class ImageDataManager(BaseDataManager):
 
         print('=> Initializing TEST dataset')
         self.testloader_dict = dict()
-        #self.testdataset_dict = {name: {'test': None} for name in target_names}
 
         test = list()
         for img_path, label in dataset.test:
@@ -101,7 +101,6 @@ class ImageDataManager(BaseDataManager):
             pin_memory=self.use_gpu, drop_last=False
         )
 
-        #self.testdataset_dict[name]['test'] = dataset.test
 
 
 

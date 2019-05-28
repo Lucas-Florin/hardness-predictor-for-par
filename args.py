@@ -79,9 +79,9 @@ def argument_parser():
                         help='newly added layers with default lr')
     parser.add_argument('--base-lr-mult', type=float, default=0.1,
                         help='learning rate multiplier for base layers')
+    parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
+                        help='name of the desired loss function')
 
-    parser.add_argument('--deepmar-loss', action='store_true',
-                        help='use DeepMAR loss')
 
     # ************************************************************
     # Learning rate scheduler options

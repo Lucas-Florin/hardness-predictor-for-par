@@ -23,3 +23,4 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
         plt.savefig(fpath, format="png")
         print("Saved loss plot at " + fname)
     plt.show()
+

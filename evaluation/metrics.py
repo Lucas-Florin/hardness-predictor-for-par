@@ -46,17 +46,30 @@ def mean_attribute_accuracies(output, target):
         return m_acc
 
 
-def attribute_accuracies(output, target):
+def attribute_accuracies(output, target, attribute_groupings=None):
     """
-    Get the raw accuracy for each attribute. (not mean over positive and negative accuracy)
+    Get the raw accuracy for each attribute as defined in Market1501 Attribute Paper.
+    If attribute groupings are given, the average for each group is calculated.
     :param output:
     :param target:
+    :param attribute_groupings:
     :return:
     """
     with torch.no_grad():
         prediction = output > 0.5
+        attribute_accuracies = (prediction == target).mean(0)
+        if attribute_groupings is None:
+            return attribute_accuracies
+        attribute_groupings = np.array(attribute_groupings, dtype=np.int)
+        num_groups = attribute_groupings.max() + 1
+        grouped_accuracies = np.zeros((num_groups, ))
 
-    return (prediction == target).mean(0)
+        for group in range(num_groups):
+            idxs = attribute_groupings == group
+            grouped_accuracies[group] = attribute_accuracies[idxs].mean()
+        return grouped_accuracies
+
+
 
 
 def accuracy(output, target):

@@ -15,7 +15,7 @@ from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_sch
 from data.data_manager import ImageDataManager
 from data.datasets import get_img_dataset
 import models
-from training.losses import SigmoidCrossEntropyLoss, DeepMARLoss
+from training.losses import SigmoidCrossEntropyLoss, DeepMARLoss, SplitSoftmaxCrossEntropyLoss
 from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
@@ -39,13 +39,16 @@ def main():
 
     # Decide which processor (CPU or GPU) to use.
     if not args.use_avai_gpus:
+        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
+
     use_gpu = torch.cuda.is_available()
     if args.use_cpu:
         use_gpu = False
 
     # Start logger.
     ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
+    print("Timestamp: " + ts)
     log_name = ts + 'test' + '.log' if args.evaluate else ts + 'train' + '.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
 
@@ -76,15 +79,21 @@ def main():
         else:
             print("WARNING: Could not load pretraining weights")
 
-    # ?
+    # Load model onto GPU if GPU is used.
     model = nn.DataParallel(model).cuda() if use_gpu else model
 
-    # ?
-    if args.deepmar_loss:
-        pos_ratio = get_img_dataset(args.dataset_name).get_positive_attribute_ratio()
-        criterion = DeepMARLoss(pos_ratio, use_gpu=use_gpu)
-    else:
+    # Select Loss function.
+    if args.loss_func == "deepmar":
+        pos_ratio = dm.dataset.get_positive_attribute_ratio()
+        criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=use_gpu)
+    elif args.loss_func == "scel":
         criterion = SigmoidCrossEntropyLoss(num_classes=dm.num_attributes, use_gpu=use_gpu)
+    elif args.loss_func == "sscel":
+        attribute_grouping = dm.dataset.attribute_grouping
+        criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=use_gpu)
+    else:
+        criterion = None
+
     optimizer = init_optimizer(model, **optimizer_kwargs(args))
     scheduler = init_lr_scheduler(optimizer, **lr_scheduler_kwargs(args))
 
@@ -96,8 +105,9 @@ def main():
         split = args.eval_split
         print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
         testloader = testloader_dict[split]
-        acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
+        acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset)
 
+        # Calculate testing time.
         elapsed = round(time.time() - time_start)
         elapsed = str(datetime.timedelta(seconds=elapsed))
         print('Testing Time: {}'.format(elapsed))
@@ -135,7 +145,7 @@ def main():
             split = args.eval_split
             print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
             testloader = testloader_dict[split]
-            acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu)
+            acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset)
             ranklogger.write(epoch + 1, acc)
             filename = ts + 'checkpoint' + '.pth.tar'
             save_checkpoint({
@@ -230,7 +240,7 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
 
 
 
-def test(model, testloader, logits, attributes, use_gpu):
+def test(model, testloader, logits, attributes, use_gpu, dataset):
     """
 
     :param model:
@@ -263,15 +273,22 @@ def test(model, testloader, logits, attributes, use_gpu):
     predictions = np.array(predictions)
     gt = np.array(gt, dtype="bool")
     if args.group_atts:
-        attribute_grouping = get_img_dataset(args.dataset_name).attribute_grouping
+        # Each group has exactly one positive attribute.
+        attribute_grouping = dataset.attribute_grouping
         predictions = metrics.group_attributes(predictions, attribute_grouping)
+        if not args.use_macc:
+            attributes = dataset.grouped_attribute_names
+    else:
+        attribute_grouping = None
     if args.use_macc:
+        # Use mA for each attribute.
         acc_atts = metrics.mean_attribute_accuracies(predictions, gt)
         acc_name = 'Mean Attribute Accuracies'
     else:
-        acc_atts = metrics.attribute_accuracies(predictions, gt)
+        #
+        acc_atts = metrics.attribute_accuracies(predictions, gt, attribute_grouping)
+
         acc_name = 'Attribute Accuracies'
-    #mean_acc, acc, prec, rec, f1 = metrics.get_metrics(predictions, gt)
 
     print('Results ----------')
     print(metrics.get_metrics_table(predictions, gt))

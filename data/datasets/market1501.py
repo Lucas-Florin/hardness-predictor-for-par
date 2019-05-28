@@ -95,6 +95,24 @@ class Market1501Attributes(BaseDataset):
         self.val = val
         self.test = gallery
 
+        # Create list of grouped attribute names.
+        attribute_groupings = np.array(self.attribute_grouping, dtype=np.int)
+        num_groups = attribute_groupings.max() + 1
+        grouped_attribute_names = list()
+        attributes_np = np.array(self.attributes)
+        for group in range(num_groups):
+            idxs = attribute_groupings == group
+            group_names = attributes_np[idxs].tolist()
+            if idxs.sum() == 1:
+                grouped_attribute_names.append(group_names[0])
+            else:
+                # The name of the first attribute in the group is taken as the group name.
+                # TODO: Make nicer.
+                group_name = group_names[0] + "_group"
+                grouped_attribute_names.append(group_name)
+
+        self.grouped_attribute_names = grouped_attribute_names
+
     def _check_before_run(self):
         """Check if all files are available before going deeper"""
         if not osp.exists(self.dataset_dir):
