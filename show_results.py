@@ -1,3 +1,8 @@
+"""
+@author Lucas Florin
+@contact lucasflorin4@gmail.com
+"""
+
 import torch
 import argparse
 import numpy as np
@@ -6,7 +11,10 @@ from utils.plot import plot_epoch_losses
 
 def main():
     global args
-    checkpoint = torch.load(args.load_path)
+    if torch.cuda.is_available():
+        checkpoint = torch.load(args.load_path)
+    else:
+        checkpoint = torch.load(args.load_path, map_location='cpu')
     losses = checkpoint["losses"]
     plot_epoch_losses(losses, args.save_path)
 

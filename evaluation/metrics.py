@@ -3,6 +3,9 @@ Metrics for evaluating models as defined in:
 Pedestrian Attribute Recognition: A Survey.
 Xiao Wang, Shaofei Zheng, Rui Yang, Bin Luo, Jin Tang
 https://arxiv.org/abs/1901.07474v1
+
+@author Lucas Florin
+@contact lucasflorin4@gmail.com
 """
 
 import numpy as np

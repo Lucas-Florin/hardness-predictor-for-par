@@ -1,4 +1,8 @@
-import torch
+"""
+@author Lucas Florin
+@contact lucasflorin4@gmail.com
+"""
+
 import torch.nn as nn
 from .softmax_split import SoftmaxSplit
 

@@ -1,8 +1,12 @@
+"""
+@author Lucas Florin
+@contact lucasflorin4@gmail.com
+"""
+
 import numpy as np
 import time
 import matplotlib.pyplot as plt
 import os.path as osp
-
 
 
 def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):

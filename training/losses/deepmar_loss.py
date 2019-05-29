@@ -1,3 +1,8 @@
+"""
+@author Lucas Florin
+@contact lucasflorin4@gmail.com
+"""
+
 import torch
 import torch.nn as nn
 import torch.cuda as cuda
