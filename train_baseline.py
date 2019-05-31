@@ -156,6 +156,7 @@ def main():
                 'model': args.model,
                 'optimizer': optimizer.state_dict(),
                 'losses': epoch_losses,
+                'args': args
             }, osp.join(args.save_experiment, filename))
             print("Saved model checkpoint at " + filename)
 
@@ -165,8 +166,9 @@ def main():
     print('Training Time {}'.format(elapsed))
     ranklogger.show_summary()
 
-    # Plot loss over epochs.
-    plot_epoch_losses(epoch_losses, args.save_experiment, ts)
+    if args.plot_epoch_loss:
+        # Plot loss over epochs.
+        plot_epoch_losses(epoch_losses, args.save_experiment, ts)
 
 
 
@@ -250,6 +252,7 @@ def test(model, testloader, logits, attributes, use_gpu, dataset):
     :param use_gpu:
     :return:
     """
+    print("entered test")
     global args
     batch_time = AverageMeter()
     model.eval()
@@ -278,6 +281,7 @@ def test(model, testloader, logits, attributes, use_gpu, dataset):
         predictions = metrics.group_attributes(predictions, attribute_grouping)
         if not args.use_macc:
             attributes = dataset.grouped_attribute_names
+        print("Grouping attributes. ")
     else:
         attribute_grouping = None
     if args.use_macc:

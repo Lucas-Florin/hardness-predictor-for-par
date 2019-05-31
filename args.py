@@ -136,6 +136,8 @@ def argument_parser():
                         help='gpu device ids for CUDA_VISIBLE_DEVICES')
     parser.add_argument('--use-avai-gpus', action='store_true',
                         help='use available gpus instead of specified devices (useful when using managed clusters)')
+    parser.add_argument('--plot-epoch-loss', action='store_true',
+                        help='plot loss over epochs')
 
     return parser
 
