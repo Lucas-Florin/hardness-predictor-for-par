@@ -9,7 +9,7 @@ import os.path as osp
 
 from utils.matlab_helper import MatlabMatrix
 from .base import BaseDataset
-
+import numpy as np
 
 class PA100K(BaseDataset):
     """
@@ -32,15 +32,19 @@ class PA100K(BaseDataset):
         data = MatlabMatrix.loadmat(self.attributes_path)
         attributes = data["attributes"]  # List of all annotated attributes.
 
+        train_labels = data["train_label"]
         train = [(osp.join(self.img_dir, filename), label)
-                 for filename, label in zip(data["train_images_name"], data["train_label"])]
+                 for filename, label in zip(data["train_images_name"], train_labels)]
 
+        val_labels = data["val_label"]
         val = [(osp.join(self.img_dir, filename), label)
-               for filename, label in zip(data["val_images_name"], data["val_label"])]
+               for filename, label in zip(data["val_images_name"], val_labels)]
 
+        test_labels = data["test_label"]
         test = [(osp.join(self.img_dir, filename), label)
-                for filename, label in zip(data["test_images_name"], data["test_label"])]
+                for filename, label in zip(data["test_images_name"], test_labels)]
 
+        self.labels = np.concatenate((train_labels, val_labels, test_labels), axis=0)
         self.train = train
         self.val = val
         self.test = test
