@@ -81,6 +81,8 @@ def argument_parser():
                         help='learning rate multiplier for base layers')
     parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
                         help='name of the desired loss function')
+    parser.add_argument('--loss-func-param', type=float, default=1,
+                        help='the parameter for the loss function')
 
 
     # ************************************************************

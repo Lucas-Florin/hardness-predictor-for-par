@@ -86,7 +86,7 @@ def main():
     # Select Loss function.
     if args.loss_func == "deepmar":
         pos_ratio = dm.dataset.get_positive_attribute_ratio()
-        criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=use_gpu)
+        criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=use_gpu, sigma=args.loss_func_param)
     elif args.loss_func == "scel":
         criterion = SigmoidCrossEntropyLoss(num_classes=dm.num_attributes, use_gpu=use_gpu)
     elif args.loss_func == "sscel":
