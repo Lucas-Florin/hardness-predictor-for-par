@@ -48,13 +48,14 @@ def main():
 
     # Start logger.
     ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
-    print("Timestamp: " + ts)
+
     log_name = ts + 'test' + '.log' if args.evaluate else ts + 'train' + '.log'
     sys.stdout = Logger(osp.join(args.save_experiment, log_name))
 
     # Print out the arguments taken from Terminal (or defaults).
     print('==========\nArgs:{}\n=========='.format(args))
 
+    print("Timestamp: " + ts)
     # Warn if not using GPU.
     if use_gpu:
         print('Currently using GPU {}'.format(args.gpu_devices))
