@@ -20,9 +20,10 @@ from .base import BaseDataset
 class RAPv2(BaseDataset):
     """
     RAPv2.0
+    Reference:
+    [Li et al. 2019] Multi-attribute Learning for Pedestrian Attribute Recognition in Surveillance Scenarios
 
     """
-    # TODO: Paper reference.
     dataset_dir = 'RAP'
     split_idx = 0
 

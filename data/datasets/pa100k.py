@@ -14,9 +14,10 @@ import numpy as np
 class PA100K(BaseDataset):
     """
     PA-100K
+    Reference:
+    [Liu et al. 2017] HydraPlus-Net: Attentive Deep Features for Pedestrian Analysis
 
     """
-    # TODO: Paper reference.
     dataset_dir = 'pa100k'
 
     def __init__(self, root, verbose=True, **kwargs):
