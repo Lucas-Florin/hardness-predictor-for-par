@@ -1,12 +1,14 @@
 from .market1501 import Market1501Attributes
 from .rap import RAPv2
 from .pa100k import PA100K
+from .peta import PETA
 
 # Map the dataset names to the corresponding dataset classes.
 __imgreid_factory = {
     'market1501': Market1501Attributes,
     'rap': RAPv2,
-    'pa100k': PA100K
+    'pa100k': PA100K,
+    'peta': PETA
 }
 
 

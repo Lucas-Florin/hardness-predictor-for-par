@@ -253,7 +253,6 @@ def test(model, testloader, logits, attributes, use_gpu, dataset):
     :param use_gpu:
     :return:
     """
-    print("entered test")
     global args
     batch_time = AverageMeter()
     model.eval()
