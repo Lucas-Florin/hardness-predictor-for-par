@@ -35,11 +35,12 @@ class PETA(BaseDataset):
     # Attributes discarded because of low frequency, as defined in PETA Readme.
     discarded_attributes = {'accessoryFaceMask', 'lowerBodyLogo', 'accessoryShawl', 'lowerBodyThickStripes'}
     # The possible names for colors.
-    color_names = {'Black', 'Blue', 'Brown', 'Green', 'Grey', 'Orange', 'Pink', 'Purple', 'Red', 'White', 'Yellow'}
+    color_names = ['Black', 'Blue', 'Brown', 'Green', 'Grey', 'Orange', 'Pink', 'Purple', 'Red', 'White', 'Yellow']
     # The size of dataset splits.
     num_train = 9500
     num_val = 1900
     num_test = 7600
+    shuffle_fname = "data/datasets/peta_shuffle.csv"
 
     def __init__(self, root, verbose=True, **kwargs):
         super(PETA, self).__init__(root)
@@ -55,7 +56,7 @@ class PETA(BaseDataset):
         attributes = set()
         datasets = dict()  # Holds references to each of the different datasets.
         num_ids = 0  # Counts the number of different pedestrian ids in all the datasets.
-        for dir_name in glob.glob(self.archive_dir_pattern):
+        for dir_name in sorted(list(glob.glob(self.archive_dir_pattern))):
             data = dict()
             label_file = open(osp.join(dir_name, "Label.txt"), "r")  # This file has the labels for each id.
             while True:
@@ -121,11 +122,10 @@ class PETA(BaseDataset):
         att_idxs = {a: i for i, a in enumerate(attributes)}
         dataset = list()  # This list saves tuples of image file names and labels.
 
-
-        for dir_name in datasets:  # For each dataset
+        for dir_name in sorted(list(datasets)):  # For each dataset
             data = datasets[dir_name]
             data_bin = dict()  # Saves the binary label vectors for each datapoint.
-            for i in data:  # For each datapoint in the dataset
+            for i in sorted(list(data)):  # For each datapoint in the dataset
                 # Generate a binary vector representation of the labels.
                 labels = np.zeros((num_attributes, ), dtype="int8")  # Init binary label vector with zeros.
                 for label in data[i]:
@@ -133,7 +133,7 @@ class PETA(BaseDataset):
                     labels[att_idxs[label]] = 1
                 data_bin[i] = labels
 
-            img_files = glob.glob(osp.join(dir_name, "*.*"))  # Find all files in the folder.
+            img_files = sorted(list(glob.glob(osp.join(dir_name, "*.*"))))  # Find all files in the folder.
             for fpath in img_files:  # For each file
                 fname = osp.basename(fpath)  # Separate filename from the rest of the path.
                 if fname == "Label.txt":
@@ -141,7 +141,8 @@ class PETA(BaseDataset):
                 ped_id = self.img_fname_pattern.search(fname).group()  # Extract pedestrian ID from filename.
                 ped_id = int(ped_id)
                 dataset.append((fpath, data_bin[ped_id]))  # Add tuple of filename and label vector to dataset.
-        random.shuffle(dataset)
+        shuffle = np.loadtxt(self.shuffle_fname, delimiter=",").astype(np.int)
+        dataset = np.array(dataset)[shuffle, :].tolist()
         self.dataset = dataset
         self.num_datapoints = len(dataset)
         labels_np = np.zeros((self.num_datapoints, num_attributes), dtype="int8")
