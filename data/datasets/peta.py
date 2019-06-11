@@ -33,7 +33,11 @@ class PETA(BaseDataset):
     """
     dataset_dir = 'peta/original'
     # Attributes discarded because of low frequency, as defined in PETA Readme.
-    discarded_attributes = {'accessoryFaceMask', 'lowerBodyLogo', 'accessoryShawl', 'lowerBodyThickStripes'}
+    #discarded_attributes = {'accessoryFaceMask', 'lowerBodyLogo', 'accessoryShawl', 'lowerBodyThickStripes'}
+    # Combine the following binary attributes into one binary attribute (this attribute is True if at least one of the
+    # combined attributes are true. )
+    combined_attributes = [["upperBodyThinStripes", "upperBodyThickStripes"],
+                           ["lowerBodyLongSkirt", "lowerBodyShortSkirt"]]
     # The possible names for colors.
     color_names = ['Black', 'Blue', 'Brown', 'Green', 'Grey', 'Orange', 'Pink', 'Purple', 'Red', 'White', 'Yellow']
     # The size of dataset splits.
@@ -41,6 +45,7 @@ class PETA(BaseDataset):
     num_val = 1900
     num_test = 7600
     shuffle_fname = "data/datasets/peta_shuffle.csv"
+    discarded_attributes_fname = "data/datasets/peta_discarded_attributes.csv"
 
     def __init__(self, root, verbose=True, **kwargs):
         super(PETA, self).__init__(root)
@@ -53,6 +58,7 @@ class PETA(BaseDataset):
         self.img_fname_pattern = re.compile(r"[\d]+")
 
         self._check_before_run()
+        self.discarded_attributes = set(np.loadtxt(self.discarded_attributes_fname, dtype=np.str, delimiter=","))
         attributes = set()
         datasets = dict()  # Holds references to each of the different datasets.
         num_ids = 0  # Counts the number of different pedestrian ids in all the datasets.
@@ -69,6 +75,11 @@ class PETA(BaseDataset):
                 ped_id = int(line[0].split(".")[0])
                 # All following elements are positive labels. Discarded attributes are ignored.
                 labels = set(line[1:]) - self.discarded_attributes
+                # If the second version of a combined attribute is present, it is converted to the first.
+                for att_set in self.combined_attributes:
+                    if att_set[1] in labels:
+                        labels.remove(att_set[1])
+                        labels.add(att_set[0])
                 # Attributes that have not been seen before are added to the set of attributes.
                 attributes |= labels
                 data[ped_id] = labels
@@ -163,5 +174,9 @@ class PETA(BaseDataset):
     def _check_before_run(self):
         """Check if all files are available before going deeper"""
         if not osp.exists(self.dataset_dir):
+            raise RuntimeError("'{}' is not available".format(self.dataset_dir))
+        if not osp.exists(self.shuffle_fname):
+            raise RuntimeError("'{}' is not available".format(self.dataset_dir))
+        if not osp.exists(self.discarded_attributes_fname):
             raise RuntimeError("'{}' is not available".format(self.dataset_dir))
 
