@@ -69,8 +69,11 @@ def attribute_accuracies(output, target, attribute_groupings=None):
 
         for group in range(num_groups):
             idxs = attribute_groupings == group
-            # grouped_accuracies[group] = attribute_accuracies[idxs].mean()
-            grouped_accuracies[group] = np.mean(output[:, idx].argmax(axis=1) == target[:, idx].argmax(axis=1))
+            if idxs.sum() == 1:
+                grouped_accuracies[group] = attribute_accuracies[idxs].mean()
+            else:
+                # For attribute groups it is checked whether the positive attribute in the group is the correct one.
+                grouped_accuracies[group] = np.mean(output[:, idxs].argmax(axis=1) == target[:, idxs].argmax(axis=1))
         return grouped_accuracies
 
 
