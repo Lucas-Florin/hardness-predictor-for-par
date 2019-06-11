@@ -1,5 +1,4 @@
 python train_baseline.py \
-    --root datasets \
     -d rap \
     --gpu-devices 0 \
     --max-epoch 120 \

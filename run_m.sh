@@ -1,11 +1,10 @@
 python train_baseline.py \
     -d market1501 \
-    --gpu-devices 0 \
-    --max-epoch 3 \
+    --gpu-devices 1 \
+    --max-epoch 60 \
     --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
-    --stepsize 60 120 \
-    --print-freq 100 \
+    --stepsize 20 40 \
     --group-atts \
-    --eval-freq 30 \
-    --color-jitter
+    --loss-func deepmar \
+    --random-erase

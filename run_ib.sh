@@ -1,1 +1,1 @@
-setsid ./run_ah.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log.txt &
+setsid ./run_step.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_peta/log.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_peta/log.txt &
