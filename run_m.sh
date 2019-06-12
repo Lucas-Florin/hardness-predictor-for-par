@@ -6,5 +6,5 @@ python train_baseline.py \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
     --stepsize 20 40 \
     --group-atts \
-    --loss-func deepmar \
-    --random-erase
+    --loss-func scel \
+    --f1-calib
