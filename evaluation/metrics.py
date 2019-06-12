@@ -77,27 +77,31 @@ def attribute_accuracies(output, target, attribute_groupings=None):
         return grouped_accuracies
 
 
-
-
 def accuracy(output, target):
     with torch.no_grad():
         prediction = output > 0.5
+        total_positives = np.logical_or(target, prediction).sum(1)
+        total_positives[total_positives == 0] = 1   # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / np.logical_or(target, prediction).sum(1)).mean()
+        return (np.logical_and(target, prediction).sum(1) / total_positives).mean()
 
 
 def precision(output, target):
     with torch.no_grad():
         prediction = output > 0.5
+        pred_positives = prediction.sum(1)
+        pred_positives[pred_positives == 0] = 1  # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / prediction.sum(1)).mean()
+        return (np.logical_and(target, prediction).sum(1) / pred_positives).mean()
 
 
 def recall(output, target):
     with torch.no_grad():
         prediction = output > 0.5
+        target_positives = target.sum(1)
+        target_positives[target_positives == 0] = 1   # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / target.sum(1)).mean()
+        return (np.logical_and(target, prediction).sum(1) / target_positives).mean()
 
 
 def f1measure(output, target):
@@ -152,6 +156,32 @@ def group_attributes(output, attribute_grouping):
     return grouped_output
 
 
-
-
+def get_f1_calibration_thresholds(output, target, resolution=100):
+    """
+    Calculate the thresholds for F1 Calibration as defined in:
+    [Bekele et al. 2019] The Deeper, the Better: Analysis of Person Attributes Recognition
+    https://arxiv.org/abs/1901.03756
+    :param output:
+    :param target:
+    :param resolution:
+    :return:
+    """
+    num_attributes = output.shape[1]
+    num_datapoints = output.shape[0]
+    thresholds = np.zeros((1, num_attributes))
+    best_diff = np.empty((num_attributes, ))
+    best_diff.fill(num_datapoints)
+    for i in range(1, resolution):
+        # For each attribute, find the threshold for which the number of false positives and the number of false
+        # negatives is the same. For this threshold precision and recall are the same.
+        t = i / resolution
+        predictions = output > t
+        fn = np.logical_and(target == 1, predictions == 0).sum(0)  # Number of false negatives.
+        fp = np.logical_and(target == 0, predictions == 1).sum(0)  # Number of false positives.
+        diff = np.absolute(fp - fn).flatten()  # The difference between fp and fn -> minimize
+        # For each attribute, if the difference is lower than the previous best (lowest), the threshold is overwritten.
+        thresholds[:, diff < best_diff] = t
+        # For each attribute, the best (lowest) difference is updated.
+        best_diff = np.where(diff < best_diff, diff, best_diff)
+    return thresholds
 

@@ -105,8 +105,10 @@ def main():
         print('Evaluate only')
         split = args.eval_split
         print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
+        f1_calibration_thresholds = get_threshold(model, trainloader, criterion.logits, use_gpu)
         testloader = testloader_dict[split]
-        acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset)
+        acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset,
+                             f1_calibration_thresholds)
 
         # Calculate testing time.
         elapsed = round(time.time() - time_start)
@@ -127,7 +129,7 @@ def main():
         initial_optim_state = optimizer.state_dict()
 
         for epoch in range(args.fixbase_epoch):
-            epoch_losses[epoch] = train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu,
+            epoch_losses[epoch]= train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu,
                                         fixbase=True)
 
 
@@ -144,9 +146,12 @@ def main():
         if (epoch + 1) > args.start_eval and args.eval_freq > 0 and (epoch + 1) % args.eval_freq == 0 or (
                 epoch + 1) == args.max_epoch:
             split = args.eval_split
+            f1_calibration_thresholds = get_threshold(model, trainloader, criterion.logits, use_gpu)
+
             print('=> Evaluating {} on {} ...'.format(args.dataset_name, split))
             testloader = testloader_dict[split]
-            acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset)
+            acc, acc_atts = test(model, testloader, criterion.logits, dm.attributes, use_gpu, dm.dataset,
+                                 f1_calibration_thresholds)
             ranklogger.write(epoch + 1, acc)
             filename = ts + 'checkpoint' + '.pth.tar'
             save_checkpoint({
@@ -170,8 +175,6 @@ def main():
     if args.plot_epoch_loss:
         # Plot loss over epochs.
         plot_epoch_losses(epoch_losses, args.save_experiment, ts)
-
-
 
 
 def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, fixbase=False):
@@ -242,8 +245,7 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
     return losses.avg
 
 
-
-def test(model, testloader, logits, attributes, use_gpu, dataset):
+def test(model, testloader, logits, attributes, use_gpu, dataset, f1_calibration_thresholds):
     """
 
     :param model:
@@ -275,6 +277,10 @@ def test(model, testloader, logits, attributes, use_gpu, dataset):
     # compute test accuracies
     predictions = np.array(predictions)
     gt = np.array(gt, dtype="bool")
+    if args.f1_calib:
+        predictions = predictions > f1_calibration_thresholds
+    else:
+        predictions = predictions > 0.5
     if args.group_atts:
         # Each group has exactly one positive attribute.
         attribute_grouping = dataset.attribute_grouping
@@ -298,12 +304,48 @@ def test(model, testloader, logits, attributes, use_gpu, dataset):
     print(metrics.get_metrics_table(predictions, gt))
     print('------------------')
     print(acc_name + ':')
-    table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%')
+    if args.f1_calib:
+        header = ["Attribute", "Accuracy", "F1-Calibration Threshold"]
+        table = tab.tabulate(zip(attributes, acc_atts, f1_calibration_thresholds.flatten()), floatfmt='.2%',
+                             headers=header)
+    else:
+        header = ["Attribute", "Accuracy"]
+        table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%', headers=header)
     print(table)
     print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
     print('------------------')
 
     return acc_atts.mean(), acc_atts
+
+
+def get_threshold(model, loader, logits, use_gpu):
+    """
+
+    :param model:
+    :param loader:
+    :param logits:
+    :param attributes:
+    :param use_gpu:
+    :return:
+    """
+    global args
+    model.eval()
+    with torch.no_grad():
+        predictions, gt = list(), list()
+        for batch_idx, (imgs, labels, _) in enumerate(loader):
+            if use_gpu:
+                imgs, labels = imgs.cuda(), labels.cuda()
+
+            outputs = model(imgs)
+            outputs = logits(outputs)
+
+            predictions.extend(outputs.tolist())
+            gt.extend(labels.tolist())
+
+    # compute test accuracies
+    predictions = np.array(predictions)
+    gt = np.array(gt, dtype="bool")
+    return metrics.get_f1_calibration_thresholds(predictions, gt)
 
 
 if __name__ == '__main__':

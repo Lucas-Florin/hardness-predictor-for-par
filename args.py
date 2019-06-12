@@ -113,6 +113,8 @@ def argument_parser():
                         help='group binary attributes into non-binary ones')
     parser.add_argument('--use-macc', action='store_true',
                         help='use mean accuracy instead of normal accuracy')
+    parser.add_argument('--f1-calib', action='store_true',
+                        help='use F1 calibration')
     parser.add_argument('--eval-freq', type=int, default=-1,
                         help='evaluation frequency (set to -1 to test only in the end)')
     parser.add_argument('--start-eval', type=int, default=0,
