@@ -56,6 +56,7 @@ class ImageDataManager(BaseDataManager):
     Image data manager
     """
     # TODO: Implement discarding hard training examples.
+    # TODO: Test.
 
     def __init__(self,
                  use_gpu,
@@ -66,6 +67,7 @@ class ImageDataManager(BaseDataManager):
 
         print('=> Initializing TRAIN dataset')
         train = list()
+        self.train = train
 
         dataset = init_img_dataset(root=self.root, name=dataset_name)
         self.dataset = dataset
@@ -80,10 +82,18 @@ class ImageDataManager(BaseDataManager):
             pin_memory=self.use_gpu, drop_last=True
         )
 
-        print('=> Initializing TEST dataset')
         self.testloader_dict = dict()
 
+        self.testloader_dict['train'] = DataLoader(
+            ImageDataset(train, transform=self.transform_test),
+            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
+            pin_memory=self.use_gpu, drop_last=False
+        )
+
+        print('=> Initializing TEST dataset')
+
         test = list()
+        self.test = test
         for img_path, label in dataset.test:
             test.append((img_path, torch.tensor(label.astype(np.float32))))
         self.testloader_dict['test'] = DataLoader(
@@ -94,6 +104,7 @@ class ImageDataManager(BaseDataManager):
 
         print('=> Initializing VAL dataset')
         val = list()
+        self.val = val
         for img_path, label in dataset.val:
             val.append((img_path, torch.tensor(label.astype(np.float32))))
         self.testloader_dict['val'] = DataLoader(
@@ -101,6 +112,33 @@ class ImageDataManager(BaseDataManager):
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
             pin_memory=self.use_gpu, drop_last=False
         )
+
+    def discard_examples(self, examples_to_discard, split="train"):
+        if split == "train":
+            split_data = self.train
+        else:
+            split_data = None
+
+        split_data_new = [sample for sample, discard in zip(split_data, examples_to_discard) if not discard]
+
+        self.testloader_dict[split] = DataLoader(
+            ImageDataset(split_data_new, transform=self.transform_test),
+            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
+            pin_memory=self.use_gpu, drop_last=False
+        )
+
+    def reset_split(self, split="train"):
+        if split == "train":
+            split_data = self.train
+        else:
+            split_data = None
+
+        self.testloader_dict[split] = DataLoader(
+            ImageDataset(split_data, transform=self.transform_test),
+            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
+            pin_memory=self.use_gpu, drop_last=False
+        )
+
 
 
 

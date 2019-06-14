@@ -34,6 +34,7 @@ args = parser.parse_args()
 # TODO: Modularize.
 # TODO: Remove unnecessary outputs and corresponding computations.
 
+
 def main():
     global args # The arguments from the Terminal.
     time_start = time.time()
