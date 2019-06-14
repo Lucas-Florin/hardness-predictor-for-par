@@ -55,6 +55,7 @@ class ImageDataManager(BaseDataManager):
     """
     Image data manager
     """
+    # TODO: Implement discarding hard training examples.
 
     def __init__(self,
                  use_gpu,

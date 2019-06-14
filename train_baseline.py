@@ -31,6 +31,8 @@ import tabulate as tab
 parser = argument_parser()
 args = parser.parse_args()
 
+# TODO: Modularize.
+# TODO: Remove unnecessary outputs and corresponding computations.
 
 def main():
     global args # The arguments from the Terminal.
@@ -129,7 +131,7 @@ def main():
         initial_optim_state = optimizer.state_dict()
 
         for epoch in range(args.fixbase_epoch):
-            epoch_losses[epoch]= train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu,
+            epoch_losses[epoch] = train(epoch, model, criterion, optimizer, trainloader, dm.attributes, use_gpu,
                                         fixbase=True)
 
 
@@ -193,8 +195,6 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
     losses = AverageMeter()
     accs = AverageMeter()
     accs_atts = AverageMeter()
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
 
     model.train()
 
@@ -203,9 +203,7 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
     else:
         open_all_layers(model)
 
-    end = time.time()
     for batch_idx, (imgs, labels, _) in enumerate(trainloader):
-        data_time.update(time.time() - end)
 
         if use_gpu:
             imgs, labels = imgs.cuda(), labels.cuda()
@@ -216,7 +214,6 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
         loss.backward()
         optimizer.step()
 
-        batch_time.update(time.time() - end)
 
         losses.update(loss.item(), labels.size(0))
         acc, acc_atts = accuracy(criterion.logits(outputs), labels)
@@ -224,24 +221,13 @@ def train(epoch, model, criterion, optimizer, trainloader, attributes, use_gpu, 
         accs_atts.update(acc_atts)
 
         if (batch_idx + 1) % args.print_freq == 0:
-            best_idx = torch.argmax(accs_atts.avg)
-            worst_idx = torch.argmin(accs_atts.avg)
             print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Acc {acc.val:.2%} ({acc.avg:.2%})\t'
-                  'Best {best_att}: {best_acc:.2%}, '
-                  'worst {worst_att}: {worst_acc:.2%}'.format(
+                  'Acc {acc.val:.2%} ({acc.avg:.2%})'.format(
                 epoch + 1, batch_idx + 1, len(trainloader),
-                batch_time=batch_time,
-                data_time=data_time,
                 loss=losses,
-                acc=accs,
-                best_att=attributes[best_idx], best_acc=accs_atts.avg[best_idx],
-                worst_att=attributes[worst_idx], worst_acc=accs_atts.avg[worst_idx]
+                acc=accs
             ))
-        end = time.time()
     return losses.avg
 
 
@@ -256,7 +242,6 @@ def test(model, testloader, logits, attributes, use_gpu, dataset, f1_calibration
     :return:
     """
     global args
-    batch_time = AverageMeter()
     model.eval()
     with torch.no_grad():
         predictions, gt = list(), list()
@@ -267,12 +252,9 @@ def test(model, testloader, logits, attributes, use_gpu, dataset, f1_calibration
             end = time.time()
             outputs = model(imgs)
             outputs = logits(outputs)
-            batch_time.update(time.time() - end)
 
             predictions.extend(outputs.tolist())
             gt.extend(labels.tolist())
-
-    print('=> BatchTime(s)/BatchSize(img): {:.3f}/{}'.format(batch_time.avg, args.test_batch_size))
 
     # compute test accuracies
     predictions = np.array(predictions)
@@ -324,7 +306,6 @@ def get_threshold(model, loader, logits, use_gpu):
     :param model:
     :param loader:
     :param logits:
-    :param attributes:
     :param use_gpu:
     :return:
     """
