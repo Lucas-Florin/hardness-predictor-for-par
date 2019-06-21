@@ -1,4 +1,4 @@
-python train_baseline.py \
+python baseline_trainer.py \
     --root datasets \
     -d pa100k \
     --gpu-devices 0 \

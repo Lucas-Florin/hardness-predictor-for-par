@@ -1,4 +1,4 @@
-python train_baseline.py \
+python baseline_trainer.py \
     -d peta \
     --gpu-devices 1 \
     --eval-split val \

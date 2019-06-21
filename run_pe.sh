@@ -1,8 +1,8 @@
-python train_baseline.py \
+python baseline_trainer.py \
     --root datasets \
     -d peta \
-    --gpu-devices 1 \
-    --max-epoch 60 \
+    --gpu-devices 0 \
+    --max-epoch 2 \
     --stepsize 20 40 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_peta/ \
