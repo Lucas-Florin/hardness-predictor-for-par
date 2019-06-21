@@ -38,74 +38,12 @@ class BaselineTrainer(object):
         Run the trainer.
         :param args: Command line args.
         """
-        self.args = args
-        self.time_start = time.time()
-        set_random_seed(args.seed)
 
-        # Decide which processor (CPU or GPU) to use.
-        if not args.use_avai_gpus:
-            os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-            os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
+        self.init_environment(args)
 
-        self.use_gpu = torch.cuda.is_available()
-        if args.use_cpu:
-            self.use_gpu = False
+        self.init_data()
 
-        # Start logger.
-        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
-
-        self.log_name = self.ts + 'test' + '.log' if args.evaluate else self.ts + 'train' + '.log'
-        sys.stdout = Logger(osp.join(args.save_experiment, self.log_name))
-
-        # Print out the arguments taken from Terminal (or defaults).
-        print('==========\nArgs:{}\n=========='.format(args))
-
-        print("Timestamp: " + self.ts)
-        # Warn if not using GPU.
-        if self.use_gpu:
-            print('Currently using GPU {}'.format(args.gpu_devices))
-            cudnn.benchmark = True
-        else:
-            warnings.warn('Currently using CPU, however, GPU is highly recommended')
-
-        print('Initializing image data manager')
-        self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(args))
-        self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
-
-        print('Initializing model: {}'.format(args.model))
-        self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
-                                       pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
-        print('Model size: {:.3f} M'.format(count_num_param(self.model)))
-
-        # Load pretrained weights if specified in args.
-        load_file = osp.join(args.save_experiment, args.load_weights)
-        if args.load_weights:
-            if check_isfile(load_file):
-                load_pretrained_weights(self.model, load_file)
-            else:
-                print("WARNING: Could not load pretraining weights")
-
-        # Load model onto GPU if GPU is used.
-        self.model = nn.DataParallel(self.model).cuda() if self.use_gpu else self.model
-
-        # Select Loss function.
-        if args.loss_func == "deepmar":
-            pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
-            self.criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
-                                         sigma=args.loss_func_param)
-        elif args.loss_func == "scel":
-            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
-        elif args.loss_func == "sscel":
-            attribute_grouping = self.dm.dataset.attribute_grouping
-            self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=self.use_gpu)
-        else:
-            self.criterion = None
-
-        self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
-        self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
-
-        # if args.resume and check_isfile(args.resume):
-        #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
+        self.init_model()
 
         if args.evaluate:
             print('Evaluate only')
@@ -177,6 +115,78 @@ class BaselineTrainer(object):
             # Plot loss over epochs.
             plot_epoch_losses(self.epoch_losses, self.args.save_experiment, self.ts)
 
+    def init_environment(self, args):
+        self.args = args
+        self.time_start = time.time()
+        set_random_seed(args.seed)
+
+        # Decide which processor (CPU or GPU) to use.
+        if not args.use_avai_gpus:
+            os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+            os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
+
+        self.use_gpu = torch.cuda.is_available()
+        if args.use_cpu:
+            self.use_gpu = False
+
+        # Start logger.
+        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
+
+        self.log_name = self.ts + 'test' + '.log' if args.evaluate else self.ts + 'train' + '.log'
+        sys.stdout = Logger(osp.join(args.save_experiment, self.log_name))
+
+        # Print out the arguments taken from Terminal (or defaults).
+        print('==========\nArgs:{}\n=========='.format(args))
+
+        print("Timestamp: " + self.ts)
+        # Warn if not using GPU.
+        if self.use_gpu:
+            print('Currently using GPU {}'.format(args.gpu_devices))
+            cudnn.benchmark = True
+        else:
+            warnings.warn('Currently using CPU, however, GPU is highly recommended')
+
+    def init_data(self):
+        print('Initializing image data manager')
+        self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(args))
+        self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
+
+    def init_model(self):
+        print('Initializing model: {}'.format(args.model))
+        self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
+                                       pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
+        print('Model size: {:.3f} M'.format(count_num_param(self.model)))
+
+        # Load pretrained weights if specified in args.
+        load_file = osp.join(args.save_experiment, args.load_weights)
+        if args.load_weights:
+            if check_isfile(load_file):
+                load_pretrained_weights(self.model, load_file)
+            else:
+                print("WARNING: Could not load pretraining weights")
+
+        # Load model onto GPU if GPU is used.
+        self.model = nn.DataParallel(self.model).cuda() if self.use_gpu else self.model
+
+        # Select Loss function.
+        if args.loss_func == "deepmar":
+            pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
+            self.criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
+                                         sigma=args.loss_func_param)
+        elif args.loss_func == "scel":
+            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
+        elif args.loss_func == "sscel":
+            attribute_grouping = self.dm.dataset.attribute_grouping
+            self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=self.use_gpu)
+        else:
+            self.criterion = None
+
+        self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
+        self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
+
+        # if args.resume and check_isfile(args.resume):
+        #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
+
     def train(self, fixbase=False):
         """
         Train the model for an epoch.
@@ -211,41 +221,37 @@ class BaselineTrainer(object):
             accs_atts.update(acc_atts)
 
             if (batch_idx + 1) % args.print_freq == 0:
-                print('Epoch: [{0}][{1}/{2}]\t' +
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t' +
+                print('Epoch: [{0}][{1}/{2}]\t' 
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t' 
                       'Acc {acc.val:.2%} ({acc.avg:.2%})'.format(
                           self.epoch + 1, batch_idx + 1, len(self.trainloader),
                           loss=losses,
                           acc=accs
                       ))
+        self.epoch += 1
         return losses.avg
 
-    def test(self, loader=None):
+    def test(self, predictions=None, ground_truth=None):
         """
-
-        :param loader:
+        Test the model. If predictions or ground truth are not given they are calculated based on the split defined in
+        the command line arguments.
+        :param predictions: (Optional) the predictions to be tested.
+        :param ground_truth: (Optional) the ground truth of the predictions.
         :return:
         """
-        if loader is None:
-            loader = self.testloader_dict[self.args.eval_split]
+
         f1_calibration_thresholds = self.get_threshold()
         attributes = self.dm.attributes
-        self.model.eval()
-        with torch.no_grad():
-            predictions, gt = list(), list()
-            for batch_idx, (imgs, labels, _) in enumerate(loader):
-                if self.use_gpu:
-                    imgs, labels = imgs.cuda(), labels.cuda()
-
-                outputs = self.model(imgs)
-                outputs = self.criterion.logits(outputs)
-
-                predictions.extend(outputs.tolist())
-                gt.extend(labels.tolist())
+        if predictions is None or ground_truth is None:
+            standard_predictions, standard_ground_truth = self.get_full_output()
+            if predictions is None:
+                predictions = standard_predictions
+            if ground_truth is None:
+                ground_truth = standard_ground_truth
 
         # compute test accuracies
         predictions = np.array(predictions)
-        gt = np.array(gt, dtype="bool")
+        ground_truth = np.array(ground_truth, dtype="bool")
         if args.f1_calib:
             predictions = predictions > f1_calibration_thresholds
         else:
@@ -261,16 +267,16 @@ class BaselineTrainer(object):
             attribute_grouping = None
         if args.use_macc:
             # Use mA for each attribute.
-            acc_atts = metrics.mean_attribute_accuracies(predictions, gt)
+            acc_atts = metrics.mean_attribute_accuracies(predictions, ground_truth)
             acc_name = 'Mean Attribute Accuracies'
         else:
             #
-            acc_atts = metrics.attribute_accuracies(predictions, gt, attribute_grouping)
+            acc_atts = metrics.attribute_accuracies(predictions, ground_truth, attribute_grouping)
 
             acc_name = 'Attribute Accuracies'
 
         print('Results ----------')
-        print(metrics.get_metrics_table(predictions, gt))
+        print(metrics.get_metrics_table(predictions, ground_truth))
         print('------------------')
         print(acc_name + ':')
         if args.f1_calib:
@@ -294,9 +300,24 @@ class BaselineTrainer(object):
         """
         if loader is None:
             loader = self.testloader_dict["train"]
+        predictions, gt = self.get_full_output(loader)
+
+        # compute test accuracies
+        predictions = np.array(predictions)
+        gt = np.array(gt, dtype="bool")
+        return metrics.get_f1_calibration_thresholds(predictions, gt)
+
+    def get_full_output(self, loader=None):
+        """
+        Get the output of the model for all the datapoints in the loader.
+        :param loader: (Optional) The loader to be used as input. Default: the split specified in the command line args.
+        :return: The predictions made by the model and the ground truth as lists.
+        """
+        if loader is None:
+            loader = self.testloader_dict[self.args.eval_split]
         self.model.eval()
         with torch.no_grad():
-            predictions, gt = list(), list()
+            predictions, ground_truth = list(), list()
             for batch_idx, (imgs, labels, _) in enumerate(loader):
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
@@ -305,12 +326,8 @@ class BaselineTrainer(object):
                 outputs = self.criterion.logits(outputs)
 
                 predictions.extend(outputs.tolist())
-                gt.extend(labels.tolist())
-
-        # compute test accuracies
-        predictions = np.array(predictions)
-        gt = np.array(gt, dtype="bool")
-        return metrics.get_f1_calibration_thresholds(predictions, gt)
+                ground_truth.extend(labels.tolist())
+        return predictions, ground_truth
 
 
 if __name__ == '__main__':
