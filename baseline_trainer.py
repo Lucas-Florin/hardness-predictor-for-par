@@ -5,6 +5,7 @@ import datetime
 import os.path as osp
 import numpy as np
 import warnings
+import tabulate as tab
 
 import torch
 import torch.nn as nn
@@ -23,7 +24,7 @@ import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
 from utils.plot import plot_epoch_losses
-import tabulate as tab
+
 
 
 # TODO: Modularize.
@@ -62,9 +63,9 @@ class BaselineTrainer(object):
         self.time_start = time.time()
         self.ranklogger = AccLogger()
         print('=> Start training')
-        self.epoch_losses = np.zeros(shape=(args.max_epoch, ))
+        self.epoch_losses = np.zeros(shape=(args.max_epoch, len(self.criterion_list)))
         self.epoch = 0
-
+        """
         # Train Fixbase epochs.
         if self.args.fixbase_epoch > 0:
             print('Train {} for {} epochs while keeping other layers frozen'.format(self.args.open_layers,
@@ -77,12 +78,12 @@ class BaselineTrainer(object):
 
             print('Done. All layers are open to train for {} epochs'.format(args.max_epoch))
             self.optimizer.load_state_dict(initial_optim_state)
-
+        """
         # Train non-fixbase epochs.
         for epoch in range(args.start_epoch, args.max_epoch):
             loss = self.train()
 
-            self.epoch_losses[epoch] = loss
+            self.epoch_losses[epoch, :] = loss
             self.scheduler.step()
 
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
@@ -91,18 +92,7 @@ class BaselineTrainer(object):
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
                 acc, acc_atts = self.test()
                 self.ranklogger.write(epoch + 1, acc)
-                filename = self.ts + 'checkpoint.pth.tar'
-                save_checkpoint({
-                    'state_dict': self.model.state_dict(),
-                    'acc': acc,
-                    'acc_atts': acc_atts,
-                    'epoch': epoch + 1,
-                    'model': self.args.model,
-                    'optimizer': self.optimizer.state_dict(),
-                    'losses': self.epoch_losses,
-                    'args': self.args
-                }, osp.join(self.args.save_experiment, filename))
-                print("Saved model checkpoint at " + filename)
+                self.checkpoint()
             self.epoch += 1
 
         # Calculate elapsed time.
@@ -114,6 +104,17 @@ class BaselineTrainer(object):
         if args.plot_epoch_loss:
             # Plot loss over epochs.
             plot_epoch_losses(self.epoch_losses, self.args.save_experiment, self.ts)
+
+    def checkpoint(self):
+        filename = self.ts + 'checkpoint.pth.tar'
+        save_checkpoint({
+            'state_dicts': [model.state_dict() for model in self.model_list],
+            'epoch': self.epoch + 1,
+            'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
+            'losses': self.epoch_losses,
+            'args': self.args
+        }, osp.join(self.args.save_experiment, filename))
+        print("Saved model checkpoint at " + filename)
 
     def init_environment(self, args):
         self.args = args
@@ -184,6 +185,11 @@ class BaselineTrainer(object):
         self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
         self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
 
+        self.model_list = [self.model]
+        self.optimizer_list = [self.optimizer]
+        self.scheduler_list = [self.scheduler]
+        self.criterion_list = [self.criterion]
+
         # if args.resume and check_isfile(args.resume):
         #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
@@ -240,7 +246,7 @@ class BaselineTrainer(object):
         :return:
         """
 
-        f1_calibration_thresholds = self.get_threshold()
+        f1_calibration_thresholds = self.get_f1_calibration_threshold()
         attributes = self.dm.attributes
         if predictions is None or ground_truth is None:
             standard_predictions, standard_ground_truth = self.get_full_output()
@@ -292,7 +298,7 @@ class BaselineTrainer(object):
 
         return acc_atts.mean(), acc_atts
 
-    def get_threshold(self, loader=None):
+    def get_f1_calibration_threshold(self, loader=None):
         """
 
         :param loader:
