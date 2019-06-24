@@ -82,7 +82,8 @@ class Trainer(object):
             loss = self.train()
 
             self.epoch_losses[epoch, :] = loss
-            self.scheduler.step()
+            for scheduler in self.scheduler_list:
+                scheduler.step()
 
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:

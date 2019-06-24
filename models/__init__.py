@@ -18,6 +18,7 @@ from .mudeep import *
 from .hacnn import *
 from .pcb import *
 from .mlfn import *
+from .HP_Net import HP_RES50
 
 
 __model_factory = {
@@ -50,6 +51,7 @@ __model_factory = {
     'pcb_p6': pcb_p6,
     'pcb_p4': pcb_p4,
     'mlfn': mlfn,
+    'hp_net': HP_RES50
 }
 
 
