@@ -1,5 +1,7 @@
 import argparse
 
+# TODO: Modularize
+
 
 def argument_parser():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)

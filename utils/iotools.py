@@ -42,13 +42,15 @@ def save_checkpoint(state, fpath='checkpoint.pth.tar', is_best=False):
     if len(osp.dirname(fpath)) != 0:
         mkdir_if_missing(osp.dirname(fpath))
     # remove 'module.' in state_dict's keys if necessary
-    state_dict = state['state_dict']
-    new_state_dict = OrderedDict()
-    for k, v in state_dict.items():
-        if k.startswith('module.'):
-            k = k[7:]
-        new_state_dict[k] = v
-    state['state_dict'] = new_state_dict
+    state_dicts = state['state_dicts']
+    for i in range(len(state_dicts)):
+        state_dict = state_dicts[i]
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            if k.startswith('module.'):
+                k = k[7:]
+            new_state_dict[k] = v
+        state_dicts[i] = new_state_dict
     # save
     torch.save(state, fpath)
     if is_best:
