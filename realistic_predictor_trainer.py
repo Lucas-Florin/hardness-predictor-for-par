@@ -62,10 +62,13 @@ class RealisticPredictorTrainer(Trainer):
 
         # Load model onto GPU if GPU is used.
         self.model_main = nn.DataParallel(self.model_main).cuda() if self.use_gpu else self.model_main
+        self.model = self.model_main
         self.model_hp = nn.DataParallel(self.model_hp).cuda() if self.use_gpu else self.model_hp
+
 
         # Select Loss function.
         self.criterion_main = SigmoidCrossEntropyLoss(use_gpu=self.use_gpu)
+        self.criterion = self.criterion_main
         self.criterion_hp = HardnessPredictorLoss()
 
         # TODO: SGD or Adam? (Paper uses both)
@@ -99,12 +102,12 @@ class RealisticPredictorTrainer(Trainer):
         self.model_hp.train()
 
         # TODO: Adapt fixbase.
-        """
         if fixbase or self.args.always_fixbase:
             open_specified_layers(self.model_main, self.args.open_layers)
+            open_specified_layers(self.model_hp, self.args.open_layers)
         else:
             open_all_layers(self.model_main)
-        """
+            open_all_layers(self.model_hp)
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
 
             if self.use_gpu:
@@ -114,7 +117,6 @@ class RealisticPredictorTrainer(Trainer):
             label_predicitons = self.model_main(imgs)
             hardness_predictions = self.model_hp(imgs)
 
-            # TODO: .detach_() vs .detach()
             # Make a detached version of the hp scores for computing the main loss.
             hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
             # Compute main loss, gradient and optimize main net.
@@ -142,7 +144,6 @@ class RealisticPredictorTrainer(Trainer):
                           self.epoch + 1, batch_idx + 1, len(self.trainloader),
                           loss=losses_main
                       ))
-        self.epoch += 1
         return losses_main.avg, losses_hp.avg
 
 

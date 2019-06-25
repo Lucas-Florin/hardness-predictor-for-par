@@ -121,7 +121,6 @@ class BaselineTrainer(Trainer):
                           loss=losses,
                           acc=accs
                       ))
-        self.epoch += 1
         return losses.avg
 
 

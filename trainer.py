@@ -87,11 +87,11 @@ class Trainer(object):
 
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
-
+                self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
                 acc, acc_atts = self.test()
                 self.ranklogger.write(epoch + 1, acc)
-                self.checkpoint()
+
             self.epoch += 1
 
         # Calculate elapsed time.
