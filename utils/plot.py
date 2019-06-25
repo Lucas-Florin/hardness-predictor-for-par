@@ -14,6 +14,12 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
     y = epoch_losses
     fig, ax = plt.subplots()
     ax.plot(x, y)
+
+    legend = ["Main Net Loss"]
+
+    if epoch_losses.shape[1] == 2:
+        legend += ["HP Net Loss"]
+    ax.legend(legend)
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.yscale("log")
