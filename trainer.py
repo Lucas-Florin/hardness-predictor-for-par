@@ -234,7 +234,7 @@ class Trainer(object):
         gt = np.array(gt, dtype="bool")
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 
-    def get_full_output(self, loader=None):
+    def get_full_output(self, loader=None, model=None, criterion=None):
         """
         Get the output of the model for all the datapoints in the loader.
         :param loader: (Optional) The loader to be used as input. Default: the split specified in the command line args.
@@ -242,15 +242,19 @@ class Trainer(object):
         """
         if loader is None:
             loader = self.testloader_dict[self.args.eval_split]
-        self.model.eval()
+        if model is None:
+            model = self.model
+        if criterion is None:
+            criterion = self.criterion
+        model.eval()
         with torch.no_grad():
             predictions, ground_truth = list(), list()
             for batch_idx, (imgs, labels, _) in enumerate(loader):
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
 
-                outputs = self.model(imgs)
-                outputs = self.criterion.logits(outputs)
+                outputs = model(imgs)
+                outputs = criterion.logits(outputs)
 
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
