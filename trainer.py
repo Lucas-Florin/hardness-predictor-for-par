@@ -206,12 +206,10 @@ class Trainer(object):
         print(metrics.get_metrics_table(predictions, ground_truth))
         print('------------------')
         print(acc_name + ':')
-        if self.args.f1_calib:
+        if self.args.f1_calib and not self.args.group_atts:
             header = ["Attribute", "Accuracy", "F1-Calibration Threshold"]
             table = tab.tabulate(zip(attributes, acc_atts, f1_calibration_thresholds.flatten()), floatfmt='.2%',
                                  headers=header)
-            print(len(attributes))
-            print(len(f1_calibration_thresholds))
         else:
             header = ["Attribute", "Accuracy"]
             table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%', headers=header)
