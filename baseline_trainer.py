@@ -49,7 +49,7 @@ class BaselineTrainer(Trainer):
         load_file = osp.join(args.save_experiment, args.load_weights)
         if args.load_weights:
             if check_isfile(load_file):
-                load_pretrained_weights(self.model, load_file)
+                load_pretrained_weights([self.model], load_file)
             else:
                 print("WARNING: Could not load pretraining weights")
 

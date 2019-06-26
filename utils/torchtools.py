@@ -95,7 +95,7 @@ def accuracy(output, target):
         return acc, acc_atts
 
 
-def load_pretrained_weights(model, weight_path):
+def load_pretrained_weights(models, weight_path):
     """Load pretrianed weights to model
 
     Incompatible layers (unmatched in name or size) will be ignored
@@ -107,27 +107,32 @@ def load_pretrained_weights(model, weight_path):
     # TODO: Implement loading multiple models from one file.
     checkpoint = torch.load(weight_path)
     if 'state_dict' in checkpoint:
-        state_dict = checkpoint['state_dict']
+        state_dicts = [checkpoint['state_dict']]
+    elif 'state_dicts' in checkpoint:
+        state_dicts = checkpoint['state_dicts']
     else:
-        state_dict = checkpoint
-    model_dict = model.state_dict()
-    new_state_dict = OrderedDict()
-    matched_layers, discarded_layers = [], []
-    for k, v in state_dict.items():
-        # If the pretrained state_dict was saved as nn.DataParallel,
-        # keys would contain "module.", which should be ignored.
-        if k.startswith('module.'):
-            k = k[7:]
-        if k in model_dict and model_dict[k].size() == v.size():
-            new_state_dict[k] = v
-            matched_layers.append(k)
+        state_dicts = [checkpoint]
+    for i in range(len(models)):
+        model = models[i]
+        state_dict = state_dicts[i]
+        model_dict = model.state_dict()
+        new_state_dict = OrderedDict()
+        matched_layers, discarded_layers = [], []
+        for k, v in state_dict.items():
+            # If the pretrained state_dict was saved as nn.DataParallel,
+            # keys would contain "module.", which should be ignored.
+            if k.startswith('module.'):
+                k = k[7:]
+            if k in model_dict and model_dict[k].size() == v.size():
+                new_state_dict[k] = v
+                matched_layers.append(k)
+            else:
+                discarded_layers.append(k)
+        model_dict.update(new_state_dict)
+        model.load_state_dict(model_dict)
+        if len(matched_layers) == 0:
+            print('** ERROR: the pretrained weights "{}" cannot be loaded, please check the key names manually (ignored and continue)'.format(weight_path))
         else:
-            discarded_layers.append(k)
-    model_dict.update(new_state_dict)
-    model.load_state_dict(model_dict)
-    if len(matched_layers) == 0:
-        print('** ERROR: the pretrained weights "{}" cannot be loaded, please check the key names manually (ignored and continue)'.format(weight_path))
-    else:
-        print('Successfully loaded pretrained weights from "{}"'.format(weight_path))
-        if len(discarded_layers) > 0:
-            print("* The following layers are discarded due to unmatched keys or layer size: {}".format(discarded_layers))
+            print('Successfully loaded pretrained weights from "{}"'.format(weight_path))
+            if len(discarded_layers) > 0:
+                print("* The following layers are discarded due to unmatched keys or layer size: {}".format(discarded_layers))
