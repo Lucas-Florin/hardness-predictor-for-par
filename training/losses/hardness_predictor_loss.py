@@ -24,7 +24,9 @@ class HardnessPredictorLoss(nn.Module):
         :param weight:
         :return: sigmoid cross-entropy loss
         """
-        loss = self.loss_function(hp_net_outputs, main_net_predictions, weight=weight)
+        hp_broadcasted = hp_net_outputs.new_empty(main_net_predictions.shape)
+        hp_broadcasted[:] = hp_net_outputs
+        loss = self.loss_function(hp_broadcasted, main_net_predictions, weight=weight)
         return loss
 
     def logits(self, inputs):
