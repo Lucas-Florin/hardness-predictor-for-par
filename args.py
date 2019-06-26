@@ -125,6 +125,8 @@ def argument_parser():
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val'],
                         help='name of the desired evaluation split (test/val)')
+    parser.add_argument('--num-save-hard', type=int, default=0,
+                        help='number of hard images that are saved to collage')
 
     # ************************************************************
     # Miscs

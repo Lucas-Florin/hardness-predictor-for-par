@@ -13,6 +13,7 @@ import torch.backends.cudnn as cudnn
 
 from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_scheduler_kwargs
 from data.data_manager import ImageDataManager
+from data.dataset_loader import read_image
 import models
 from training.losses import SigmoidCrossEntropyLoss, HardnessPredictorLoss
 from utils.iotools import check_isfile, save_checkpoint
@@ -23,7 +24,7 @@ from utils.generaltools import set_random_seed
 import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
-from utils.plot import plot_epoch_losses
+from utils.plot import plot_epoch_losses, save_img_collage
 from trainer import Trainer
 
 
@@ -148,19 +149,27 @@ class RealisticPredictorTrainer(Trainer):
     def test(self, predictions=None, ground_truth=None):
         return_values = super().test(predictions, ground_truth)
 
-        hp_scores, labels = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+        hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+        hp_scores = np.array(hp_scores)
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
             ["Mean", np.mean(hp_scores)],
             ["Variance", np.var(hp_scores)]
         ]))
 
-        if self.args.hp_net_simple:
+        if not self.args.hp_net_simple:
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance"]
             table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
                                  floatfmt='.2%', headers=header)
             print(table)
+        if self.args.num_save_hard > 0:
+            hp_scores = hp_scores.mean(1) if not self.args.hp_net_simple else hp_scores
+            hp_scores = hp_scores.flatten()
+            sorted_idxs = hp_scores.argsort()
+            hard_idxs = sorted_idxs[-self.args.num_save_hard : ]
+            filename = osp.join(self.args.save_experiment,  self.ts + "hard_images.png")
+            save_img_collage(self.dm.split_dict[self.args.eval_split], hard_idxs, filename)
 
         return return_values
 

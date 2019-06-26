@@ -81,12 +81,14 @@ class ImageDataManager(BaseDataManager):
         )
 
         self.testloader_dict = dict()
-
+        self.split_dict = dict()
+        train_dataset = ImageDataset(train, transform=self.transform_test)
         self.testloader_dict['train'] = DataLoader(
-            ImageDataset(train, transform=self.transform_test),
+            train_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
             pin_memory=self.use_gpu, drop_last=False
         )
+        self.split_dict["train"] = train_dataset
 
         print('=> Initializing TEST dataset')
 
@@ -94,22 +96,26 @@ class ImageDataManager(BaseDataManager):
         self.test = test
         for img_path, label in dataset.test:
             test.append((img_path, torch.tensor(label.astype(np.float32))))
+        test_dataset = ImageDataset(test, transform=self.transform_test)
         self.testloader_dict['test'] = DataLoader(
-            ImageDataset(test, transform=self.transform_test),
+            test_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
             pin_memory=self.use_gpu, drop_last=False
         )
+        self.split_dict["test"] = test_dataset
 
         print('=> Initializing VAL dataset')
         val = list()
         self.val = val
         for img_path, label in dataset.val:
             val.append((img_path, torch.tensor(label.astype(np.float32))))
+        val_dataset = ImageDataset(val, transform=self.transform_test)
         self.testloader_dict['val'] = DataLoader(
-            ImageDataset(val, transform=self.transform_test),
+            val_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
             pin_memory=self.use_gpu, drop_last=False
         )
+        self.split_dict["val"] = val_dataset
 
     def discard_examples(self, examples_to_discard, split="train"):
         if split == "train":

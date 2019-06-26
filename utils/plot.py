@@ -7,6 +7,9 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import os.path as osp
+from data.dataset_loader import read_image
+import torchvision.utils as vutils
+import torch
 
 
 def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
@@ -33,4 +36,9 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
         plt.savefig(fpath, format="png")
         print("Saved loss plot at " + fname)
     plt.show()
+
+
+def save_img_collage(dataset, idxs, filename):
+    batch = [dataset[i][0] for i in np.array(idxs).flatten()]
+    vutils.save_image(batch, filename)
 

@@ -169,7 +169,7 @@ class Trainer(object):
         f1_calibration_thresholds = None
         attributes = self.dm.attributes
         if predictions is None or ground_truth is None:
-            standard_predictions, standard_ground_truth = self.get_full_output()
+            standard_predictions, standard_ground_truth, _ = self.get_full_output()
             if predictions is None:
                 predictions = standard_predictions
             if ground_truth is None:
@@ -210,6 +210,8 @@ class Trainer(object):
             header = ["Attribute", "Accuracy", "F1-Calibration Threshold"]
             table = tab.tabulate(zip(attributes, acc_atts, f1_calibration_thresholds.flatten()), floatfmt='.2%',
                                  headers=header)
+            print(len(attributes))
+            print(len(f1_calibration_thresholds))
         else:
             header = ["Attribute", "Accuracy"]
             table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%', headers=header)
@@ -227,7 +229,7 @@ class Trainer(object):
         """
         if loader is None:
             loader = self.testloader_dict["train"]
-        predictions, gt = self.get_full_output(loader)
+        predictions, gt, _ = self.get_full_output(loader)
 
         # compute test accuracies
         predictions = np.array(predictions)
@@ -248,8 +250,8 @@ class Trainer(object):
             criterion = self.criterion
         model.eval()
         with torch.no_grad():
-            predictions, ground_truth = list(), list()
-            for batch_idx, (imgs, labels, _) in enumerate(loader):
+            predictions, ground_truth, imgs_path_list = list(), list(), list()
+            for batch_idx, (imgs, labels, img_paths) in enumerate(loader):
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
 
@@ -258,6 +260,7 @@ class Trainer(object):
 
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
-        return predictions, ground_truth
+                imgs_path_list.extend(img_paths)
+        return predictions, ground_truth, imgs_path_list
 
 
