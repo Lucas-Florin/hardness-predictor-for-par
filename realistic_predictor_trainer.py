@@ -56,7 +56,7 @@ class RealisticPredictorTrainer(Trainer):
         load_file = osp.join(args.save_experiment, args.load_weights)
         if args.load_weights:
             if check_isfile(load_file):
-                load_pretrained_weights(self.model_main, load_file)
+                load_pretrained_weights([self.model_main, self.model_hp], load_file)
             else:
                 print("WARNING: Could not load pretraining weights")
 
@@ -101,7 +101,6 @@ class RealisticPredictorTrainer(Trainer):
         self.model_main.train()
         self.model_hp.train()
 
-        # TODO: Adapt fixbase.
         if fixbase or self.args.always_fixbase:
             open_specified_layers(self.model_main, self.args.open_layers)
             open_specified_layers(self.model_hp, self.args.open_layers)
@@ -145,6 +144,25 @@ class RealisticPredictorTrainer(Trainer):
                           loss=losses_main
                       ))
         return losses_main.avg, losses_hp.avg
+
+    def test(self, predictions=None, ground_truth=None):
+        return_values = super().test(predictions, ground_truth)
+
+        hp_scores, labels = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+        print("HP-Net Hardness Scores: ")
+        print(tab.tabulate([
+            ["Mean", np.mean(hp_scores)],
+            ["Variance", np.var(hp_scores)]
+        ]))
+
+        if self.args.hp_net_simple:
+            print("-" * 30)
+            header = ["Attribute", "Hardness Score Mean", "Variance"]
+            table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
+                                 floatfmt='.2%', headers=header)
+            print(table)
+
+        return return_values
 
 
 if __name__ == '__main__':
