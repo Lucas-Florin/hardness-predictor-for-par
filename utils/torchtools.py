@@ -104,7 +104,6 @@ def load_pretrained_weights(models, weight_path):
     - model (nn.Module): network model, which must not be nn.DataParallel
     - weight_path (str): path to pretrained weights
     """
-    # TODO: Implement loading multiple models from one file.
     checkpoint = torch.load(weight_path)
     if 'state_dict' in checkpoint:
         state_dicts = [checkpoint['state_dict']]
