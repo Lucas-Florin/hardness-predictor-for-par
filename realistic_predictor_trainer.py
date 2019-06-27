@@ -55,9 +55,15 @@ class RealisticPredictorTrainer(Trainer):
 
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
+        self.loaded_args = None
         if args.load_weights:
             if check_isfile(load_file):
-                load_pretrained_weights([self.model_main, self.model_hp], load_file)
+                cp = load_pretrained_weights([self.model_main, self.model_hp], load_file)
+                if "args" in cp:
+                    self.loaded_args = cp["args"]
+                    # TODO: Change referneces to laoded args.
+                else:
+                    print("WARNING: Could not load args. ")
             else:
                 print("WARNING: Could not load pretraining weights")
 
@@ -151,6 +157,7 @@ class RealisticPredictorTrainer(Trainer):
 
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         hp_scores = np.array(hp_scores)
+        labels = np.array(labels)
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
             ["Mean", np.mean(hp_scores)],
@@ -163,13 +170,24 @@ class RealisticPredictorTrainer(Trainer):
             table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
                                  floatfmt='.2%', headers=header)
             print(table)
-        if self.args.num_save_hard > 0:
-            hp_scores = hp_scores.mean(1) if not self.args.hp_net_simple else hp_scores
+        hard_att_labels = None
+        if self.args.num_save_hard + self.args.num_save_easy > 0:
+            if not self.args.hp_net_simple:
+                if self.args.hard_att in self.dm.attributes:
+                    print("Looking at Hard attribute " + self.args.hard_att)
+                    att_idx = self.dm.attributes.index(self.args.hard_att)
+                    hp_scores = hp_scores[:, att_idx]
+                    hard_att_labels = labels[:, att_idx]
+                else:
+                    hp_scores = hp_scores.mean(1)
             hp_scores = hp_scores.flatten()
             sorted_idxs = hp_scores.argsort()
-            hard_idxs = sorted_idxs[-self.args.num_save_hard : ]
+            hard_idxs = np.concatenate((sorted_idxs[:self.args.num_save_easy],
+                                        sorted_idxs[-self.args.num_save_hard:]))
             filename = osp.join(self.args.save_experiment,  self.ts + "hard_images.png")
-            save_img_collage(self.dm.split_dict[self.args.eval_split], hard_idxs, filename)
+            title = "Examples by hardness for " + (self.args.load_weights if self.args.load_weights else self.ts)
+            save_img_collage(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
+                             hard_att_labels[hard_idxs], hp_scores[hard_idxs])
 
         return return_values
 

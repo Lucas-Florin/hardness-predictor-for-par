@@ -127,6 +127,9 @@ def argument_parser():
                         help='name of the desired evaluation split (test/val)')
     parser.add_argument('--num-save-hard', type=int, default=0,
                         help='number of hard images that are saved to collage')
+    parser.add_argument('--num-save-easy', type=int, default=0,
+                        help='number of easy images that are saved to collage')
+    parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
 
     # ************************************************************
     # Miscs

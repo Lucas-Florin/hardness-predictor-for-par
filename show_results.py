@@ -6,6 +6,7 @@
 import torch
 import argparse
 import numpy as np
+import re
 from utils.plot import plot_epoch_losses
 
 
@@ -16,7 +17,8 @@ def main():
     else:
         checkpoint = torch.load(args.load_path, map_location='cpu')
     losses = checkpoint["losses"]
-    plot_epoch_losses(losses, args.save_path)
+    ts = re.match(r".*/([\d\-_]+)checkpoint", args.load_path).group(1)
+    plot_epoch_losses(losses, args.save_path, ts=ts)
 
 
 def get_args():

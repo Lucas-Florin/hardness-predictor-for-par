@@ -111,7 +111,8 @@ class Trainer(object):
             'epoch': self.epoch + 1,
             'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
             'losses': self.epoch_losses,
-            'args': self.args
+            'args': self.args,
+            'ts': self.ts
         }, osp.join(self.args.save_experiment, filename))
         print("Saved model checkpoint at " + filename)
 
