@@ -24,7 +24,7 @@ from utils.generaltools import set_random_seed
 import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
-from utils.plot import plot_epoch_losses, save_img_collage
+from utils.plot import plot_epoch_losses, show_img_grid
 from trainer import Trainer
 
 
@@ -135,7 +135,7 @@ class RealisticPredictorTrainer(Trainer):
 
             # Compute HP loss, gradient and optimize HP net.
             label_predicitons_logits = self.criterion_main.logits(label_predicitons.detach())
-            loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits)
+            loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
 
             self.optimizer_hp.zero_grad()
             loss_hp.backward()
@@ -153,18 +153,22 @@ class RealisticPredictorTrainer(Trainer):
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
+        # Run the standard accuracy testing.
         return_values = super().test(predictions, ground_truth)
 
+        # Compute Hardness scores.
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         hp_scores = np.array(hp_scores)
         labels = np.array(labels)
+
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
             ["Mean", np.mean(hp_scores)],
             ["Variance", np.var(hp_scores)]
         ]))
-
+        # TODO: fix for case hp-net simple with no hard attribute.
         if not self.args.hp_net_simple:
+            # Display the hardness scores for every attribute.
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance"]
             table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
@@ -172,24 +176,33 @@ class RealisticPredictorTrainer(Trainer):
             print(table)
         hard_att_labels = None
         if self.args.num_save_hard + self.args.num_save_easy > 0:
+            # This part only gets executed if the corresponding arguments are passed at the terminal.
+            if self.args.hard_att in self.dm.attributes:
+                # If a valid attribute is given the labels for that attribute are selected.
+                print("Looking at Hard attribute " + self.args.hard_att)
+                att_idx = self.dm.attributes.index(self.args.hard_att)
+                hard_att_labels = labels[:, att_idx]
             if not self.args.hp_net_simple:
+                # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
+                # over all attributes is taken.
                 if self.args.hard_att in self.dm.attributes:
-                    print("Looking at Hard attribute " + self.args.hard_att)
-                    att_idx = self.dm.attributes.index(self.args.hard_att)
                     hp_scores = hp_scores[:, att_idx]
-                    hard_att_labels = labels[:, att_idx]
                 else:
                     hp_scores = hp_scores.mean(1)
             hp_scores = hp_scores.flatten()
             sorted_idxs = hp_scores.argsort()
+            # Select easy and hard examples as specified in the terminal.
             hard_idxs = np.concatenate((sorted_idxs[:self.args.num_save_easy],
                                         sorted_idxs[-self.args.num_save_hard:]))
             filename = osp.join(self.args.save_experiment,  self.ts + "hard_images.png")
             title = "Examples by hardness for " + (self.args.load_weights if self.args.load_weights else self.ts)
-            save_img_collage(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
-                             hard_att_labels[hard_idxs], hp_scores[hard_idxs])
+            if hard_att_labels is not None:
+                hard_att_labels = hard_att_labels[hard_idxs]
+            # Display the image examples.
+            show_img_grid(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
+                          hard_att_labels, hp_scores[hard_idxs])
 
-        return return_values
+        return return_values  # Return the values from the super-function.
 
 
 if __name__ == '__main__':
