@@ -55,13 +55,12 @@ class RealisticPredictorTrainer(Trainer):
 
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
-        self.loaded_args = None
+        self.loaded_args = self.args
         if args.load_weights:
             if check_isfile(load_file):
                 cp = load_pretrained_weights([self.model_main, self.model_hp], load_file)
                 if "args" in cp:
                     self.loaded_args = cp["args"]
-                    # TODO: Change referneces to laoded args.
                 else:
                     print("WARNING: Could not load args. ")
             else:
@@ -166,8 +165,7 @@ class RealisticPredictorTrainer(Trainer):
             ["Mean", np.mean(hp_scores)],
             ["Variance", np.var(hp_scores)]
         ]))
-        # TODO: fix for case hp-net simple with no hard attribute.
-        if not self.args.hp_net_simple:
+        if not self.loaded_args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance"]
@@ -182,7 +180,7 @@ class RealisticPredictorTrainer(Trainer):
                 print("Looking at Hard attribute " + self.args.hard_att)
                 att_idx = self.dm.attributes.index(self.args.hard_att)
                 hard_att_labels = labels[:, att_idx]
-            if not self.args.hp_net_simple:
+            if not self.loaded_args.hp_net_simple:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
                 if self.args.hard_att in self.dm.attributes:

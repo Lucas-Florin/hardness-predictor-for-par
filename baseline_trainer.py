@@ -46,10 +46,15 @@ class BaselineTrainer(Trainer):
         print('Model size: {:.3f} M'.format(count_num_param(self.model)))
 
         # Load pretrained weights if specified in args.
+        self.loaded_args = self.args
         load_file = osp.join(args.save_experiment, args.load_weights)
         if args.load_weights:
             if check_isfile(load_file):
-                load_pretrained_weights([self.model], load_file)
+                cp = load_pretrained_weights([self.model], load_file)
+                if "args" in cp:
+                    self.loaded_args = cp["args"]
+                else:
+                    print("WARNING: Could not load args. ")
             else:
                 print("WARNING: Could not load pretraining weights")
 
