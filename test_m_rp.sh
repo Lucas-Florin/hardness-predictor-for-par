@@ -3,6 +3,9 @@ python realistic_predictor_trainer.py \
     --gpu-devices 1 \
     --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
-    --load-weights=2019-05-28_16-50-43_checkpoint.pth.tar \
+    --load-weights=2019-06-28_12-04-49_checkpoint.pth.tar \
     --evaluate \
-    --group-atts
+    --group-atts \
+    --num-save-hard 20 \
+    --num-save-easy 20 \
+    --hard-att bag
