@@ -68,7 +68,7 @@ def show_img_grid(dataset, idxs, filename, title=None,
     if labels is not None and hardness is not None:
         # Display label and hardness score for each image.
         for cell, l, h in zip(ax.flat, labels.flatten(), hardness.flatten()):
-            cell.title.set_text("L:{0}; H:{1:.2f}".format(int(l), h))
+            cell.title.set_text("{0};{1:.2f}".format(int(l), h))
     elif hardness is not None:
         # Display only hardness score for each image.
         for cell, h in zip(ax.flat, hardness.flatten()):

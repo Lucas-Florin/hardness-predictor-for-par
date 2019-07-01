@@ -32,20 +32,23 @@ class DeepMARLoss(nn.Module):
         self.batch_size = None
         self.weights = None
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs, targets, weights=None):
         """
         Calculate loss
 
         :param inputs: network output (logits)
         :param targets: ground truth labels
+        :param weights:
         :return: sigmoid cross-entropy loss
         """
         if self.use_gpu:
             targets = targets.cuda()
-        weights = torch.where(targets == 1, self.positive_weights, self.negative_weights)
+        deepmar_weights = torch.where(targets == 1, self.positive_weights, self.negative_weights)
+        if weights is not None:
+            deepmar_weights *= weights
         if self.use_gpu:
-            weights = weights.cuda()
-        loss = self.loss_function(inputs, targets, weight=weights)
+            deepmar_weights = deepmar_weights.cuda()
+        loss = self.loss_function(inputs, targets, weight=deepmar_weights)
         return loss
 
     def logits(self, inputs):

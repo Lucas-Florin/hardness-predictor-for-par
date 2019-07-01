@@ -6,6 +6,7 @@ import os.path as osp
 import numpy as np
 import warnings
 import tabulate as tab
+import pickle
 
 import torch
 import torch.nn as nn
@@ -15,7 +16,7 @@ from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_sch
 from data.data_manager import ImageDataManager
 from data.dataset_loader import read_image
 import models
-from training.losses import SigmoidCrossEntropyLoss, HardnessPredictorLoss
+from training.losses import SigmoidCrossEntropyLoss, HardnessPredictorLoss, DeepMARLoss, SplitSoftmaxCrossEntropyLoss
 from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
@@ -73,8 +74,18 @@ class RealisticPredictorTrainer(Trainer):
 
 
         # Select Loss function.
-        self.criterion_main = SigmoidCrossEntropyLoss(use_gpu=self.use_gpu)
-        self.criterion = self.criterion_main
+        # Select Loss function.
+        if args.loss_func == "deepmar":
+            pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
+            self.criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
+                                         sigma=args.loss_func_param)
+        elif args.loss_func == "scel":
+            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
+        else:
+            self.criterion = None
+
+        #self.criterion = SigmoidCrossEntropyLoss(use_gpu=self.use_gpu)
+        self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss()
 
         # TODO: SGD or Adam? (Paper uses both)
@@ -153,12 +164,22 @@ class RealisticPredictorTrainer(Trainer):
 
     def test(self, predictions=None, ground_truth=None):
         # Run the standard accuracy testing.
-        return_values = super().test(predictions, ground_truth)
+        mean_acc, label_prediction_probs, label_predictions = super().test(predictions, ground_truth)
 
         # Compute Hardness scores.
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         hp_scores = np.array(hp_scores)
         labels = np.array(labels)
+        pickle_dict = {
+            "hp_scores": hp_scores,
+            "labels": labels,
+            "attributes": self.dm.attributes,
+            "label_prediction_probs": label_prediction_probs,
+            "label_predictions": label_predictions
+        }
+        pickle_file = open(osp.join(self.args.save_experiment, "hp_scores.pickle"), "wb")
+        pickle.dump(pickle_dict, pickle_file)
+        pickle_file.close()
 
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
@@ -170,7 +191,7 @@ class RealisticPredictorTrainer(Trainer):
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance"]
             table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
-                                 floatfmt='.2%', headers=header)
+                                 floatfmt='.4f', headers=header)
             print(table)
         hard_att_labels = None
         if self.args.num_save_hard + self.args.num_save_easy > 0:
@@ -200,7 +221,7 @@ class RealisticPredictorTrainer(Trainer):
             show_img_grid(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
                           hard_att_labels, hp_scores[hard_idxs])
 
-        return return_values  # Return the values from the super-function.
+        return mean_acc, label_prediction_probs, label_predictions  # Return the values from the super-function.
 
 
 if __name__ == '__main__':

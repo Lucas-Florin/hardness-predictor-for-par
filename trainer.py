@@ -89,7 +89,7 @@ class Trainer(object):
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
                 self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
-                acc, acc_atts = self.test()
+                acc, _, _ = self.test()
                 self.ranklogger.write(epoch + 1, acc)
 
             self.epoch += 1
@@ -158,7 +158,7 @@ class Trainer(object):
     def train(self, fixbase=False):
         raise NotImplementedError()
 
-    def test(self, predictions=None, ground_truth=None):
+    def test(self, prediction_probs=None, ground_truth=None):
         """
         Test the model. If predictions or ground truth are not given they are calculated based on the split defined in
         the command line arguments.
@@ -169,21 +169,21 @@ class Trainer(object):
 
         f1_calibration_thresholds = None
         attributes = self.dm.attributes
-        if predictions is None or ground_truth is None:
+        if prediction_probs is None or ground_truth is None:
             standard_predictions, standard_ground_truth, _ = self.get_full_output()
-            if predictions is None:
-                predictions = standard_predictions
+            if prediction_probs is None:
+                prediction_probs = standard_predictions
             if ground_truth is None:
                 ground_truth = standard_ground_truth
 
         # compute test accuracies
-        predictions = np.array(predictions)
+        prediction_probs = np.array(prediction_probs)
         ground_truth = np.array(ground_truth, dtype="bool")
         if self.args.f1_calib:
             f1_calibration_thresholds = self.get_f1_calibration_threshold()
-            predictions = predictions > f1_calibration_thresholds
+            predictions = prediction_probs > f1_calibration_thresholds
         else:
-            predictions = predictions > 0.5
+            predictions = prediction_probs > 0.5
         if self.args.group_atts:
             # Each group has exactly one positive attribute.
             attribute_grouping = self.dm.dataset.attribute_grouping
@@ -218,7 +218,7 @@ class Trainer(object):
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')
 
-        return acc_atts.mean(), acc_atts
+        return acc_atts.mean(), prediction_probs, predictions
 
     def get_f1_calibration_threshold(self, loader=None):
         """
