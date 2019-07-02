@@ -163,13 +163,32 @@ class RealisticPredictorTrainer(Trainer):
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
-        # Run the standard accuracy testing.
-        mean_acc, label_prediction_probs, label_predictions = super().test(predictions, ground_truth)
-
         # Compute Hardness scores.
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         hp_scores = np.array(hp_scores)
         labels = np.array(labels)
+        if self.args.reject_hard_portion > 0:
+            num_datapoints = labels.shape[0]
+            num_attributes = labels.shape[1]
+            assert self.args.reject_hard_portion <= 1
+            num_reject = int(num_datapoints * self.args.reject_hard_portion)
+            ignore = np.zeros(labels.shape, dtype="int8")
+            for i in range(num_attributes):
+                hp_scores_att = hp_scores[:, i]
+                sorted_idxs = hp_scores_att.argsort()
+                hard_idxs = sorted_idxs[-num_reject:]
+                ignore[hard_idxs, [i] * num_reject] = 1
+        elif self.args.reject_harder_than < 1:
+            ignore = hp_scores > self.args.reject_harder_than
+        else:
+            #ignore = np.random.random(labels.shape) < 0.1
+            ignore = None
+        if ignore is not None:
+            print("Ignoring the {:.0%} hardest of testing examples. ".format(ignore.mean()))
+
+        # Run the standard accuracy testing.
+        mean_acc, label_prediction_probs, label_predictions = super().test(ignore=ignore)
+
         pickle_dict = {
             "hp_scores": hp_scores,
             "labels": labels,

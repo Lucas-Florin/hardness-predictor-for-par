@@ -158,24 +158,17 @@ class Trainer(object):
     def train(self, fixbase=False):
         raise NotImplementedError()
 
-    def test(self, prediction_probs=None, ground_truth=None):
+    def test(self, ignore=None):
         """
         Test the model. If predictions or ground truth are not given they are calculated based on the split defined in
         the command line arguments.
-        :param predictions: (Optional) the predictions to be tested.
-        :param ground_truth: (Optional) the ground truth of the predictions.
         :return:
         """
 
         f1_calibration_thresholds = None
         attributes = self.dm.attributes
-        if prediction_probs is None or ground_truth is None:
-            standard_predictions, standard_ground_truth, _ = self.get_full_output()
-            if prediction_probs is None:
-                prediction_probs = standard_predictions
-            if ground_truth is None:
-                ground_truth = standard_ground_truth
 
+        prediction_probs, ground_truth, _ = self.get_full_output()
         # compute test accuracies
         prediction_probs = np.array(prediction_probs)
         ground_truth = np.array(ground_truth, dtype="bool")
@@ -195,7 +188,7 @@ class Trainer(object):
             attribute_grouping = None
         if self.args.use_macc:
             # Use mA for each attribute.
-            acc_atts = metrics.mean_attribute_accuracies(predictions, ground_truth)
+            acc_atts = metrics.mean_attribute_accuracies(predictions, ground_truth, ignore)
             acc_name = 'Mean Attribute Accuracies'
         else:
             #
@@ -204,7 +197,7 @@ class Trainer(object):
             acc_name = 'Attribute Accuracies'
 
         print('Results ----------')
-        print(metrics.get_metrics_table(predictions, ground_truth))
+        print(metrics.get_metrics_table(predictions, ground_truth, ignore))
         print('------------------')
         print(acc_name + ':')
         if self.args.f1_calib and not self.args.group_atts:

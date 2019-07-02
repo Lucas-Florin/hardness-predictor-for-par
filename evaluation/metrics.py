@@ -24,11 +24,11 @@ def _get_conf_mat(output, target):
     return tp, fn, fp, tn
 
 
-def mean_accuracy(output, target):
-    return mean_attribute_accuracies(output, target).mean()
+def mean_accuracy(output, target, ignore=None):
+    return mean_attribute_accuracies(output, target, ignore).mean()
 
 
-def mean_attribute_accuracies(output, target):
+def mean_attribute_accuracies(output, target, ignore=None):
     """
     Get the average between the positive and negative accuracy for each attribute. As proposed in RAPv2.0 Paper
     :param output:
@@ -36,13 +36,17 @@ def mean_attribute_accuracies(output, target):
     :return:
     """
     with torch.no_grad():
+        if ignore is None:
+            # If ignore argument is not passed, nothing is ignored.
+            ignore = np.zeros(target.shape, "int8")
+        use = np.logical_not(ignore)
         prediction = output > 0.5
-        p = (target == 1).sum(0)  # Number of positive samples.
+        p = (np.logical_and(use, target == 1)).sum(0)  # Number of positive samples.
         p[p == 0] = 1  # Prevent division by zero
-        tp = np.logical_and(target == 1, prediction == 1).sum(0)  # Number of true positives.
-        n = (target == 0).sum(0)  # Number of negative samples.
+        tp = np.logical_and(use, np.logical_and(target == 1, prediction == 1)).sum(0)  # Number of true positives.
+        n = np.logical_and(use, (target == 0)).sum(0)  # Number of negative samples.
         n[n == 0] = 1  # Prevent division by zero
-        tn = np.logical_and(target == 0, prediction == 0).sum(0)  # Number of true negatives.
+        tn = np.logical_and(use, np.logical_and(target == 0, prediction == 0)).sum(0)  # Number of true negatives.
 
         m_acc = (tp.astype("float64") / p + tn.astype("float64") / n) / 2
 
@@ -77,51 +81,63 @@ def attribute_accuracies(output, target, attribute_groupings=None):
         return grouped_accuracies
 
 
-def accuracy(output, target):
+def accuracy(output, target, ignore=None):
+    if ignore is None:
+        # If ignore argument is not passed, nothing is ignored.
+        ignore = np.zeros(target.shape, "int8")
+    use = np.logical_not(ignore)
     with torch.no_grad():
         prediction = output > 0.5
-        total_positives = np.logical_or(target, prediction).sum(1)
+        total_positives = np.logical_and(use, np.logical_or(target, prediction)).sum(1)
         total_positives[total_positives == 0] = 1   # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / total_positives).mean()
+        return (np.logical_and(use, np.logical_and(target, prediction)).sum(1) / total_positives).mean()
 
 
-def precision(output, target):
+def precision(output, target, ignore=None):
+    if ignore is None:
+        # If ignore argument is not passed, nothing is ignored.
+        ignore = np.zeros(target.shape, "int8")
+    use = np.logical_not(ignore)
     with torch.no_grad():
         prediction = output > 0.5
-        pred_positives = prediction.sum(1)
+        pred_positives = np.logical_and(use, prediction).sum(1)
         pred_positives[pred_positives == 0] = 1  # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / pred_positives).mean()
+        return (np.logical_and(use, np.logical_and(target, prediction)).sum(1) / pred_positives).mean()
 
 
-def recall(output, target):
+def recall(output, target, ignore=None):
+    if ignore is None:
+        # If ignore argument is not passed, nothing is ignored.
+        ignore = np.zeros(target.shape, "int8")
+    use = np.logical_not(ignore)
     with torch.no_grad():
         prediction = output > 0.5
-        target_positives = target.sum(1)
+        target_positives = np.logical_and(use, target).sum(1)
         target_positives[target_positives == 0] = 1   # Prevent division by zero
 
-        return (np.logical_and(target, prediction).sum(1) / target_positives).mean()
+        return (np.logical_and(use, np.logical_and(target, prediction)).sum(1) / target_positives).mean()
 
 
-def f1measure(output, target):
-    pre = precision(output, target)
-    rec = recall(output, target)
+def f1measure(output, target, ignore=None):
+    pre = precision(output, target, ignore)
+    rec = recall(output, target, ignore)
     return 2 * (pre * rec) / (pre + rec)
 
 
-def get_metrics(output, target):
+def get_metrics(output, target, ignore=None):
     return (
-        mean_accuracy(output, target),
-        accuracy(output, target),
-        precision(output, target),
-        recall(output, target),
-        f1measure(output, target)
+        mean_accuracy(output, target, ignore),
+        accuracy(output, target, ignore),
+        precision(output, target, ignore),
+        recall(output, target, ignore),
+        f1measure(output, target, ignore)
     )
 
 
-def get_metrics_table(output, target):
-    metrics = get_metrics(output, target)
+def get_metrics_table(output, target, ignore=None):
+    metrics = get_metrics(output, target, ignore)
     metric_names = [
         "Mean Accuracy",
         "Accuracy",
@@ -156,7 +172,7 @@ def group_attributes(output, attribute_grouping):
     return grouped_output
 
 
-def get_f1_calibration_thresholds(output, target, resolution=100):
+def get_f1_calibration_thresholds(output, target, ignore=None, resolution=100):
     """
     Calculate the thresholds for F1 Calibration as defined in:
     [Bekele et al. 2019] The Deeper, the Better: Analysis of Person Attributes Recognition
@@ -166,6 +182,10 @@ def get_f1_calibration_thresholds(output, target, resolution=100):
     :param resolution:
     :return:
     """
+    if ignore is None:
+        # If ignore argument is not passed, nothing is ignored.
+        ignore = np.zeros(target.shape, "int8")
+    use = np.logical_not(ignore)
     num_attributes = output.shape[1]
     num_datapoints = output.shape[0]
     thresholds = np.zeros((1, num_attributes))
@@ -176,8 +196,8 @@ def get_f1_calibration_thresholds(output, target, resolution=100):
         # negatives is the same. For this threshold precision and recall are the same.
         t = i / resolution
         predictions = output > t
-        fn = np.logical_and(target == 1, predictions == 0).sum(0)  # Number of false negatives.
-        fp = np.logical_and(target == 0, predictions == 1).sum(0)  # Number of false positives.
+        fn = np.logical_and(use, np.logical_and(target == 1, predictions == 0)).sum(0)  # Number of false negatives.
+        fp = np.logical_and(use, np.logical_and(target == 0, predictions == 1)).sum(0)  # Number of false positives.
         diff = np.absolute(fp - fn).flatten()  # The difference between fp and fn -> minimize
         # For each attribute, if the difference is lower than the previous best (lowest), the threshold is overwritten.
         thresholds[:, diff < best_diff] = t

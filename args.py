@@ -130,6 +130,11 @@ def argument_parser():
     parser.add_argument('--num-save-easy', type=int, default=0,
                         help='number of easy images that are saved to collage')
     parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
+    parser.add_argument('--reject-hard-portion', default=-1.0, type=float,
+                        help='reject this portion of the hardest testing examples')
+    parser.add_argument('--reject-harder-than', default=1.0, type=float,
+                        help='reject testing examples that are harder than this threshold')
+
 
     # ************************************************************
     # Miscs
