@@ -187,18 +187,18 @@ class RealisticPredictorTrainer(Trainer):
             print("Ignoring the {:.0%} hardest of testing examples. ".format(ignore.mean()))
 
         # Run the standard accuracy testing.
-        mean_acc, label_prediction_probs, label_predictions = super().test(ignore=ignore)
+        mean_acc = super().test(ignore=ignore)
+        label_prediction_probs = self.result_dict["prediction_probs"]
+        label_predictions = self.result_dict["predictions"]
 
-        pickle_dict = {
-            "hp_scores": hp_scores,
-            "labels": labels,
-            "attributes": self.dm.attributes,
-            "label_prediction_probs": label_prediction_probs,
-            "label_predictions": label_predictions
-        }
-        pickle_file = open(osp.join(self.args.save_experiment, "hp_scores.pickle"), "wb")
-        pickle.dump(pickle_dict, pickle_file)
+        self.result_dict.update({
+            "hp_scores": hp_scores
+        })
+        pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
+        pickle_file = open(pickle_path, "wb")
+        pickle.dump(self.result_dict, pickle_file)
         pickle_file.close()
+        print("Saved Results at " + pickle_path)
 
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
@@ -213,6 +213,7 @@ class RealisticPredictorTrainer(Trainer):
                                  floatfmt='.4f', headers=header)
             print(table)
         hard_att_labels = None
+        hard_att_pred = None
         if self.args.num_save_hard + self.args.num_save_easy > 0:
             # This part only gets executed if the corresponding arguments are passed at the terminal.
             if self.args.hard_att in self.dm.attributes:
@@ -220,6 +221,7 @@ class RealisticPredictorTrainer(Trainer):
                 print("Looking at Hard attribute " + self.args.hard_att)
                 att_idx = self.dm.attributes.index(self.args.hard_att)
                 hard_att_labels = labels[:, att_idx]
+                hard_att_pred = label_prediction_probs[:, att_idx]
             if not self.loaded_args.hp_net_simple:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
@@ -236,9 +238,11 @@ class RealisticPredictorTrainer(Trainer):
             title = "Examples by hardness for " + (self.args.load_weights if self.args.load_weights else self.ts)
             if hard_att_labels is not None:
                 hard_att_labels = hard_att_labels[hard_idxs]
+            if hard_att_pred is not None:
+                hard_att_pred = hard_att_pred[hard_idxs]
             # Display the image examples.
             show_img_grid(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
-                          hard_att_labels, hp_scores[hard_idxs])
+                          hard_att_labels, hp_scores[hard_idxs], hard_att_pred)
 
         return mean_acc, label_prediction_probs, label_predictions  # Return the values from the super-function.
 

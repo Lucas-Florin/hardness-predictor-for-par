@@ -43,7 +43,7 @@ class Trainer(object):
         self.init_data()
 
         self.init_model()
-
+        self.result_dict = None
         if args.evaluate:
             print('Evaluate only')
             split = args.eval_split
@@ -91,6 +91,7 @@ class Trainer(object):
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
                 acc, _, _ = self.test()
                 self.ranklogger.write(epoch + 1, acc)
+                self.checkpoint()
 
             self.epoch += 1
 
@@ -104,17 +105,21 @@ class Trainer(object):
             # Plot loss over epochs.
             plot_epoch_losses(self.epoch_losses, self.args.save_experiment, self.ts)
 
-    def checkpoint(self):
-        filename = self.ts + 'checkpoint.pth.tar'
+    def checkpoint(self, ts=None):
+        if ts is None:
+            ts = self.ts
+        filename = ts + 'checkpoint.pth.tar'
         save_checkpoint({
             'state_dicts': [model.state_dict() for model in self.model_list],
             'epoch': self.epoch + 1,
             'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
             'losses': self.epoch_losses,
             'args': self.args,
-            'ts': self.ts
+            'ts': self.ts,
+            'result_dict': self.result_dict
         }, osp.join(self.args.save_experiment, filename))
         print("Saved model checkpoint at " + filename)
+
 
     def init_environment(self, args):
 
@@ -210,8 +215,14 @@ class Trainer(object):
         print(table)
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')
-
-        return acc_atts.mean(), prediction_probs, predictions
+        self.result_dict = {
+            "prediction_probs": prediction_probs,
+            "predictions": predictions,
+            "labels": ground_truth,
+            "args": self.args,
+            "attributes": self.dm.attributes
+        }
+        return acc_atts.mean()
 
     def get_f1_calibration_threshold(self, loader=None):
         """

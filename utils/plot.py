@@ -11,6 +11,7 @@ import os.path as osp
 from data.dataset_loader import read_image
 import torchvision.utils as vutils
 import torch
+import evaluation.metrics as metrics
 
 
 def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
@@ -40,7 +41,7 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
 
 
 def show_img_grid(dataset, idxs, filename, title=None,
-                  attribute_name=None, labels=None, hardness=None):
+                  attribute_name=None, labels=None, hardness=None, prediction_probs=None):
     """
     Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
     label and hardness of each image are displayed above it.
@@ -65,10 +66,10 @@ def show_img_grid(dataset, idxs, filename, title=None,
         fig.suptitle(title)
     for cell, img in zip(ax.flat, batch):
         cell.imshow(img)
-    if labels is not None and hardness is not None:
+    if labels is not None and hardness is not None and prediction_probs is not None:
         # Display label and hardness score for each image.
-        for cell, l, h in zip(ax.flat, labels.flatten(), hardness.flatten()):
-            cell.title.set_text("{0};{1:.2f}".format(int(l), h))
+        for cell, l, p, h in zip(ax.flat, labels.flatten(), prediction_probs.flatten(), hardness.flatten()):
+            cell.title.set_text("{};{:.2f};{:.2f}".format(int(l), p, h))
     elif hardness is not None:
         # Display only hardness score for each image.
         for cell, h in zip(ax.flat, hardness.flatten()):
@@ -77,7 +78,38 @@ def show_img_grid(dataset, idxs, filename, title=None,
     for cell in ax.flat:
         cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
 
-    plt.savefig(filename, format="png")
-    print("Saved by hardness examples at " + filename)
+
     plt.show()
+    if input("Save Figure? (y/n):") == "y":
+        plt.savefig(filename, format="png")
+        print("Saved by hardness examples at " + filename)
+
+
+def show_accuracy_by_hardness(filename, title, attribute_name, labels, predictions, hp_scores):
+    x = np.arange(0, 1, 0.1)
+    y = np.zeros(x.shape)
+    num_datapoints = labels.shape[0]
+    predictions = predictions.reshape((num_datapoints, 1))
+    labels = labels.reshape((num_datapoints, 1))
+    for i in range(len(x)):
+
+        num_reject = int(num_datapoints * x[i])
+        ignore = np.zeros(labels.shape, dtype="int8")
+        sorted_idxs = hp_scores.argsort()
+        hard_idxs = sorted_idxs[-num_reject:]
+        if num_reject > 0:
+            ignore[hard_idxs] = 1
+        predictions = predictions.reshape((num_datapoints, 1))
+        labels = labels.reshape((num_datapoints, 1))
+        y[i] = metrics.mean_accuracy(predictions, labels, ignore)
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    if attribute_name:
+        title += "; Attribute = " + attribute_name
+    fig.suptitle(title)
+
+    plt.show()
+    if input("Save Figure? (y/n):") == "y":
+        plt.savefig(filename, format="png")
+        print("Saved by hardness examples at " + filename)
 
