@@ -85,6 +85,12 @@ def argument_parser():
                         help='name of the desired loss function')
     parser.add_argument('--loss-func-param', type=float, default=1,
                         help='the parameter for the loss function')
+    parser.add_argument('--no-hp-feedback', action='store_true',
+                        help='do not use the hardness score as weighting for the main net loss function')
+    parser.add_argument('--hp-train-sequentially', action='store_true',
+                        help='train the HP-Net only after the main net is fully trained')
+    parser.add_argument('--train-hp-only', action='store_true',
+                        help='only train the HP-Net')
 
 
     # ************************************************************

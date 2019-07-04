@@ -115,7 +115,13 @@ class RealisticPredictorTrainer(Trainer):
         losses_main = AverageMeter()
         losses_hp = AverageMeter()
 
-        self.model_main.train()
+
+        if self.args.train_hp_only:
+            self.model_main.eval()
+            losses = losses_hp
+        else:
+            self.model_main.train()
+            losses = losses_main
         self.model_hp.train()
 
         if fixbase or self.args.always_fixbase:
@@ -132,16 +138,19 @@ class RealisticPredictorTrainer(Trainer):
             # Run the batch through both nets.
             label_predicitons = self.model_main(imgs)
             hardness_predictions = self.model_hp(imgs)
+            if self.args.train_hp_only:
+                if self.args.no_hp_feedback:
+                    main_net_weights = None
+                else:
+                    # Make a detached version of the hp scores for computing the main loss.
+                    main_net_weights = self.criterion_hp.logits(hardness_predictions.detach())
+                # Compute main loss, gradient and optimize main net.
+                loss_main = self.criterion_main(label_predicitons, labels, main_net_weights)
+                self.optimizer_main.zero_grad()
+                loss_main.backward()
+                self.optimizer_main.step()
 
-            # Make a detached version of the hp scores for computing the main loss.
-            hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
-            # Compute main loss, gradient and optimize main net.
-            loss_main = self.criterion_main(label_predicitons, labels, hardness_predictions_logits)
-            self.optimizer_main.zero_grad()
-            loss_main.backward()
-            self.optimizer_main.step()
-
-            losses_main.update(loss_main.item(), labels.size(0))
+                losses_main.update(loss_main.item(), labels.size(0))
 
             # Compute HP loss, gradient and optimize HP net.
             label_predicitons_logits = self.criterion_main.logits(label_predicitons.detach())
@@ -158,7 +167,7 @@ class RealisticPredictorTrainer(Trainer):
                 print('Epoch: [{0}][{1}/{2}]\t' 
                       'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
                           self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                          loss=losses_main
+                          loss=losses
                       ))
         return losses_main.avg, losses_hp.avg
 

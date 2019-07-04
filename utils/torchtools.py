@@ -111,7 +111,8 @@ def load_pretrained_weights(models, weight_path):
         state_dicts = checkpoint['state_dicts']
     else:
         state_dicts = [checkpoint]
-    for i in range(len(models)):
+    num_models = min(len(models), len(state_dicts))
+    for i in range(num_models):
         model = models[i]
         state_dict = state_dicts[i]
         model_dict = model.state_dict()
