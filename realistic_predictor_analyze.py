@@ -53,8 +53,16 @@ def main(args):
 
     print('Initializing image data manager')
     dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
-    hard_att_labels = None
-    hard_att_pred = None
+    acc_atts = metrics.mean_attribute_accuracies(label_predictions, labels)
+    print('Results ----------')
+    print(metrics.get_metrics_table(label_predictions, labels))
+    print('------------------')
+    print('Mean Attribute Accuracies:')
+    header = ["Attribute", "Accuracy"]
+    table = tab.tabulate(zip(dm.attributes, acc_atts), floatfmt='.2%', headers=header)
+    print(table)
+    print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
+    print('------------------')
     print("Looking at Hard attribute " + args.hard_att)
     att_idx = dm.attributes.index(args.hard_att)
     hard_att_labels = labels[:, att_idx]
@@ -66,9 +74,15 @@ def main(args):
 
     if args.plot_acc_hp:
         filename = osp.join(args.save_experiment, ts + "accuracy_over_hardness.png")
-        title = "Mean Accuracy over hardness for " + (args.load_weights if args.load_weights else ts)
+        title = "Mean Accuracy over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
         plot.show_accuracy_by_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
+
+    if args.plot_pos_hp:
+        filename = osp.join(args.save_experiment, ts + "positivity_over_hardness.png")
+        title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
+
+        plot.show_positivity_by_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
 
     if args.num_save_hard + args.num_save_easy > 0:
         # This part only gets executed if the corresponding arguments are passed at the terminal.

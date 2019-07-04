@@ -147,7 +147,8 @@ def argument_parser():
                         help='only show examples with positive ground truth')
     parser.add_argument('--show-neg-samples', action='store_true',
                         help='only show examples with negative ground truth')
-
+    parser.add_argument('--plot-pos-hp', action='store_true',
+                        help='plot positivity rate over hardness')
 
 
     # ************************************************************

@@ -107,9 +107,39 @@ def show_accuracy_by_hardness(filename, title, attribute_name, labels, predictio
     if attribute_name:
         title += "; Attribute = " + attribute_name
     fig.suptitle(title)
-
+    plt.xlabel("Portion of rejected hard samples")
+    plt.ylabel("Mean accuracy on remaining samples")
+    #plt.ylim(0, 1)
     plt.show()
     if input("Save Figure? (y/n):") == "y":
         plt.savefig(filename, format="png")
         print("Saved by hardness examples at " + filename)
 
+
+def show_positivity_by_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10):
+    x = np.arange(resolution)
+    y = np.zeros(x.shape)
+    num_datapoints = labels.shape[0]
+    predictions = predictions.reshape((num_datapoints, 1))
+    labels = labels.reshape((num_datapoints, 1))
+    num_select = int(num_datapoints // resolution)
+    num_rest = num_datapoints % resolution
+    sorted_idxs = hp_scores.argsort()
+    sorted_idxs = sorted_idxs[np.random.choice(sorted_idxs.shape[0], num_datapoints - num_rest, replace=False)]
+    print("Ignoring {} randomly selected samples to avoid rest. ". format(num_rest))
+    assert num_select * resolution == sorted_idxs.shape[0]
+    for i in range(resolution):
+        selected_idx = sorted_idxs[num_select * i:num_select * (i + 1)]
+        y[i] = labels[selected_idx].sum() / num_select
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    if attribute_name:
+        title += "; Attribute = " + attribute_name
+    fig.suptitle(title)
+    plt.xlabel("Quantile by Hardness")
+    plt.ylabel("Positivity Rate")
+    #plt.ylim(0, 1)
+    plt.show()
+    if input("Save Figure? (y/n):") == "y":
+        plt.savefig(filename, format="png")
+        print("Saved by hardness examples at " + filename)

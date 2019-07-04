@@ -170,7 +170,7 @@ class Trainer(object):
         :return:
         """
 
-        f1_calibration_thresholds = None
+        f1_calibration_thresholds = self.get_f1_calibration_threshold()
         attributes = self.dm.attributes
 
         prediction_probs, ground_truth, _ = self.get_full_output()
@@ -178,7 +178,7 @@ class Trainer(object):
         prediction_probs = np.array(prediction_probs)
         ground_truth = np.array(ground_truth, dtype="bool")
         if self.args.f1_calib:
-            f1_calibration_thresholds = self.get_f1_calibration_threshold()
+
             predictions = prediction_probs > f1_calibration_thresholds
         else:
             predictions = prediction_probs > 0.5
@@ -220,7 +220,8 @@ class Trainer(object):
             "predictions": predictions,
             "labels": ground_truth,
             "args": self.args,
-            "attributes": self.dm.attributes
+            "attributes": self.dm.attributes,
+            "f1-thresholds": f1_calibration_thresholds
         }
         return acc_atts.mean()
 
