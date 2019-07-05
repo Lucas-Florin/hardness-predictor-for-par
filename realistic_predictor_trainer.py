@@ -138,7 +138,7 @@ class RealisticPredictorTrainer(Trainer):
             # Run the batch through both nets.
             label_predicitons = self.model_main(imgs)
             hardness_predictions = self.model_hp(imgs)
-            if self.args.train_hp_only:
+            if not self.args.train_hp_only:
                 if self.args.no_hp_feedback:
                     main_net_weights = None
                 else:
