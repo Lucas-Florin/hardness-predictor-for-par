@@ -66,7 +66,8 @@ def main(args):
     print("Looking at Hard attribute " + args.hard_att)
     att_idx = dm.attributes.index(args.hard_att)
     hard_att_labels = labels[:, att_idx]
-    hard_att_pred = label_prediction_probs[:, att_idx]
+    hard_att_pred = label_predictions[:, att_idx]
+    hard_att_prob = label_prediction_probs[:, att_idx]
     if not loaded_args.hp_net_simple:
         # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
         # over all attributes is taken.
@@ -94,16 +95,12 @@ def main(args):
             sorted_idxs = sorted_idxs[np.logical_not(hard_att_labels[sorted_idxs])]
         # Select easy and hard examples as specified in the terminal.
         hard_idxs = np.concatenate((sorted_idxs[:args.num_save_easy], sorted_idxs[-args.num_save_hard:]))
-
         filename = osp.join(args.save_experiment,  ts + "hard_images.png")
         title = "Examples by hardness for " + (args.load_weights if args.load_weights else ts)
-        if hard_att_labels is not None:
-            hard_att_labels = hard_att_labels[hard_idxs]
-        if hard_att_pred is not None:
-            hard_att_pred = hard_att_pred[hard_idxs]
         # Display the image examples.
         plot.show_img_grid(dm.split_dict[args.eval_split], hard_idxs, filename, title, args.hard_att,
-                      hard_att_labels, hp_scores[hard_idxs], hard_att_pred)
+                           hard_att_labels[hard_idxs], hp_scores[hard_idxs], hard_att_prob[hard_idxs],
+                           hard_att_pred[hard_idxs])
 
 
 
