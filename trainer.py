@@ -200,18 +200,18 @@ class Trainer(object):
             acc_atts = metrics.attribute_accuracies(predictions, ground_truth, attribute_grouping)
 
             acc_name = 'Attribute Accuracies'
-
+        positivity_ratio = self.dm.dataset.get_positive_attribute_ratio()
         print('Results ----------')
         print(metrics.get_metrics_table(predictions, ground_truth, ignore))
         print('------------------')
         print(acc_name + ':')
         if self.args.f1_calib and not self.args.group_atts:
-            header = ["Attribute", "Accuracy", "F1-Calibration Threshold"]
-            table = tab.tabulate(zip(attributes, acc_atts, f1_calibration_thresholds.flatten()), floatfmt='.2%',
-                                 headers=header)
+            header = ["Attribute", "Accuracy", "Positivity Ratio", "F1-Calibration Threshold"]
+            table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio, f1_calibration_thresholds.flatten()),
+                                 floatfmt='.2%', headers=header)
         else:
-            header = ["Attribute", "Accuracy"]
-            table = tab.tabulate(zip(attributes, acc_atts), floatfmt='.2%', headers=header)
+            header = ["Attribute", "Accuracy", "Positivity Ratio"]
+            table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
         print(table)
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')

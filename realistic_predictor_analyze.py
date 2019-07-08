@@ -51,15 +51,18 @@ def main(args):
     loaded_args = result_dict["args"]
     labels = result_dict["labels"]
 
+
     print('Initializing image data manager')
     dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
+
+    positivity_ratio = dm.dataset.get_positive_attribute_ratio()
     acc_atts = metrics.mean_attribute_accuracies(label_predictions, labels)
     print('Results ----------')
     print(metrics.get_metrics_table(label_predictions, labels))
     print('------------------')
     print('Mean Attribute Accuracies:')
-    header = ["Attribute", "Accuracy"]
-    table = tab.tabulate(zip(dm.attributes, acc_atts), floatfmt='.2%', headers=header)
+    header = ["Attribute", "Accuracy", "Positivity Ratio"]
+    table = tab.tabulate(zip(dm.attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
     print(table)
     print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
     print('------------------')
