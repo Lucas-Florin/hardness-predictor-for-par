@@ -91,6 +91,8 @@ def argument_parser():
                         help='train the HP-Net only after the main net is fully trained')
     parser.add_argument('--train-hp-only', action='store_true',
                         help='only train the HP-Net')
+    parser.add_argument('--use-deepmar-for-hp', action='store_true',
+                        help='use DeepMAR weighting for the HP loss')
 
 
     # ************************************************************

@@ -72,21 +72,20 @@ class RealisticPredictorTrainer(Trainer):
         self.model = self.model_main
         self.model_hp = nn.DataParallel(self.model_hp).cuda() if self.use_gpu else self.model_hp
 
-
+        self.pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
         # Select Loss function.
         # Select Loss function.
         if args.loss_func == "deepmar":
-            pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
-            self.criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
+
+            self.criterion = DeepMARLoss(self.pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
                                          sigma=args.loss_func_param)
         elif args.loss_func == "scel":
             self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
         else:
             self.criterion = None
 
-        #self.criterion = SigmoidCrossEntropyLoss(use_gpu=self.use_gpu)
         self.criterion_main = self.criterion
-        self.criterion_hp = HardnessPredictorLoss()
+        self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu)
 
         # TODO: SGD or Adam? (Paper uses both)
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
@@ -214,7 +213,7 @@ class RealisticPredictorTrainer(Trainer):
             ["Mean", np.mean(hp_scores)],
             ["Variance", np.var(hp_scores)]
         ]))
-        if not self.loaded_args.hp_net_simple:
+        if not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance"]
