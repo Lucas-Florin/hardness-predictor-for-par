@@ -85,7 +85,8 @@ class RealisticPredictorTrainer(Trainer):
             self.criterion = None
 
         self.criterion_main = self.criterion
-        self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu)
+        self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
+                                                  sigma=self.args.hp_loss_param)
 
         # TODO: SGD or Adam? (Paper uses both)
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
@@ -113,7 +114,6 @@ class RealisticPredictorTrainer(Trainer):
         """
         losses_main = AverageMeter()
         losses_hp = AverageMeter()
-
 
         if self.args.train_hp_only:
             self.model_main.eval()

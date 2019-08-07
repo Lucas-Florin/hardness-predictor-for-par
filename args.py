@@ -84,7 +84,7 @@ def argument_parser():
     parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
                         help='name of the desired loss function')
     parser.add_argument('--loss-func-param', type=float, default=1,
-                        help='the parameter for the loss function')
+                        help='the parameter for the main loss function')
     parser.add_argument('--no-hp-feedback', action='store_true',
                         help='do not use the hardness score as weighting for the main net loss function')
     parser.add_argument('--hp-train-sequentially', action='store_true',
@@ -93,6 +93,8 @@ def argument_parser():
                         help='only train the HP-Net')
     parser.add_argument('--use-deepmar-for-hp', action='store_true',
                         help='use DeepMAR weighting for the HP loss')
+    parser.add_argument('--hp-loss-param', type=float, default=1,
+                        help='the parameter for the HP loss function')
 
 
     # ************************************************************
