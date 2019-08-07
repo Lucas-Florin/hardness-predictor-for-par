@@ -219,7 +219,7 @@ class Trainer(object):
             "prediction_probs": prediction_probs,
             "predictions": predictions,
             "labels": ground_truth,
-            "args": self.args,
+            "args": self.loaded_args if self.args.evaluate else self.args,
             "attributes": self.dm.attributes,
             "f1-thresholds": f1_calibration_thresholds
         }
