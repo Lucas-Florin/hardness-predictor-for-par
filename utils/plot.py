@@ -58,7 +58,6 @@ def show_img_grid(dataset, idxs, filename, title=None,
     num_imgs = len(batch)
     grid_height = 3
     grid_width = num_imgs // grid_height if num_imgs % grid_height == 0 else num_imgs // grid_height + 1
-    # figsize=(20, 10) makes sure that the saved image is not too small.
     fig, ax = plt.subplots(grid_height, grid_width, figsize=(20, 10))
     if title is not None:
         if attribute_name:
@@ -79,14 +78,13 @@ def show_img_grid(dataset, idxs, filename, title=None,
     for cell in ax.flat:
         cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
 
-
-    plt.show()
     if input("Save Figure? (y/n):") == "y":
         plt.savefig(filename, format="png")
         print("Saved by hardness examples at " + filename)
+    plt.show()
 
 
-def show_accuracy_by_hardness(filename, title, attribute_name, labels, predictions, hp_scores):
+def show_accuracy_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores):
     x = np.arange(0, 1, 0.1)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
@@ -112,13 +110,14 @@ def show_accuracy_by_hardness(filename, title, attribute_name, labels, predictio
     plt.xlabel("Portion of rejected hard samples")
     plt.ylabel("Mean accuracy on remaining samples")
     #plt.ylim(0, 1)
-    plt.show()
+
     if input("Save Figure? (y/n):") == "y":
         plt.savefig(filename, format="png")
-        print("Saved by hardness examples at " + filename)
+        print("Saved accuracy over hardness at " + filename)
+    plt.show()
 
 
-def show_positivity_by_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10):
+def show_positivity_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10):
     x = np.arange(resolution)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
@@ -141,7 +140,8 @@ def show_positivity_by_hardness(filename, title, attribute_name, labels, predict
     plt.xlabel("Quantile by Hardness")
     plt.ylabel("Positivity Rate")
     #plt.ylim(0, 1)
-    plt.show()
+
     if input("Save Figure? (y/n):") == "y":
         plt.savefig(filename, format="png")
-        print("Saved by hardness examples at " + filename)
+        print("Saved positivity ratio by hardness at " + filename)
+    plt.show()

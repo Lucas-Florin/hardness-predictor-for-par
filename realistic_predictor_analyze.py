@@ -80,13 +80,13 @@ def main(args):
         filename = osp.join(args.save_experiment, ts + "accuracy_over_hardness.png")
         title = "Mean Accuracy over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
-        plot.show_accuracy_by_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
+        plot.show_accuracy_over_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
 
     if args.plot_pos_hp:
         filename = osp.join(args.save_experiment, ts + "positivity_over_hardness.png")
         title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
-        plot.show_positivity_by_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
+        plot.show_positivity_over_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
 
     if args.num_save_hard + args.num_save_easy > 0:
         # This part only gets executed if the corresponding arguments are passed at the terminal.
