@@ -11,6 +11,7 @@ https://arxiv.org/abs/1901.07474v1
 import numpy as np
 import torch
 import tabulate as tab
+from sklearn.metrics import label_ranking_average_precision_score, average_precision_score
 
 
 def _get_conf_mat(output, target):
@@ -204,4 +205,74 @@ def get_f1_calibration_thresholds(output, target, ignore=None, resolution=100):
         # For each attribute, the best (lowest) difference is updated.
         best_diff = np.where(diff < best_diff, diff, best_diff)
     return thresholds
+
+
+def average_precision(target, score):
+    """
+    Get the average precision for one query as defined in:
+    Kishida, K. (2005). Property of average precision and its generalization: An examination of evaluation indicator
+    for information retrieval experiments (p. 19p). Tokyo, Japan: National Institute of Informatics.
+    :param target: ground truth relevance
+    :param score: the ranking score
+    :return: the average precision for that query
+    """
+    # Make sure the arrays are in the correct format.
+    """
+    if score.ndim == 1:
+        score = score.reshape((1, score.size))
+    if target.ndim == 1:
+        target = target.reshape((1, target.size))
+    """
+    #assert (target.shape == score.shape).all()
+    # Calculate the average precision using the function from scikit-learn
+    return average_precision_score(target, score)
+
+
+def hp_average_precision(labels, predictions, hp_scores):
+    """
+    Get the average precision metric for a hardness predictor for each attribute.
+    Each attribute is treated as a separate query. Falsely predicted labels are ground truth relevant. The hardness
+    score is the predicted relevancy score.
+    :param labels: The ground truth attribute labels.
+    :param predictions: The predicted attribute labels.
+    :param hp_scores: The hardness scores given by the hardness predictor.
+    :return: An array with the average precision for each attribute.
+    """
+    # Transpose the arrays so that each attribute can be analyzed separately.
+    labels = labels.transpose()
+    predictions = predictions.transpose()
+    hp_scores = hp_scores.transpose()
+    # Compute the average precision for each attribute.
+    attribute_average_precisions = [average_precision(l != p, s) for l, p, s in zip(labels, predictions, hp_scores)]
+    return np.array(attribute_average_precisions)
+
+
+def hp_mean_average_precision(labels, predictions, hp_scores):
+    """
+    Get the mean average precision metric for a hardness predictor for each attribute.
+    Each attribute is treated as a separate query. For each attribute, the average precision for the positive and for
+    the negative samples is calculated separately and then averaged. Falsely predicted labels are ground truth
+    relevant. The hardness score is the predicted relevancy score.
+    :param labels: The ground truth attribute labels.
+    :param predictions: The predicted attribute labels.
+    :param hp_scores: The hardness scores given by the hardness predictor.
+    :return: An array with the average precision for each attribute.
+    """
+    # Transpose the arrays so that each attribute can be analyzed separately.
+    labels = labels.transpose()
+    predictions = predictions.transpose()
+    hp_scores = hp_scores.transpose()
+    attribute_average_precisions = []
+    # Compute the mean average precision score for each attribute.
+    for l, p, s in zip(labels, predictions, hp_scores):
+        # Compute the score for the positive and the negative samples separately
+        ap_pos = average_precision(np.logical_not(p[l]), s[l])
+        ap_neg = average_precision(p[np.logical_not(l)], s[np.logical_not(l)])
+        attribute_average_precisions.append((ap_pos + ap_neg) / 2)
+    return np.array(attribute_average_precisions)
+
+
+
+
+
 

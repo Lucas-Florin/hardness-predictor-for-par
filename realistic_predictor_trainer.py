@@ -216,10 +216,15 @@ class RealisticPredictorTrainer(Trainer):
         if not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
-            header = ["Attribute", "Hardness Score Mean", "Variance"]
-            table = tab.tabulate(zip(self.dm.attributes, hp_scores.mean(0), hp_scores.var(0)),
+            header = ["Attribute", "Hardness Score Mean", "Variance", "Average Precision", "Mean Average Precision"]
+            mean = hp_scores.mean(0)
+            var = hp_scores.var(0)
+            average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
+            mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
+            table = tab.tabulate(zip(self.dm.attributes, mean, var, average_precision, mean_average_precision),
                                  floatfmt='.4f', headers=header)
             print(table)
+            print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
         hard_att_labels = None
         hard_att_pred = None
         if self.args.num_save_hard + self.args.num_save_easy > 0:

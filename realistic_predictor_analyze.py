@@ -57,14 +57,18 @@ def main(args):
 
     positivity_ratio = dm.dataset.get_positive_attribute_ratio()
     acc_atts = metrics.mean_attribute_accuracies(label_predictions, labels)
+    average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
+    mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
     print('Results ----------')
     print(metrics.get_metrics_table(label_predictions, labels))
     print('------------------')
     print('Mean Attribute Accuracies:')
-    header = ["Attribute", "Accuracy", "Positivity Ratio"]
-    table = tab.tabulate(zip(dm.attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
+    header = ["Attribute", "Accuracy", "Positivity Ratio", "Average Precision", "Mean Average Precision"]
+    table = tab.tabulate(zip(dm.attributes, acc_atts, positivity_ratio, average_precision, mean_average_precision),
+                         floatfmt='.2%', headers=header)
     print(table)
-    print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
+    print("Mean over attributes of mean attribute accuracy of label prediction: {:.2%}".format(acc_atts.mean()))
+    print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
     print('------------------')
     print("Looking at Hard attribute " + args.hard_att)
     att_idx = dm.attributes.index(args.hard_att)
