@@ -268,6 +268,10 @@ def hp_mean_average_precision(labels, predictions, hp_scores):
         # Compute the score for the positive and the negative samples separately
         ap_pos = average_precision(np.logical_not(p[l]), s[l])
         ap_neg = average_precision(p[np.logical_not(l)], s[np.logical_not(l)])
+        if np.isnan(ap_pos):
+            ap_pos = 0
+        if np.isnan(ap_neg):
+            ap_neg = 0
         attribute_average_precisions.append((ap_pos + ap_neg) / 2)
     return np.array(attribute_average_precisions)
 
