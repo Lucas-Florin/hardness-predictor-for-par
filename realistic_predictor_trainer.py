@@ -174,7 +174,7 @@ class RealisticPredictorTrainer(Trainer):
         # Compute Hardness scores.
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         hp_scores = np.array(hp_scores)
-        labels = np.array(labels)
+        labels = np.array(labels, dtype="bool")
         if self.args.reject_hard_portion > 0:
             num_datapoints = labels.shape[0]
             num_attributes = labels.shape[1]
@@ -221,10 +221,15 @@ class RealisticPredictorTrainer(Trainer):
             var = hp_scores.var(0)
             average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
             mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
-            table = tab.tabulate(zip(self.dm.attributes, mean, var, average_precision, mean_average_precision),
-                                 floatfmt='.4f', headers=header)
+            data = list(zip(self.dm.attributes, mean, var, average_precision, mean_average_precision))
+            table = tab.tabulate(data, floatfmt='.4f', headers=header)
             print(table)
             print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
+            csv_path = osp.join(self.args.save_experiment, "result_table.csv")
+            np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter=",")
+            print("Saved Table at " + csv_path)
+
+
         hard_att_labels = None
         hard_att_pred = None
         if self.args.num_save_hard + self.args.num_save_easy > 0:
