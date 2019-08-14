@@ -3,10 +3,11 @@ python realistic_predictor_analyze.py \
     --gpu-devices 0 \
     --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
+    --hard-att hat \
+    --plot-pos-hp \
+    --plot-acc-hp \
     --num-save-hard 20 \
     --num-save-easy 20 \
-    --hard-att handbag \
-    --plot-acc-hp \
-    --show-pos-samples
+    --show-pos-samples \
 
 

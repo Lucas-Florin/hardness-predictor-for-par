@@ -1,11 +1,12 @@
 python realistic_predictor_trainer.py \
     -d market1501 \
-    --gpu-devices 1 \
+    --gpu-devices 0 \
     --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_market/ \
-    --load-weights=2019-06-28_12-04-49_checkpoint.pth.tar \
+    --load-weights=2019-07-01_13-47-19_checkpoint.pth.tar \
     --evaluate \
     --group-atts \
+    --f1-calib
     --num-save-hard 20 \
     --num-save-easy 20 \
     --hard-att bag

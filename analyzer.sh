@@ -1,11 +1,14 @@
-python realistic_predictor_trainer.py \
+python realistic_predictor_analyze.py \
     -d rap \
     --gpu-devices 1 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --load-weights=2019-08-12_18-56-38_checkpoint.pth.tar \
-    --evaluate \
-    --use-macc
+    --reject-hard-attributes-quantile 0.5
+    --hard-att attachment-Backpack \
     --num-save-hard 20 \
     --num-save-easy 20 \
-    --hard-att attachment-Backpack \
+    --show-neg-samples
+    --plot-acc-hp \
+    --plot-pos-hp \
+
+
