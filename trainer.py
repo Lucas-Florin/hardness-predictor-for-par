@@ -221,7 +221,8 @@ class Trainer(object):
             "labels": ground_truth,
             "args": self.loaded_args if self.args.evaluate else self.args,
             "attributes": self.dm.attributes,
-            "f1-thresholds": f1_calibration_thresholds
+            "f1_thresholds": f1_calibration_thresholds,
+            "positivity_ratio": positivity_ratio
         }
         return acc_atts.mean()
 

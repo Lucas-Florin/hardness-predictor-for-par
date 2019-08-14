@@ -141,6 +141,10 @@ def argument_parser():
                         help='reject this portion of the hardest testing examples')
     parser.add_argument('--reject-harder-than', default=1.0, type=float,
                         help='reject testing examples that are harder than this threshold')
+    parser.add_argument('--reject-hard-attributes-quantile', default=-1.0, type=float,
+                        help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
+    parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
+                        help='reject attributes that have a mean hardness score higher than this threshold')
 
     # ************************************************************
     # Plot settings
