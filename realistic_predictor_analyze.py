@@ -89,7 +89,7 @@ def main(args):
     else:
         ignored_attributes = None
     if ignored_attributes is not None:
-        print("Ignoring attributes: " + str(attributes[ignored_attributes.astype("bool")]))
+        print("Ignoring attributes: " + str(np.array(attributes)[ignored_attributes.astype("bool")]))
 
     acc_atts = metrics.mean_attribute_accuracies(label_predictions, labels, ignore=ignored_test_datapoints)
     average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
