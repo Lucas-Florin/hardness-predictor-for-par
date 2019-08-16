@@ -88,7 +88,6 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
                                                   sigma=self.args.hp_loss_param)
 
-        # TODO: SGD or Adam? (Paper uses both)
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
         self.scheduler_main = init_lr_scheduler(self.optimizer_main, **lr_scheduler_kwargs(args))
 
@@ -96,7 +95,9 @@ class RealisticPredictorTrainer(Trainer):
         op_args = optimizer_kwargs(args)
         op_args['lr'] *= op_args['base_lr_mult']
         self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
-        self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **lr_scheduler_kwargs(args))
+        sc_args = lr_scheduler_kwargs(args)
+        sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
+        self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
 
         self.model_list = [self.model_main, self.model_hp]
         self.optimizer_list = [self.optimizer_main, self.optimizer_hp]
@@ -115,13 +116,17 @@ class RealisticPredictorTrainer(Trainer):
         losses_main = AverageMeter()
         losses_hp = AverageMeter()
 
-        if self.args.train_hp_only:
+        if self.args.train_hp_only or self.epoch >= self.args.max_epoch - self.args.hp_epoch_offset:
             self.model_main.eval()
             losses = losses_hp
         else:
             self.model_main.train()
             losses = losses_main
-        self.model_hp.train()
+
+        if self.epoch < self.args.hp_epoch_offset:
+            self.model_hp.eval()
+        else:
+            self.model_hp.train()
 
         if fixbase or self.args.always_fixbase:
             open_specified_layers(self.model_main, self.args.open_layers)
@@ -137,8 +142,8 @@ class RealisticPredictorTrainer(Trainer):
             # Run the batch through both nets.
             label_predicitons = self.model_main(imgs)
             hardness_predictions = self.model_hp(imgs)
-            if not self.args.train_hp_only:
-                if self.args.no_hp_feedback:
+            if not self.args.train_hp_only and self.epoch < self.args.max_epoch - self.args.hp_epoch_offset:
+                if self.args.no_hp_feedback or self.epoch < self.args.hp_epoch_offset:
                     main_net_weights = None
                 else:
                     # Make a detached version of the hp scores for computing the main loss.
@@ -151,15 +156,16 @@ class RealisticPredictorTrainer(Trainer):
 
                 losses_main.update(loss_main.item(), labels.size(0))
 
-            # Compute HP loss, gradient and optimize HP net.
-            label_predicitons_logits = self.criterion_main.logits(label_predicitons.detach())
-            loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
+            if self.epoch >= self.args.hp_epoch_offset:
+                # Compute HP loss, gradient and optimize HP net.
+                label_predicitons_logits = self.criterion_main.logits(label_predicitons.detach())
+                loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
 
-            self.optimizer_hp.zero_grad()
-            loss_hp.backward()
-            self.optimizer_hp.step()
+                self.optimizer_hp.zero_grad()
+                loss_hp.backward()
+                self.optimizer_hp.step()
 
-            losses_hp.update(loss_hp.item(), labels.size(0))
+                losses_hp.update(loss_hp.item(), labels.size(0))
 
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:

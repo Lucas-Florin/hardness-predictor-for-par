@@ -95,6 +95,8 @@ def argument_parser():
                         help='use DeepMAR weighting for the HP loss')
     parser.add_argument('--hp-loss-param', type=float, default=1,
                         help='the parameter for the HP loss function')
+    parser.add_argument('--hp-epoch-offset', type=int, default=0,
+                        help='delay start, end and learning rate decay of HP-Net')
 
 
     # ************************************************************
