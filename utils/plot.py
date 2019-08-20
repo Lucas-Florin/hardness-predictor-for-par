@@ -85,7 +85,7 @@ def show_img_grid(dataset, idxs, filename, title=None,
 
 
 def show_accuracy_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores):
-    x = np.arange(0, 1, 0.1)
+    x = np.arange(0, 1, 0.01)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
     predictions = predictions.reshape((num_datapoints, 1))
