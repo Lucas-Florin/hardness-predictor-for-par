@@ -12,7 +12,7 @@ from utils.plot import plot_epoch_losses
 
 def main():
     global args
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and not args.use_cpu:
         checkpoint = torch.load(args.load_path)
     else:
         checkpoint = torch.load(args.load_path, map_location='cpu')
@@ -25,6 +25,7 @@ def get_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-l", "--load-path", type=str, required=True, help="path to the checkpoint. ")
     parser.add_argument("-s", "--save-path", type=str, default=None, help="path to save new plot. ")
+    parser.add_argument("--use-cpu", action='store_true', help="path to save new plot. ")
     return parser.parse_args()
 
 
