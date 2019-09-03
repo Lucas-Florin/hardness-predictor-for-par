@@ -1,9 +1,9 @@
 python realistic_predictor_trainer.py \
-    -d rap \
-    --gpu-devices 3 \
+    -d pa100k \
+    --gpu-devices 0 \
     --eval-split val \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --load-weights=2019-08-16_12-17-34_checkpoint.pth.tar \
+    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
+    --load-weights=2019-08-16_12-38-20_checkpoint.pth.tar \
     --evaluate \
     --use-macc
     --num-save-hard 20 \
