@@ -88,10 +88,10 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
                                                   sigma=self.args.hp_loss_param)
 
+
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
         self.scheduler_main = init_lr_scheduler(self.optimizer_main, **lr_scheduler_kwargs(args))
 
-        # TODO: make like original paper?
         op_args = optimizer_kwargs(args)
         op_args['lr'] *= op_args['base_lr_mult']
         self.optimizer_hp = init_optimizer(self.model_hp, **op_args)

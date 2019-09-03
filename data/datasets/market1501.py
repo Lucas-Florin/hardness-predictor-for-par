@@ -107,7 +107,6 @@ class Market1501Attributes(BaseDataset):
                 grouped_attribute_names.append(group_names[0])
             else:
                 # The name of the first attribute in the group is taken as the group name.
-                # TODO: Make nicer.
                 group_name = group_names[0] + "_group"
                 grouped_attribute_names.append(group_name)
 

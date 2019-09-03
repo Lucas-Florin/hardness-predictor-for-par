@@ -1,6 +1,5 @@
 import argparse
 
-# TODO: Modularize
 
 
 def argument_parser():
