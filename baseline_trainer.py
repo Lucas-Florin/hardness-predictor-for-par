@@ -77,6 +77,10 @@ class BaselineTrainer(Trainer):
         self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
         self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
 
+        # Set default for max_epoch if it was not passed as an argument in the console.
+        if self.args.max_epoch < 0:
+            self.args.max_epoch = 60
+
         self.model_list = [self.model]
         self.optimizer_list = [self.optimizer]
         self.scheduler_list = [self.scheduler]

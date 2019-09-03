@@ -57,10 +57,19 @@ def argument_parser():
     # ************************************************************
     # Training hyperparameters
     # ************************************************************
-    parser.add_argument('--max-epoch', default=60, type=int,
-                        help='maximum epochs to run')
+    parser.add_argument('--max-epoch', default=-1, type=int,
+                        help='maximum epochs to run training function')
+    parser.add_argument('--main-net-train-epochs', default=-1, type=int,
+                        help='maximum epochs to train the main-Net (not including finetuning)')
+    parser.add_argument('--hp-net-train-epochs', default=-1, type=int,
+                        help='maximum epochs to train the HP-Net')
     parser.add_argument('--start-epoch', default=0, type=int,
                         help='manual epoch number (useful when restart)')
+    parser.add_argument('--hp-epoch-offset', type=int, default=0,
+                        help='delay start and learning rate decay of HP-Net')
+    parser.add_argument('--main-net-finetuning-epochs', type=int, default=0,
+                        help='after the HP-Net has finished training and hard examples have been discarded, continue '
+                             'training the main-Net. ')
 
     parser.add_argument('--train-batch-size', default=32, type=int,
                         help='training batch size')
@@ -94,8 +103,7 @@ def argument_parser():
                         help='use DeepMAR weighting for the HP loss')
     parser.add_argument('--hp-loss-param', type=float, default=1,
                         help='the parameter for the HP loss function')
-    parser.add_argument('--hp-epoch-offset', type=int, default=0,
-                        help='delay start, end and learning rate decay of HP-Net')
+
 
 
     # ************************************************************
@@ -136,8 +144,13 @@ def argument_parser():
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
                         help='name of the desired evaluation split (test/val)')
-
     parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
+
+    # Rejection arguments.
+    # TODO: add necessary arguments after rejectors have been implemented.
+    parser.add_argument('--rejector', type=str, default='none',
+                        choices=['none', 'ma', 'median', 'quantile', 'threshold'],
+                        help='name of the desired rejection strategy')
     parser.add_argument('--reject-hard-portion', default=-1.0, type=float,
                         help='reject this portion of the hardest testing examples')
     parser.add_argument('--reject-harder-than', default=1.0, type=float,
@@ -146,6 +159,8 @@ def argument_parser():
                         help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
     parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
                         help='reject attributes that have a mean hardness score higher than this threshold')
+
+    #
 
     # ************************************************************
     # Plot settings
