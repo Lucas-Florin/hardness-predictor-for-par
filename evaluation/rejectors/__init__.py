@@ -17,5 +17,8 @@ Partly based on:
 
 from .none_rejector import NoneRejector
 from .mean_accuracy_rejector import MeanAccuracyRejector
+from .median_rejector import MedianRejector
+from .threshold_rejector import ThresholdRejector
+from .quantile_rejector import QuantileRejector
 
-# TODO: Implement missing rejection strategies.
+# TODO: Test rejection strategies.

@@ -15,6 +15,6 @@ class NoneRejector(BaseRejector):
     This rejector does not reject any samples. It selects all samples.
     """
 
-    def __call__(self, hp_scores):
-        return hp_scores.new_ones(hp_scores.shape)
+    def update_thresholds(self, labels, label_predictions, hp_scores):
+        self.attribute_thresholds = hp_scores.new_ones(hp_scores.shape)
 

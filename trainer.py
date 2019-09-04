@@ -156,6 +156,14 @@ class Trainer(object):
         print('Initializing image data manager')
         self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(self.args))
         self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
+        self.attributes = self.dm.attributes
+        if self.args.group_atts:
+            # Each group has exactly one positive attribute.
+            self.attribute_grouping = self.dm.dataset.attribute_grouping
+            if not self.args.use_macc:
+                self.attributes = self.dm.dataset.grouped_attribute_names
+        else:
+            self.attribute_grouping = None
 
     def init_model(self):
         raise NotImplementedError()
@@ -170,58 +178,39 @@ class Trainer(object):
         :return:
         """
 
-        f1_calibration_thresholds = self.get_f1_calibration_threshold()
-        attributes = self.dm.attributes
-
-        prediction_probs, ground_truth, _ = self.get_full_output()
-        # compute test accuracies
-        prediction_probs = np.array(prediction_probs)
-        ground_truth = np.array(ground_truth, dtype="bool")
-        if self.args.f1_calib:
-
-            predictions = prediction_probs > f1_calibration_thresholds
-        else:
-            predictions = prediction_probs > 0.5
-        if self.args.group_atts:
-            # Each group has exactly one positive attribute.
-            attribute_grouping = self.dm.dataset.attribute_grouping
-            predictions = metrics.group_attributes(predictions, attribute_grouping)
-            if not self.args.use_macc:
-                attributes = self.dm.dataset.grouped_attribute_names
-            print("Grouping attributes. ")
-        else:
-            attribute_grouping = None
+        ground_truth, prediction_probs, label_predictions = self.get_label_predictions()
         if self.args.use_macc:
             # Use mA for each attribute.
-            acc_atts = metrics.mean_attribute_accuracies(predictions, ground_truth, ignore)
+            acc_atts = metrics.mean_attribute_accuracies(label_predictions, ground_truth, ignore)
             acc_name = 'Mean Attribute Accuracies'
         else:
             #
-            acc_atts = metrics.attribute_accuracies(predictions, ground_truth, attribute_grouping)
+            acc_atts = metrics.attribute_accuracies(label_predictions, ground_truth, self.attribute_grouping)
 
             acc_name = 'Attribute Accuracies'
         positivity_ratio = self.dm.dataset.get_positive_attribute_ratio()
         print('Results ----------')
-        print(metrics.get_metrics_table(predictions, ground_truth, ignore))
+        print(metrics.get_metrics_table(label_predictions, ground_truth, ignore))
         print('------------------')
         print(acc_name + ':')
         if self.args.f1_calib and not self.args.group_atts:
             header = ["Attribute", "Accuracy", "Positivity Ratio", "F1-Calibration Threshold"]
-            table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio, f1_calibration_thresholds.flatten()),
+            table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio,
+                                     self.f1_calibration_thresholds.flatten()),
                                  floatfmt='.2%', headers=header)
         else:
             header = ["Attribute", "Accuracy", "Positivity Ratio"]
-            table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
+            table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
         print(table)
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')
         self.result_dict = {
             "prediction_probs": prediction_probs,
-            "predictions": predictions,
+            "predictions": label_predictions,
             "labels": ground_truth,
             "args": self.loaded_args if self.args.evaluate else self.args,
             "attributes": self.dm.attributes,
-            "f1_thresholds": f1_calibration_thresholds,
+            "f1_thresholds": self.f1_calibration_thresholds,
             "positivity_ratio": positivity_ratio
         }
         return acc_atts.mean()
@@ -268,4 +257,20 @@ class Trainer(object):
                 imgs_path_list.extend(img_paths)
         return predictions, ground_truth, imgs_path_list
 
+    def get_label_predictions(self, loader=None, model=None, criterion=None):
+        self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
 
+        prediction_probs, ground_truth, _ = self.get_full_output(loader, model, criterion)
+        # compute test accuracies
+        prediction_probs = np.array(prediction_probs)
+        ground_truth = np.array(ground_truth, dtype="bool")
+        if self.args.f1_calib:
+
+            label_predictions = prediction_probs > self.f1_calibration_thresholds
+        else:
+            label_predictions = prediction_probs > 0.5
+        if self.args.group_atts:
+            # Each group has exactly one positive attribute.
+            label_predictions = metrics.group_attributes(label_predictions, self.attribute_grouping)
+            print("Grouping attributes. ")
+        return ground_truth, prediction_probs, label_predictions

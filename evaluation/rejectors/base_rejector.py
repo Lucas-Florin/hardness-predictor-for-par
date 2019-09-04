@@ -12,6 +12,10 @@ class BaseRejector():
     The base class for all rejectors. A rejector rejects some attributes of some of the samples passed based on the
     hardness score. Each rejector implements a specific rejection strategy.
     """
+
+    def __init__(self):
+        self.attribute_thresholds = None
+
     def __call__(self, hp_scores):
         """
         Call the rejector.
@@ -19,7 +23,7 @@ class BaseRejector():
         :return: an array of the same type as hp_scores. A 1 means the sample is selected, a 0 means the sample is
             rejected.
         """
-        raise NotImplementedError
+        return hp_scores < self.attribute_thresholds
 
     def update_thresholds(self, labels, label_predictions, hp_scores):
         """

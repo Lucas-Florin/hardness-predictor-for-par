@@ -147,13 +147,12 @@ def argument_parser():
     parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
 
     # Rejection arguments.
-    # TODO: add necessary arguments after rejectors have been implemented.
     parser.add_argument('--rejector', type=str, default='none',
-                        choices=['none', 'ma', 'median', 'quantile', 'threshold'],
+                        choices=['none', 'macc', 'median', 'quantile', 'threshold'],
                         help='name of the desired rejection strategy')
-    parser.add_argument('--reject-hard-portion', default=-1.0, type=float,
-                        help='reject this portion of the hardest testing examples')
-    parser.add_argument('--reject-harder-than', default=1.0, type=float,
+    parser.add_argument('--max-rejection-quantile', default=-1.0, type=float,
+                        help='reject at most this portion of the hardest testing examples of each attribute')
+    parser.add_argument('--rejection-threshold', default=-1.0, type=float,
                         help='reject testing examples that are harder than this threshold')
     parser.add_argument('--reject-hard-attributes-quantile', default=-1.0, type=float,
                         help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
