@@ -255,9 +255,10 @@ class Trainer(object):
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
                 imgs_path_list.extend(img_paths)
-        return predictions, ground_truth, imgs_path_list
+        return np.array(predictions), np.array(ground_truth), imgs_path_list
 
     def get_label_predictions(self, loader=None, model=None, criterion=None):
+        print("Computing label predictions. ")
         self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
 
         prediction_probs, ground_truth, _ = self.get_full_output(loader, model, criterion)

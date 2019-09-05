@@ -37,4 +37,4 @@ class MeanAccuracyRejector(QuantileRejector):
             macc = mean_attribute_accuracies(label_predictions, labels, ignore)
             maccs[i, :] = macc
         self.attribute_thresholds = possible_attribute_thresholds[maccs.argmax(0)]
-        print("Rejecting " + str(np.logical_not(self(hp_scores)).mean()) + " % of training samples. ")
+        self.print_percentage_rejected(hp_scores)

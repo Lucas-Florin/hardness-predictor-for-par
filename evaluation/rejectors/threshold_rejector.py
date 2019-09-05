@@ -25,7 +25,7 @@ class ThresholdRejector(QuantileRejector):
         ideal_thresholds = hp_scores.new_full((1, hp_scores.shape[1]), self.hp_score_threshold)
         self.attribute_thresholds = np.where(
             self.attribute_thresholds < ideal_thresholds, self.attribute_thresholds, ideal_thresholds)
-        print("Rejecting " + str(np.logical_not(self(hp_scores)).mean()) + " % of training samples. ")
+        self.print_percentage_rejected(hp_scores)
 
 
 

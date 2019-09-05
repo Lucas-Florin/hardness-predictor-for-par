@@ -23,6 +23,8 @@ class BaseRejector():
         :return: an array of the same type as hp_scores. A 1 means the sample is selected, a 0 means the sample is
             rejected.
         """
+        print(self.attribute_thresholds.shape)
+        print(hp_scores.shape)
         return hp_scores < self.attribute_thresholds
 
     def update_thresholds(self, labels, label_predictions, hp_scores):
@@ -47,4 +49,7 @@ class BaseRejector():
         :return: A boolean value.
         """
         return self.attribute_thresholds is not None
+
+    def print_percentage_rejected(self, hp_scores):
+        print("Rejecting the {:.2%} hardest of training examples. ".format((np.logical_not(self(hp_scores))).mean()))
 

@@ -55,6 +55,19 @@ class RealisticPredictorTrainer(Trainer):
         self.model_hp = models.init_model(name="hp_net", num_classes=num_hp_net_outputs)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_hp)))
 
+        if self.args.rejector == "none":
+            self.rejector = rejectors.NoneRejector()
+        elif self.args.rejector == 'macc':
+            self.rejector = rejectors.MeanAccuracyRejector(self.args.max_rejection_quantile)
+        elif self.args.rejector == "median":
+            self.rejector = rejectors.MedianRejector(self.args.max_rejection_quantile)
+        elif self.args.rejector == "threshold":
+            self.rejector = rejectors.ThresholdRejector(self.args.rejection_threshold, self.args.max_rejection_quantile)
+        elif self.args.rejector == "quantile":
+            self.rejector = rejectors.QuantileRejector(self.args.max_rejection_quantile)
+        else:
+            self.rejector = None
+
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
         self.loaded_args = self.args
@@ -65,6 +78,10 @@ class RealisticPredictorTrainer(Trainer):
                     self.loaded_args = cp["args"]
                 else:
                     print("WARNING: Could not load args. ")
+                if "rejection_thresholds" in cp:
+                    self.rejector.load_thresholds(cp["rejection_thresholds"])
+                else:
+                    print("WARNING: Could not load rejection thresholds. ")
             else:
                 print("WARNING: Could not load pretraining weights")
 
@@ -89,18 +106,7 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
                                                   sigma=self.args.hp_loss_param)
 
-        if self.args.rejector == "none":
-            self.rejector = rejectors.NoneRejector()
-        elif self.args.rejector == 'macc':
-            self.rejector = rejectors.MeanAccuracyRejector(self.args.max_rejection_quantile)
-        elif self.args.rejector == "median":
-            self.rejector = rejectors.MedianRejector(self.args.max_rejection_quantile)
-        elif self.args.rejector == "threshold":
-            self.rejector = rejectors.ThresholdRejector(self.args.rejection_threshold, self.args.max_rejection_quantile)
-        elif self.args.rejector == "quantile":
-            self.rejector = rejectors.QuantileRejector(self.args.max_rejection_quantile)
-        else:
-            self.rejector = None
+
 
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
         self.scheduler_main = init_lr_scheduler(self.optimizer_main, **lr_scheduler_kwargs(args))
@@ -112,6 +118,28 @@ class RealisticPredictorTrainer(Trainer):
         sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
 
+        if not self.args.evaluate:
+            self.init_epochs()
+
+        self.model_list = [self.model_main, self.model_hp]
+        self.optimizer_list = [self.optimizer_main, self.optimizer_hp]
+        self.scheduler_list = [self.scheduler_main, self.scheduler_hp]
+        self.criterion_list = [self.criterion_main, self.criterion_hp]
+
+        # if args.resume and check_isfile(args.resume):
+        #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
+
+    def update_rejector_thresholds(self):
+
+        print("Computing hardness scores for training data. ")
+        hardness_predictions, _, _ = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
+        print("Computing label predictions for training data. ")
+        labels, _, label_predictions = self.get_label_predictions(
+            self.trainloader, self.model_main, self.criterion_main)
+        print("Updating rejection thresholds based on training data. ")
+        self.rejector.update_thresholds(labels, label_predictions, hardness_predictions)
+
+    def init_epochs(self):
         # Initialize the epoch thresholds.
         if self.args.max_epoch < 0 and (self.args.main_net_train_epochs < 0 or self.args.hp_net_train_epochs < 0):
             raise ValueError("Neither max-epochs or not-train-epochs is defined. ")
@@ -124,14 +152,6 @@ class RealisticPredictorTrainer(Trainer):
         if self.args.max_epoch < 0:
             self.args.max_epoch = (max(self.args.main_net_train_epochs, self.args.hp_net_train_epochs
                                        + self.args.hp_epoch_offset) + self.args.main_net_finetuning_epochs)
-
-        self.model_list = [self.model_main, self.model_hp]
-        self.optimizer_list = [self.optimizer_main, self.optimizer_hp]
-        self.scheduler_list = [self.scheduler_main, self.scheduler_hp]
-        self.criterion_list = [self.criterion_main, self.criterion_hp]
-
-        # if args.resume and check_isfile(args.resume):
-        #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
     def train(self, fixbase=False):
         """
@@ -150,10 +170,7 @@ class RealisticPredictorTrainer(Trainer):
                     + self.args.hp_epoch_offset)
 
         if rejection_epoch:
-            hardness_predictions = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
-            labels, _, label_predictions = self.get_full_output(
-                self.trainloader, self.model_main, self.criterion_main)
-            self.rejector.update_thresholds(labels, label_predictions, hardness_predictions)
+            self.update_rejector_thresholds()
         if train_main:
             self.model_main.train()
             losses = losses_main
@@ -218,18 +235,25 @@ class RealisticPredictorTrainer(Trainer):
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
-        # Compute Hardness scores.
-        hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
-        hp_scores = np.array(hp_scores)
-        labels = np.array(labels, dtype="bool")
+        if not self.rejector.is_initialized():
+            self.update_rejector_thresholds()
 
+        # Compute Hardness scores.
+        print("Computing hardness scores. ")
+        hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+        #hp_scores = np.array(hp_scores)
+        labels = np.array(labels, dtype="bool")
+        ignore = np.logical_not(self.rejector(hp_scores))
+        print("Ignoring the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
-        mean_acc = super().test()
+        mean_acc = super().test(ignore)
         label_prediction_probs = self.result_dict["prediction_probs"]
         label_predictions = self.result_dict["predictions"]
 
         self.result_dict.update({
-            "hp_scores": hp_scores
+            "hp_scores": hp_scores,
+            "rejection_thresholds": self.rejector.attribute_thresholds,
+            "ignored_test_samples": ignore
         })
         pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
         pickle_file = open(pickle_path, "wb")
@@ -291,6 +315,7 @@ class RealisticPredictorTrainer(Trainer):
                           hard_att_labels, hp_scores[hard_idxs], hard_att_pred)
 
         return mean_acc, label_prediction_probs, label_predictions  # Return the values from the super-function.
+
 
 
 if __name__ == '__main__':

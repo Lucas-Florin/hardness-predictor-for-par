@@ -16,6 +16,6 @@ class NoneRejector(BaseRejector):
     """
 
     def update_thresholds(self, labels, label_predictions, hp_scores):
-        self.attribute_thresholds = hp_scores.new_ones(hp_scores.shape)
-        print("Rejecting " + str(np.logical_not(self(hp_scores)).mean()) + " % of training samples. ")
+        self.attribute_thresholds = np.ones((1, hp_scores.shape[1]))
+        self.print_percentage_rejected(hp_scores)
 
