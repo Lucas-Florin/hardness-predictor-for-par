@@ -34,3 +34,17 @@ class BaseRejector():
         """
         raise NotImplementedError
 
+    def load_thresholds(self, attribtute_thresholds):
+        """
+        Set the thresholds to predefined values.
+        :param attribtute_thresholds: the thresholds loaded from a past session.
+        """
+        self.attribute_thresholds = attribtute_thresholds
+
+    def is_initialized(self):
+        """
+        Have the thresholds been initialized?
+        :return: A boolean value.
+        """
+        return self.attribute_thresholds is not None
+
