@@ -29,5 +29,6 @@ class QuantileRejector(BaseRejector):
         self.shape = labels.shape
         sorted_scores = np.sort(hp_scores, axis=0)
         self.attribute_thresholds = sorted_scores[self.num_reject, :]
+        print("Rejecting " + str(np.logical_not(self(hp_scores)).mean()) + " % of training samples. ")
 
 

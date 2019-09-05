@@ -37,6 +37,7 @@ class MedianRejector(QuantileRejector):
 
             correctness_ratios[i, :] = correct_label_predictions[select].mean()
         self.attribute_thresholds = possible_attribute_thresholds[(correctness_ratios < 0.5).argmax(0)]
+        print("Rejecting " + str(np.logical_not(self(hp_scores)).mean()) + " % of training samples. ")
 
 
 
