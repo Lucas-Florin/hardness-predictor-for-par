@@ -152,6 +152,14 @@ class RealisticPredictorTrainer(Trainer):
         if self.args.max_epoch < 0:
             self.args.max_epoch = (max(self.args.main_net_train_epochs, self.args.hp_net_train_epochs
                                        + self.args.hp_epoch_offset) + self.args.main_net_finetuning_epochs)
+        print("Training schedule: ")
+        print(tab.tabulate([
+            ["Main-Net train epochs", self.args.main_net_train_epochs],
+            ["HP-Net epoch offset", self.args.hp_epoch_offset],
+            ["HP-Net train epochs", self.args.hp_net_train_epochs],
+            ["Main-Net finetuning epochs", self.args.main_net_finetuning_epochs],
+            ["Total epochs", self.args.max_epoch]
+        ]))
 
     def train(self, fixbase=False):
         """
@@ -239,7 +247,7 @@ class RealisticPredictorTrainer(Trainer):
             self.update_rejector_thresholds()
 
         # Compute Hardness scores.
-        print("Computing hardness scores. ")
+        print("Computing hardness scores for testing data. ")
         hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         #hp_scores = np.array(hp_scores)
         labels = np.array(labels, dtype="bool")
