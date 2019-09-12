@@ -16,6 +16,9 @@ class NoneRejector(BaseRejector):
     """
 
     def update_thresholds(self, labels, label_predictions, hp_scores):
-        self.attribute_thresholds = np.ones((1, hp_scores.shape[1]))
+        print("Rejecting nothing. ")
+        self.attribute_thresholds = None  # redundant
         self.print_percentage_rejected(hp_scores)
 
+    def load_thresholds(self, attribtute_thresholds):
+        self.attribute_thresholds = None  # redundant

@@ -38,12 +38,13 @@ class Trainer(object):
         :param args: Command line args.
         """
         self.args = args
+        self.time_start = time.time()
         self.init_environment(args)
 
         self.init_data()
-
+        self.result_dict = dict()
         self.init_model()
-        self.result_dict = None
+
         if args.evaluate:
             print('Evaluate only')
             split = args.eval_split
@@ -123,7 +124,7 @@ class Trainer(object):
 
     def init_environment(self, args):
 
-        self.time_start = time.time()
+
         set_random_seed(args.seed)
 
         # Decide which processor (CPU or GPU) to use.
@@ -177,7 +178,6 @@ class Trainer(object):
         the command line arguments.
         :return:
         """
-
         ground_truth, prediction_probs, label_predictions = self.get_label_predictions()
         if self.args.use_macc:
             # Use mA for each attribute.
@@ -204,7 +204,7 @@ class Trainer(object):
         print(table)
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')
-        self.result_dict = {
+        self.result_dict.update({
             "prediction_probs": prediction_probs,
             "predictions": label_predictions,
             "labels": ground_truth,
@@ -212,7 +212,7 @@ class Trainer(object):
             "attributes": self.dm.attributes,
             "f1_thresholds": self.f1_calibration_thresholds,
             "positivity_ratio": positivity_ratio
-        }
+        })
         return acc_atts.mean()
 
     def get_f1_calibration_threshold(self, loader=None):
@@ -221,13 +221,12 @@ class Trainer(object):
         :param loader:
         :return:
         """
+        print("Computing F1-calibration thresholds")
+        # TODO: ignore rejected samples?
         if loader is None:
             loader = self.testloader_dict["train"]
         predictions, gt, _ = self.get_full_output(loader)
 
-        # compute test accuracies
-        predictions = np.array(predictions)
-        gt = np.array(gt, dtype="bool")
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 
     def get_full_output(self, loader=None, model=None, criterion=None):
@@ -255,16 +254,21 @@ class Trainer(object):
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
                 imgs_path_list.extend(img_paths)
-        return np.array(predictions), np.array(ground_truth), imgs_path_list
+        return np.array(predictions), np.array(ground_truth, dtype="bool"), imgs_path_list
 
     def get_label_predictions(self, loader=None, model=None, criterion=None):
-        print("Computing label predictions. ")
-        self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
 
-        prediction_probs, ground_truth, _ = self.get_full_output(loader, model, criterion)
-        # compute test accuracies
-        prediction_probs = np.array(prediction_probs)
-        ground_truth = np.array(ground_truth, dtype="bool")
+        if self.args.evaluate and "f1_thresholds" in self.result_dict:
+            self.f1_calibration_thresholds = self.result_dict["f1_thresholds"]
+        else:
+            self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
+        if self.args.evaluate and "prediction_probs" in self.result_dict and "labels" in self.result_dict:
+
+            prediction_probs = self.result_dict["prediction_probs"]
+            ground_truth = self.result_dict["labels"]
+        else:
+            print("Computing label predictions. ")
+            prediction_probs, ground_truth, _ = self.get_full_output(loader, model, criterion)
         if self.args.f1_calib:
 
             label_predictions = prediction_probs > self.f1_calibration_thresholds

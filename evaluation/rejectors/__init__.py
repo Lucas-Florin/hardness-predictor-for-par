@@ -21,4 +21,3 @@ from .median_rejector import MedianRejector
 from .threshold_rejector import ThresholdRejector
 from .quantile_rejector import QuantileRejector
 
-# TODO: Test rejection strategies.

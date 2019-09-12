@@ -78,13 +78,22 @@ class RealisticPredictorTrainer(Trainer):
                     self.loaded_args = cp["args"]
                 else:
                     print("WARNING: Could not load args. ")
-                if "rejection_thresholds" in cp:
-                    self.rejector.load_thresholds(cp["rejection_thresholds"])
-                else:
-                    print("WARNING: Could not load rejection thresholds. ")
+
+                if "result_dict" in cp and self.args.evaluate:
+                    self.result_dict = cp["result_dict"]
+                    print("Loaded result dict with keys: ")
+                    print(list(self.result_dict.keys()))
+                    if "rejection_thresholds" in self.result_dict:
+                        self.rejector.load_thresholds(self.result_dict["rejection_thresholds"])
+                        if self.rejector.is_initialized():
+                            print("Loaded rejection thresholds. ")
+                        else:
+                            print("Loaded uninitialized (None) rejection thresholds. ")
+                    else:
+                        print("WARNING: Could not load rejection thresholds. ")
             else:
                 print("WARNING: Could not load pretraining weights")
-
+        self.new_eval_split = self.args.eval_split != self.loaded_args.eval_split
         # Load model onto GPU if GPU is used.
         self.model_main = nn.DataParallel(self.model_main).cuda() if self.use_gpu else self.model_main
         self.model = self.model_main
@@ -105,7 +114,7 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
                                                   sigma=self.args.hp_loss_param)
-
+        self.f1_calibration_thresholds = None
 
 
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
@@ -130,12 +139,21 @@ class RealisticPredictorTrainer(Trainer):
         #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
     def update_rejector_thresholds(self):
-
-        print("Computing hardness scores for training data. ")
-        hardness_predictions, _, _ = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
-        print("Computing label predictions for training data. ")
-        labels, _, label_predictions = self.get_label_predictions(
-            self.trainloader, self.model_main, self.criterion_main)
+        if "hp_scores_train" in self.result_dict:
+            hardness_predictions = self.result_dict["hp_scores_train"]
+        else:
+            print("Computing hardness scores for training data. ")
+            hardness_predictions, _, _ = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
+            self.result_dict["hp_scores_train"] = hardness_predictions
+        if "predictions_train" in self.result_dict and "labels_train" in self.result_dict:
+            label_predictions = self.result_dict["predictions_train"]
+            labels = self.result_dict["labels_train"]
+        else:
+            print("Computing label predictions for training data. ")
+            labels, _, label_predictions = self.get_label_predictions(
+                self.trainloader, self.model_main, self.criterion_main)
+            self.result_dict["predictions_train"] = label_predictions
+            self.result_dict["labels_train"] = labels
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, label_predictions, hardness_predictions)
 
@@ -246,13 +264,19 @@ class RealisticPredictorTrainer(Trainer):
         if not self.rejector.is_initialized():
             self.update_rejector_thresholds()
 
-        # Compute Hardness scores.
-        print("Computing hardness scores for testing data. ")
-        hp_scores, labels, images = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+        # Get Hardness scores.
+
+        if (self.args.evaluate and "hp_scores" in self.result_dict and "labels" in self.result_dict
+                and not self.new_eval_split):
+            hp_scores = self.result_dict["hp_scores"]
+            labels = self.result_dict["labels"]
+        else:
+            print("Computing hardness scores for testing data. ")
+            hp_scores, labels, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         #hp_scores = np.array(hp_scores)
-        labels = np.array(labels, dtype="bool")
+        #labels = np.array(labels, dtype="bool")
         ignore = np.logical_not(self.rejector(hp_scores))
-        print("Ignoring the {:.2%} hardest of testing examples. ".format(ignore.mean()))
+        print("Rejecting the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
         mean_acc = super().test(ignore)
         label_prediction_probs = self.result_dict["prediction_probs"]
@@ -277,13 +301,25 @@ class RealisticPredictorTrainer(Trainer):
         if not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
-            header = ["Attribute", "Hardness Score Mean", "Variance", "Average Precision", "Mean Average Precision"]
+            header = ["Attribute", "Hardness Score Mean", "Variance", "Average Precision", "Rejection Threshold",
+                      "Rejection Quantile"]
             mean = hp_scores.mean(0)
             var = hp_scores.var(0)
             average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
-            mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
-            data = list(zip(self.dm.attributes, mean, var, average_precision, mean_average_precision))
+            # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
+
+            rejection_quantiles = ignore.mean(0).flatten()
+            rejection_thresholds = self.rejector.attribute_thresholds
+            if rejection_thresholds is None:
+                rejection_thresholds = np.ones_like(rejection_quantiles)
+            else:
+                rejection_thresholds = rejection_thresholds.flatten()
+            data = list(zip(self.dm.attributes, mean, var, average_precision, rejection_thresholds, rejection_quantiles))
             table = tab.tabulate(data, floatfmt='.4f', headers=header)
+            print(table)
+            data_mean_over_attributes = [hp_scores.mean(), hp_scores.var(), average_precision.mean(),
+                                         rejection_thresholds.mean(), rejection_quantiles.mean()]
+            table = tab.tabulate([["Total"] + data_mean_over_attributes], floatfmt='.4f')
             print(table)
             print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
             csv_path = osp.join(self.args.save_experiment, "result_table.csv")

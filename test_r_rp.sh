@@ -3,9 +3,12 @@ python realistic_predictor_trainer.py \
     --gpu-devices 3 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --load-weights=2019-08-16_12-17-34_checkpoint.pth.tar \
+    --load-weights=2019-09-11_18-32-31_checkpoint.pth.tar \
     --evaluate \
-    --use-macc
+    --use-macc \
+    --rejector macc \
+    --max-rejection-quantile 0.25 \
+    --rejection-threshold 0.4
     --num-save-hard 20 \
     --num-save-easy 20 \
     --hard-att attachment-Backpack \

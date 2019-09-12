@@ -15,28 +15,32 @@ class MedianRejector(QuantileRejector):
     the maximum rejection quantile.
     """
 
-    def __init__(self, max_rejection_quantile):
-        super().__init__(max_rejection_quantile)
+    def __init__(self, rejection_quantile):
+        super().__init__(rejection_quantile)
 
     def update_thresholds(self, labels, label_predictions, hp_scores):
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
-        quantiles = np.arange(0, self.max_rejection_quantile, 0.01)
-        correctness_ratios = np.zeros(quantiles.size, num_attributes)
-        possible_attribute_thresholds = np.zeros(quantiles.size, num_attributes)
+        fraction_width = 0.01
+        quantiles = np.arange(0, self.rejection_quantile, fraction_width)
+        correctness_ratios = list()
+        possible_attribute_thresholds = list()
         correct_label_predictions = labels == label_predictions
-
+        sorted_idxs = hp_scores.argsort(0)
         for i in range(len(quantiles) - 1):
-            num_reject_start = int(num_datapoints * quantiles[i])
-            num_reject_end = int(num_datapoints * quantiles[i + 1])
-            select = np.zeros(labels.shape, dtype="int8")
-            sorted_idxs = hp_scores.argsort(0)
-            quantile_idxs = sorted_idxs[-num_reject_end : -num_reject_start, :]
-            possible_attribute_thresholds[i, :] = hp_scores[sorted_idxs[-num_reject_start, :], np.arange(num_attributes)]
-            select[quantile_idxs] = 1
-
-            correctness_ratios[i, :] = correct_label_predictions[select].mean()
-        self.attribute_thresholds = possible_attribute_thresholds[(correctness_ratios < 0.5).argmax(0)]
+            num_reject_start = int(num_datapoints * quantiles[i]) + 1
+            num_reject_end = int(num_datapoints * quantiles[i + 1]) + 1
+            thresholds_start = hp_scores[sorted_idxs[-num_reject_start, :], np.arange(num_attributes)]
+            thresholds_end = hp_scores[sorted_idxs[-num_reject_end, :], np.arange(num_attributes)]
+            possible_attribute_thresholds.append(thresholds_start)
+            select = np.logical_and(thresholds_end < hp_scores, hp_scores <= thresholds_start)
+            ratio = (correct_label_predictions * select).mean(0) / fraction_width
+            correctness_ratios.append(ratio)
+        correctness_ratios = np.array(correctness_ratios)
+        possible_attribute_thresholds = np.array(possible_attribute_thresholds)
+        threshold_idxs = (correctness_ratios < 0.5).argmax(0)
+        # TODO: what happens if none of the ratios is < 0.5?
+        self.attribute_thresholds = possible_attribute_thresholds[threshold_idxs, np.arange(num_attributes)]
         self.print_percentage_rejected(hp_scores)
 
 
