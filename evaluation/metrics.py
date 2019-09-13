@@ -276,7 +276,18 @@ def hp_mean_average_precision(labels, predictions, hp_scores):
     return np.array(attribute_average_precisions)
 
 
-
+def get_confidence(prediction_probs, decision_thresholds=None):
+    if decision_thresholds is None:
+        decision_thresholds = 0.5
+    negative_multiplicator = 1 / decision_thresholds
+    positive_multiplicator = 1 / (1 - decision_thresholds)
+    predictions = prediction_probs > decision_thresholds
+    confidence = np.abs(prediction_probs - decision_thresholds)
+    confidence = ((predictions * confidence * positive_multiplicator) +
+                  (np.logical_not(predictions) * confidence * negative_multiplicator))
+    assert confidence.max() <= 1
+    assert confidence.min() >= 0
+    return confidence
 
 
 

@@ -82,7 +82,7 @@ class RealisticPredictorTrainer(Trainer):
                 if "result_dict" in cp and self.args.evaluate:
                     self.result_dict = cp["result_dict"]
                     print("Loaded result dict with keys: ")
-                    print(list(self.result_dict.keys()))
+                    print(sorted(list(self.result_dict.keys())))
                     if "rejection_thresholds" in self.result_dict:
                         self.rejector.load_thresholds(self.result_dict["rejection_thresholds"])
                         if self.rejector.is_initialized():
@@ -139,21 +139,34 @@ class RealisticPredictorTrainer(Trainer):
         #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
     def update_rejector_thresholds(self):
-        if "hp_scores_train" in self.result_dict:
+        # TODO: adapt to new result_dict
+
+        if ("predictions_train" in self.result_dict and "labels_train" in self.result_dict
+                and "prediction_probs_train" in self.result_dict):
+            label_predictions = self.result_dict["predictions_train"]
+            labels = self.result_dict["labels_train"]
+            label_prediction_probs = self.result_dict["prediction_probs_train"]
+        else:
+            print("Computing label predictions for training data. ")
+            labels, label_prediction_probs, label_predictions = self.get_label_predictions(
+                self.trainloader, self.model_main, self.criterion_main)
+            self.result_dict["predictions_train"] = label_predictions
+            self.result_dict["prediction_probs_train"] = label_prediction_probs
+            self.result_dict["labels_train"] = labels
+        if self.args.use_confidence:
+            if self.args.f1_calib:
+                decision_thresholds = self.f1_calibration_thresholds
+                assert decision_thresholds is not None
+            else:
+                decision_thresholds = None
+            hardness_predictions = 1 - metrics.get_confidence(label_prediction_probs, decision_thresholds)
+            print("Using confidence scores as HP-scores. ")
+        elif "hp_scores_train" in self.result_dict:
             hardness_predictions = self.result_dict["hp_scores_train"]
         else:
             print("Computing hardness scores for training data. ")
             hardness_predictions, _, _ = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
             self.result_dict["hp_scores_train"] = hardness_predictions
-        if "predictions_train" in self.result_dict and "labels_train" in self.result_dict:
-            label_predictions = self.result_dict["predictions_train"]
-            labels = self.result_dict["labels_train"]
-        else:
-            print("Computing label predictions for training data. ")
-            labels, _, label_predictions = self.get_label_predictions(
-                self.trainloader, self.model_main, self.criterion_main)
-            self.result_dict["predictions_train"] = label_predictions
-            self.result_dict["labels_train"] = labels
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, label_predictions, hardness_predictions)
 
@@ -261,27 +274,32 @@ class RealisticPredictorTrainer(Trainer):
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
+
         if not self.rejector.is_initialized():
             self.update_rejector_thresholds()
 
         # Get Hardness scores.
 
-        if (self.args.evaluate and "hp_scores" in self.result_dict and "labels" in self.result_dict
-                and not self.new_eval_split):
+        if self.args.use_confidence:
+            labels, label_prediction_probs, label_predictions = self.get_label_predictions()
+            if self.args.f1_calib:
+                decision_thresholds = self.f1_calibration_thresholds
+            else:
+                decision_thresholds = None
+            hp_scores = 1 - metrics.get_confidence(label_prediction_probs, decision_thresholds)
+            print("Using confidence scores as HP-scores. ")
+        elif self.args.evaluate and "hp_scores" in self.result_dict and not self.new_eval_split:
             hp_scores = self.result_dict["hp_scores"]
-            labels = self.result_dict["labels"]
         else:
             print("Computing hardness scores for testing data. ")
-            hp_scores, labels, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
-        #hp_scores = np.array(hp_scores)
-        #labels = np.array(labels, dtype="bool")
+            hp_scores, _, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
         ignore = np.logical_not(self.rejector(hp_scores))
         print("Rejecting the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
         mean_acc = super().test(ignore)
         label_prediction_probs = self.result_dict["prediction_probs"]
         label_predictions = self.result_dict["predictions"]
-
+        labels = self.result_dict["labels"]
         self.result_dict.update({
             "hp_scores": hp_scores,
             "rejection_thresholds": self.rejector.attribute_thresholds,
@@ -298,6 +316,8 @@ class RealisticPredictorTrainer(Trainer):
             ["Mean", np.mean(hp_scores)],
             ["Variance", np.var(hp_scores)]
         ]))
+
+
         if not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)

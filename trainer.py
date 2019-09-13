@@ -37,6 +37,7 @@ class Trainer(object):
         Run the trainer.
         :param args: Command line args.
         """
+        # TODO: only init data and model if necessary.
         self.args = args
         self.time_start = time.time()
         self.init_environment(args)
@@ -215,6 +216,14 @@ class Trainer(object):
         })
         return acc_atts.mean()
 
+    def init_f1_calibration_threshold(self):
+        if self.f1_calibration_thresholds is not None:
+            return
+        if self.args.evaluate and "f1_thresholds" in self.result_dict:
+            self.f1_calibration_thresholds = self.result_dict["f1_thresholds"]
+        else:
+            self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
+
     def get_f1_calibration_threshold(self, loader=None):
         """
 
@@ -257,11 +266,8 @@ class Trainer(object):
         return np.array(predictions), np.array(ground_truth, dtype="bool"), imgs_path_list
 
     def get_label_predictions(self, loader=None, model=None, criterion=None):
+        self.init_f1_calibration_threshold()
 
-        if self.args.evaluate and "f1_thresholds" in self.result_dict:
-            self.f1_calibration_thresholds = self.result_dict["f1_thresholds"]
-        else:
-            self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
         if self.args.evaluate and "prediction_probs" in self.result_dict and "labels" in self.result_dict:
 
             prediction_probs = self.result_dict["prediction_probs"]

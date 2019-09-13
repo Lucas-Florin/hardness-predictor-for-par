@@ -145,6 +145,8 @@ def argument_parser():
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
                         help='name of the desired evaluation split (test/val)')
     parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
+    parser.add_argument('--use-confidence', action='store_true',
+                        help='use inverse confidence instead of hardness score. ')
 
     # Rejection arguments.
     parser.add_argument('--rejector', type=str, default='none',
