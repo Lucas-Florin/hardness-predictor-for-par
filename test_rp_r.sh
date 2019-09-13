@@ -9,6 +9,4 @@ python realistic_predictor_trainer.py \
     --rejector macc \
     --max-rejection-quantile 0.25 \
     --rejection-threshold 0.4
-    --num-save-hard 20 \
-    --num-save-easy 20 \
-    --hard-att attachment-Backpack \
+    --use-confidence
