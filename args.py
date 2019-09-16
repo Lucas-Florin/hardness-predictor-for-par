@@ -150,7 +150,7 @@ def argument_parser():
 
     # Rejection arguments.
     parser.add_argument('--rejector', type=str, default='none',
-                        choices=['none', 'macc', 'median', 'quantile', 'threshold'],
+                        choices=['none', 'macc', 'median', 'quantile', 'threshold', 'f1'],
                         help='name of the desired rejection strategy')
     parser.add_argument('--max-rejection-quantile', default=-1.0, type=float,
                         help='reject at most this portion of the hardest testing examples of each attribute')

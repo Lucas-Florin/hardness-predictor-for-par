@@ -66,6 +66,8 @@ class RealisticPredictorTrainer(Trainer):
             self.rejector = rejectors.ThresholdRejector(self.args.rejection_threshold, self.args.max_rejection_quantile)
         elif self.args.rejector == "quantile":
             self.rejector = rejectors.QuantileRejector(self.args.max_rejection_quantile)
+        elif self.args.rejector == 'f1':
+            self.rejector = rejectors.F1Rejector(self.args.max_rejection_quantile)
         else:
             self.rejector = None
 
@@ -144,6 +146,7 @@ class RealisticPredictorTrainer(Trainer):
         split = "train"
         if self.result_manager.check_output_dict(split):
             labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
+            print("labels")
         else:
             print("Computing label predictions for training data. ")
             labels, prediction_probs, predictions = self.get_label_predictions(split)
@@ -159,9 +162,10 @@ class RealisticPredictorTrainer(Trainer):
             print("Using confidence scores as HP-scores. ")
         elif self.result_manager.check_output_dict(split):
             _, _, _, hp_scores = self.result_manager.get_outputs(split)
+            print ("hp")
         else:
             print("Computing hardness scores for training data. ")
-            hp_scores, _, _ = self.get_full_output(self.trainloader, self.model_hp, self.criterion_hp)
+            hp_scores, _, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp, split=split)
             self.result_manager.update_outputs(split, hp_scores=hp_scores)
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, predictions, hp_scores)

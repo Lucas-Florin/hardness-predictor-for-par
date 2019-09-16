@@ -20,4 +20,4 @@ from .mean_accuracy_rejector import MeanAccuracyRejector
 from .median_rejector import MedianRejector
 from .threshold_rejector import ThresholdRejector
 from .quantile_rejector import QuantileRejector
-
+from .f1_rejector import F1Rejector

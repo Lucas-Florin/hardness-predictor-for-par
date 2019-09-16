@@ -6,7 +6,7 @@ python realistic_predictor_trainer.py \
     --load-weights=2019-09-11_18-32-31_checkpoint.pth.tar \
     --evaluate \
     --use-macc \
-    --rejector macc \
+    --rejector f1 \
     --max-rejection-quantile 0.25 \
     --rejection-threshold 0.4
     --use-confidence
