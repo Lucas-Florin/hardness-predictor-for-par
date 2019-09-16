@@ -35,6 +35,7 @@ class RealisticPredictorAnalyzer:
     A tool to analyze the results of the training of a realistic predictor.
     """
     # TODO: Complete conversion to class.
+    # TODO: Use result manager
     def __init__(self, args):
         self.args = args
         # Decide which processor (CPU or GPU) to use.

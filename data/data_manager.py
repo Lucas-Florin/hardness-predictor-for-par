@@ -50,6 +50,9 @@ class BaseDataManager(object):
         """
         return self.trainloader, self.testloader_dict
 
+    def get_testloader(self, split):
+        return self.testloader_dict[split]
+
 
 class ImageDataManager(BaseDataManager):
     """

@@ -24,6 +24,7 @@ from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
 from utils.plot import plot_epoch_losses
 import tabulate as tab
+from evaluation.result_manager import ResultManager
 
 
 
@@ -44,6 +45,7 @@ class Trainer(object):
 
         self.init_data()
         self.result_dict = dict()
+        self.result_manager = ResultManager(self.result_dict)
         self.init_model()
 
         if args.evaluate:
@@ -174,24 +176,25 @@ class Trainer(object):
         raise NotImplementedError()
 
     def test(self, ignore=None):
+        split = self.args.eval_split
         """
         Test the model. If predictions or ground truth are not given they are calculated based on the split defined in
         the command line arguments.
         :return:
         """
-        ground_truth, prediction_probs, label_predictions = self.get_label_predictions()
+        labels, prediction_probs, predictions = self.get_label_predictions(self.args.eval_split)
         if self.args.use_macc:
             # Use mA for each attribute.
-            acc_atts = metrics.mean_attribute_accuracies(label_predictions, ground_truth, ignore)
+            acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore)
             acc_name = 'Mean Attribute Accuracies'
         else:
             #
-            acc_atts = metrics.attribute_accuracies(label_predictions, ground_truth, self.attribute_grouping)
+            acc_atts = metrics.attribute_accuracies(predictions, labels, self.attribute_grouping)
 
             acc_name = 'Attribute Accuracies'
         positivity_ratio = self.dm.dataset.get_positive_attribute_ratio()
         print('Results ----------')
-        print(metrics.get_metrics_table(label_predictions, ground_truth, ignore))
+        print(metrics.get_metrics_table(predictions, labels, ignore))
         print('------------------')
         print(acc_name + ':')
         if self.args.f1_calib and not self.args.group_atts:
@@ -206,14 +209,15 @@ class Trainer(object):
         print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
         print('------------------')
         self.result_dict.update({
-            "prediction_probs": prediction_probs,
-            "predictions": label_predictions,
-            "labels": ground_truth,
+
             "args": self.loaded_args if self.args.evaluate else self.args,
             "attributes": self.dm.attributes,
             "f1_thresholds": self.f1_calibration_thresholds,
             "positivity_ratio": positivity_ratio
+
         })
+        self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels,
+                                           predictions=predictions)
         return acc_atts.mean()
 
     def init_f1_calibration_threshold(self):
@@ -238,14 +242,16 @@ class Trainer(object):
 
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 
-    def get_full_output(self, loader=None, model=None, criterion=None):
+    def get_full_output(self, loader=None, model=None, criterion=None, split=None):
         """
         Get the output of the model for all the datapoints in the loader.
         :param loader: (Optional) The loader to be used as input. Default: the split specified in the command line args.
         :return: The predictions made by the model and the ground truth as lists.
         """
+        if split is None:
+            split = self.args.eval_split
         if loader is None:
-            loader = self.testloader_dict[self.args.eval_split]
+            loader = self.testloader_dict[split]
         if model is None:
             model = self.model
         if criterion is None:
@@ -265,18 +271,16 @@ class Trainer(object):
                 imgs_path_list.extend(img_paths)
         return np.array(predictions), np.array(ground_truth, dtype="bool"), imgs_path_list
 
-    def get_label_predictions(self, loader=None, model=None, criterion=None):
+    def get_label_predictions(self, split):
         self.init_f1_calibration_threshold()
 
-        if self.args.evaluate and "prediction_probs" in self.result_dict and "labels" in self.result_dict:
-
-            prediction_probs = self.result_dict["prediction_probs"]
-            ground_truth = self.result_dict["labels"]
+        if self.args.evaluate and self.result_manager.check_output_dict(split):
+            labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
             print("Computing label predictions. ")
-            prediction_probs, ground_truth, _ = self.get_full_output(loader, model, criterion)
+            prediction_probs, labels, _ = self.get_full_output(split=split)
+            self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels)
         if self.args.f1_calib:
-
             label_predictions = prediction_probs > self.f1_calibration_thresholds
         else:
             label_predictions = prediction_probs > 0.5
@@ -284,4 +288,4 @@ class Trainer(object):
             # Each group has exactly one positive attribute.
             label_predictions = metrics.group_attributes(label_predictions, self.attribute_grouping)
             print("Grouping attributes. ")
-        return ground_truth, prediction_probs, label_predictions
+        return labels, prediction_probs, label_predictions

@@ -1,6 +1,6 @@
 python realistic_predictor_trainer.py \
     -d rap \
-    --gpu-devices 3 \
+    --gpu-devices 1 \
     --max-epoch 180 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \

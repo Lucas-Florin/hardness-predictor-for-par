@@ -1,13 +1,13 @@
 python realistic_predictor_trainer.py \
     -d pa100k \
     --gpu-devices 2 \
-    --max-epoch 60 \
+    --max-epoch 180 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
-    --stepsize 20 40 \
+    --stepsize 60 120 \
     --loss-func scel \
     --use-macc \
-    --no-hp-feedback \
+    --no-hp-feedback
     --use-deepmar-for-hp \
     --hp-loss-param 0.5
     --load-weights=2019-05-31_02-36-24_checkpoint.pth.tar \
