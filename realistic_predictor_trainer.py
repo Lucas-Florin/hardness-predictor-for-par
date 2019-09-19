@@ -146,7 +146,6 @@ class RealisticPredictorTrainer(Trainer):
         split = "train"
         if self.result_manager.check_output_dict(split):
             labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
-            print("labels")
         else:
             print("Computing label predictions for training data. ")
             labels, prediction_probs, predictions = self.get_label_predictions(split)
@@ -162,7 +161,6 @@ class RealisticPredictorTrainer(Trainer):
             print("Using confidence scores as HP-scores. ")
         elif self.result_manager.check_output_dict(split):
             _, _, _, hp_scores = self.result_manager.get_outputs(split)
-            print ("hp")
         else:
             print("Computing hardness scores for training data. ")
             hp_scores, _, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp, split=split)

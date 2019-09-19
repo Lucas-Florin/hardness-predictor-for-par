@@ -16,7 +16,11 @@ class ResultManager(object):
 
     def __init__(self, result_dict):
         self.result_dict = result_dict
-        self.output = result_dict[self.output_str] if self.output_str in result_dict else dict()
+        if self.output_str in result_dict:
+            self.output = result_dict[self.output_str]
+        else:
+            self.output = dict()
+        result_dict[self.output_str] = self.output
 
     def check_output_dict(self, split):
         if self.output is None:
