@@ -25,8 +25,9 @@ class F1Rejector(QuantileRejector):
         diffs = list()
         possible_attribute_thresholds = list()
         sorted_idxs = hp_scores.argsort(0)
-        fn = np.logical_and(labels == 1, label_predictions == 0) # Number of false negatives.
+        fn = np.logical_and(labels == 1, label_predictions == 0)  # Number of false negatives.
         fp = np.logical_and(labels == 0, label_predictions == 1)  # Number of false positives.
+        tp = np.logical_and(labels == 1, label_predictions == 1)  # Number of true positives.
         for i in range(len(quantiles)):
             num_reject = int(num_datapoints * quantiles[i]) + 1
 
@@ -36,10 +37,14 @@ class F1Rejector(QuantileRejector):
             select = np.logical_not(ignore)
             fn_sel = np.logical_and(select, fn).sum(0)  # Number of false negatives.
             fp_sel = np.logical_and(select, fp).sum(0)  # Number of false positives.
-            diff = np.absolute(fp_sel - fn_sel).flatten()  # The difference between fp and fn -> minimize
+            tp_sel = np.logical_and(select, fp).sum(0)  # Number of true positives.
+            diff = np.absolute(
+                (tp_sel / (tp_sel + fp_sel)) -
+                (tp_sel / (tp_sel + fn_sel))
+            ).flatten()  # The difference between fp and fn -> minimize
 
             diffs.append(diff)
         diffs = np.array(diffs)
         possible_attribute_thresholds = np.array(possible_attribute_thresholds)
-        self.attribute_thresholds = possible_attribute_thresholds[diffs.argmin(0), np.arange(num_attributes)]
+        self.attribute_thresholds = possible_attribute_thresholds[diffs.argmax(0), np.arange(num_attributes)]
         self.print_percentage_rejected(hp_scores)

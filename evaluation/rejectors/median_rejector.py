@@ -18,7 +18,8 @@ class MedianRejector(QuantileRejector):
     def __init__(self, rejection_quantile):
         super().__init__(rejection_quantile)
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, correctness_ratio_threshold=None):
+
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
         fraction_width = 0.01
@@ -26,6 +27,8 @@ class MedianRejector(QuantileRejector):
         correctness_ratios = list()
         possible_attribute_thresholds = list()
         correct_label_predictions = labels == label_predictions
+        if correctness_ratio_threshold is None:
+            correctness_ratio_threshold = correct_label_predictions.mean(0)
         sorted_idxs = hp_scores.argsort(0)
         for i in range(len(quantiles) - 1):
             num_reject_start = int(num_datapoints * quantiles[i]) + 1
@@ -38,8 +41,7 @@ class MedianRejector(QuantileRejector):
             correctness_ratios.append(ratio)
         correctness_ratios = np.array(correctness_ratios)
         possible_attribute_thresholds = np.array(possible_attribute_thresholds)
-        threshold_idxs = (correctness_ratios < 0.5).argmax(0)
-        # TODO: what happens if none of the ratios is < 0.5?
+        threshold_idxs = (correctness_ratios > correctness_ratio_threshold).argmax(0)
         self.attribute_thresholds = possible_attribute_thresholds[threshold_idxs, np.arange(num_attributes)]
         self.print_percentage_rejected(hp_scores)
 

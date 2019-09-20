@@ -71,6 +71,8 @@ class RealisticPredictorTrainer(Trainer):
         else:
             self.rejector = None
 
+        print("Using rejection strategy '{}'".format(self.args.rejector))
+
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
         self.loaded_args = self.args
@@ -144,6 +146,7 @@ class RealisticPredictorTrainer(Trainer):
 
     def update_rejector_thresholds(self):
         split = "train"
+        self.init_f1_calibration_threshold()
         if self.result_manager.check_output_dict(split):
             labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
         else:
