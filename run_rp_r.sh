@@ -1,13 +1,17 @@
 python realistic_predictor_trainer.py \
     -d rap \
     --gpu-devices 1 \
-    --max-epoch 180 \
+    --max-epoch 60 \
+    --stepsize 0 0 \
+    --main-net-finetuning-epochs 60 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --stepsize 60 120 \
     --loss-func deepmar \
     --use-macc \
     --no-hp-feedback \
-    --use-deepmar-for-hp
-    --load-weights=2019-06-03_17-42-43_checkpoint.pth.tar \
-    --train-hp-only
+    --use-deepmar-for-hp \
+    --load-weights=2019-09-19_15-31-32_checkpoint.pth.tar \
+    --rejector threshold \
+    --max-rejection-quantile 0.25 \
+    --rejection-threshold 0.20
+    --use-confidence

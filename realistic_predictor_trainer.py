@@ -209,9 +209,10 @@ class RealisticPredictorTrainer(Trainer):
         train_hp = (self.args.hp_epoch_offset <= self.epoch < self.args.hp_net_train_epochs
                     + self.args.hp_epoch_offset)
 
+
         if rejection_epoch:
             self.update_rejector_thresholds()
-        if train_main:
+        if train_main or train_main_finetuning:
             self.model_main.train()
             losses = losses_main
         else:
@@ -239,13 +240,15 @@ class RealisticPredictorTrainer(Trainer):
             label_prediciton_probs = self.model_main(imgs)
             hardness_predictions = self.model_hp(imgs)
             if train_main or train_main_finetuning:
+                hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
                 if self.args.no_hp_feedback or not train_hp:
                     main_net_weights = label_prediciton_probs.new_ones(label_prediciton_probs.shape)
                 else:
                     # Make a detached version of the hp scores for computing the main loss.
-                    main_net_weights = self.criterion_hp.logits(hardness_predictions.detach())
+                    main_net_weights = hardness_predictions_logits
                 if train_main_finetuning:
-                    main_net_weights = main_net_weights * self.rejector(hardness_predictions.detach())
+                    select = self.rejector(hardness_predictions_logits)
+                    main_net_weights = main_net_weights * select
                 # Compute main loss, gradient and optimize main net.
                 loss_main = self.criterion_main(label_prediciton_probs, labels, main_net_weights)
                 self.optimizer_main.zero_grad()
@@ -264,7 +267,6 @@ class RealisticPredictorTrainer(Trainer):
                 self.optimizer_hp.step()
 
                 losses_hp.update(loss_hp.item(), labels.size(0))
-
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t' 

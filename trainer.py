@@ -83,12 +83,11 @@ class Trainer(object):
         """
         # Train non-fixbase epochs.
         for epoch in range(args.start_epoch, args.max_epoch):
+            print(self.scheduler_main.get_lr())
             loss = self.train()
-
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
                 scheduler.step()
-
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
                 self.checkpoint()

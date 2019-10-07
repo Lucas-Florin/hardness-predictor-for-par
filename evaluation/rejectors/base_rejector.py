@@ -24,6 +24,8 @@ class BaseRejector():
             rejected.
         """
         if self.is_initialized():
+            if type(hp_scores) == torch.Tensor:
+                return hp_scores.new_tensor(hp_scores < hp_scores.new_tensor(self.attribute_thresholds))
             return hp_scores < self.attribute_thresholds
         else:
             return np.ones(hp_scores.shape, dtype="bool")
