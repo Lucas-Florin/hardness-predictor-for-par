@@ -7,7 +7,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-# import tikzplotlib as tikz
+import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
 import torchvision.utils as vutils
@@ -158,7 +158,7 @@ def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, fi
     plt.tight_layout()
     if save_plot:
         plt.savefig(filename + ".png", format="png")
-        #tikz.save(filename + ".tex")
+        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
