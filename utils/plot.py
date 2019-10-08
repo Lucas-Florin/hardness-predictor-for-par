@@ -7,6 +7,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+# import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
 import torchvision.utils as vutils
@@ -41,7 +42,7 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
 
 
 def show_img_grid(dataset, idxs, filename, title=None,
-                  attribute_name=None, labels=None, hardness=None, prediction_probs=None, predictions=None):
+                  attribute_name=None, labels=None, hardness=None, prediction_probs=None, predictions=None, save_plot=False):
     """
     Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
     label and hardness of each image are displayed above it.
@@ -78,13 +79,13 @@ def show_img_grid(dataset, idxs, filename, title=None,
     for cell in ax.flat:
         cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
 
-    if input("Save Figure? (y/n):") == "y":
+    if save_plot:
         plt.savefig(filename, format="png")
         print("Saved by hardness examples at " + filename)
     plt.show()
 
 
-def show_accuracy_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores):
+def show_accuracy_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, save_plot=False):
     x = np.arange(0, 1, 0.01)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
@@ -111,13 +112,13 @@ def show_accuracy_over_hardness(filename, title, attribute_name, labels, predict
     plt.ylabel("Mean accuracy on remaining samples")
     #plt.ylim(0, 1)
 
-    if input("Save Figure? (y/n):") == "y":
+    if save_plot:
         plt.savefig(filename, format="png")
         print("Saved accuracy over hardness at " + filename)
     plt.show()
 
 
-def show_positivity_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10):
+def show_positivity_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10, save_plot=False):
     x = np.arange(resolution)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
@@ -141,7 +142,23 @@ def show_positivity_over_hardness(filename, title, attribute_name, labels, predi
     plt.ylabel("Positivity Rate")
     #plt.ylim(0, 1)
 
-    if input("Save Figure? (y/n):") == "y":
+    if save_plot:
         plt.savefig(filename, format="png")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
+
+
+def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, filename, save_plot=False):
+    fig, ax = plt.subplots()
+    y_pos = np.arange(len(attribute_names))
+    ax.bar(y_pos, positivity_ratios)
+    plt.xticks(y_pos, attribute_names, rotation=90)
+    plt.ylabel("Positivity ratio")
+    plt.xlabel("Attributes")
+    plt.tight_layout()
+    if save_plot:
+        plt.savefig(filename + ".png", format="png")
+        #tikz.save(filename + ".tex")
+        print("Saved positivity ratio by hardness at " + filename)
+    plt.show()
+

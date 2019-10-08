@@ -28,6 +28,7 @@ from training.lr_schedulers import init_lr_scheduler
 import utils.plot as plot
 from trainer import Trainer
 import evaluation.rejectors as rejectors
+from evaluation.result_manager import ResultManager
 
 
 class RealisticPredictorAnalyzer:
@@ -51,28 +52,42 @@ class RealisticPredictorAnalyzer:
         ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
         file = open(osp.join(args.save_experiment, "result_dict.pickle"), 'rb')
         result_dict = pickle.load(file)
-        file.close()
+        self.result_dict = result_dict
 
-        label_prediction_probs = result_dict["prediction_probs"]
-        hp_scores = result_dict["hp_scores"]
+        file.close()
+        self.result_manager = ResultManager(self.result_dict)
+        print("Loaded result dict with keys: ")
+        print(sorted(list(self.result_dict.keys())))
+        """
+        if "rejection_thresholds" in self.result_dict:
+            self.rejector.load_thresholds(self.result_dict["rejection_thresholds"])
+            if self.rejector.is_initialized():
+                print("Loaded rejection thresholds. ")
+            else:
+                print("Loaded uninitialized (None) rejection thresholds. ")
+        else:
+            print("WARNING: Could not load rejection thresholds. ")
+        """
+        split = self.args.eval_split
+
+        labels, prediction_probs, predictions, hp_scores = self.result_manager.get_outputs(split)
         loaded_args = result_dict["args"]
-        labels = result_dict["labels"]
         f1_calibration_thresholds = result_dict["f1_thresholds"]
         attributes = result_dict["attributes"]
         positivity_ratio = result_dict["positivity_ratio"]
         ignored_test_datapoints = result_dict["ignored_test_samples"]
         if args.f1_calib:
 
-            label_predictions = label_prediction_probs > f1_calibration_thresholds
+            predictions = prediction_probs > f1_calibration_thresholds
         else:
-            label_predictions = label_prediction_probs > 0.5
+            predictions = prediction_probs > 0.5
 
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
 
         if ignored_test_datapoints is not None:
             print("Ignoring the {:.0%} hardest of testing examples. ".format(ignored_test_datapoints.mean()))
-
+        """
         attribute_hp_scores = hp_scores.mean(0)
         if args.reject_hard_attributes_quantile > 0:
             assert args.reject_hard_attributes_quantile <= 1
@@ -87,17 +102,18 @@ class RealisticPredictorAnalyzer:
             ignored_attributes = None
         if ignored_attributes is not None:
             print("Ignoring attributes: " + str(np.array(attributes)[ignored_attributes.astype("bool")]))
-
-        acc_atts = metrics.mean_attribute_accuracies(label_predictions, labels, ignore=ignored_test_datapoints)
-        average_precision = metrics.hp_average_precision(labels, label_predictions, hp_scores)
-        mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
+        """
+        ignored_attributes = None
+        acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore=ignored_test_datapoints)
+        average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
+        mean_average_precision = metrics.hp_mean_average_precision(labels, predictions, hp_scores)
         print('Results ----------')
         if ignored_attributes is None:
-            print(metrics.get_metrics_table(label_predictions, labels, ignore=ignored_test_datapoints))
+            print(metrics.get_metrics_table(predictions, labels, ignore=ignored_test_datapoints))
         else:
             selected_attributes = np.logical_not(ignored_attributes)
             print(metrics.get_metrics_table(
-                label_predictions[:, selected_attributes],
+                predictions[:, selected_attributes],
                 labels[:, selected_attributes],
                 ignore=None if ignored_test_datapoints is None else ignored_test_datapoints[:, selected_attributes]))
         print('------------------')
@@ -113,8 +129,8 @@ class RealisticPredictorAnalyzer:
             print("Looking at Hard attribute " + args.hard_att)
             att_idx = attributes.index(args.hard_att)
             hard_att_labels = labels[:, att_idx]
-            hard_att_pred = label_predictions[:, att_idx]
-            hard_att_prob = label_prediction_probs[:, att_idx]
+            hard_att_pred = predictions[:, att_idx]
+            hard_att_prob = prediction_probs[:, att_idx]
             if not loaded_args.hp_net_simple:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
@@ -131,6 +147,12 @@ class RealisticPredictorAnalyzer:
             title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
             plot.show_positivity_over_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred, hp_scores)
+
+        if args.plot_pos_atts:
+            filename = osp.join(args.save_experiment, ts + "positivity-ratio")
+            title = "Positivity Rate over Attributes"  # for " + (args.load_weights if args.load_weights else ts)
+
+            plot.plot_positivity_ratio_over_attributes(attributes, positivity_ratio, filename, self.args.save_plot)
 
         if args.num_save_hard + args.num_save_easy > 0:
             # This part only gets executed if the corresponding arguments are passed at the terminal.
