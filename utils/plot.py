@@ -150,7 +150,7 @@ def show_positivity_over_hardness(filename, title, attribute_name, labels, predi
 
 def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, filename, save_plot=False):
     fig, ax = plt.subplots()
-    y_pos = np.arange(len(attribute_names))
+    y_pos = np.arange(len(attribute_names)) + 1
     ax.bar(y_pos, positivity_ratios)
     plt.xticks(y_pos, attribute_names, rotation=90)
     plt.ylabel("Positivity ratio")
