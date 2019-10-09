@@ -119,7 +119,8 @@ def build_transforms(height,
                      width,
                      random_erase=False,  # use random erasing for data augmentation
                      color_jitter=False,  # randomly change the brightness, contrast and saturation
-                    color_aug=False,  # randomly alter the intensities of RGB channels
+                     color_aug=False,  # randomly alter the intensities of RGB channels
+                     random_translation=False,
                      **kwargs):
     # use imagenet mean and std as default
     imagenet_mean = [0.485, 0.456, 0.406]
@@ -128,7 +129,10 @@ def build_transforms(height,
 
     # build train transformations
     transform_train = []
-    transform_train += [Random2DTranslation(height, width)]
+    if random_translation:
+        transform_train += [Random2DTranslation(height, width)]
+    else:
+        transform_train += [Resize((height, width))]
     transform_train += [RandomHorizontalFlip()]
     if color_jitter:
         transform_train += [ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)]

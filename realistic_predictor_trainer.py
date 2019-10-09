@@ -118,7 +118,8 @@ class RealisticPredictorTrainer(Trainer):
             self.criterion = None
 
         self.criterion_main = self.criterion
-        self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, use_gpu=self.use_gpu,
+        self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, self.dm.num_attributes,
+                                                  use_gpu=self.use_gpu,
                                                   sigma=self.args.hp_loss_param)
         self.f1_calibration_thresholds = None
 
@@ -167,6 +168,7 @@ class RealisticPredictorTrainer(Trainer):
         else:
             print("Computing hardness scores for training data. ")
             hp_scores, _, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp, split=split)
+            hp_scores = self.criterion_hp.broadcast(hp_scores)
             self.result_manager.update_outputs(split, hp_scores=hp_scores)
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, predictions, hp_scores)
@@ -241,6 +243,7 @@ class RealisticPredictorTrainer(Trainer):
             hardness_predictions = self.model_hp(imgs)
             if train_main or train_main_finetuning:
                 hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
+                hardness_predictions_logits = self.criterion_hp.broadcast(hardness_predictions_logits)
                 if self.args.no_hp_feedback or not train_hp:
                     main_net_weights = label_prediciton_probs.new_ones(label_prediciton_probs.shape)
                 else:
@@ -296,6 +299,7 @@ class RealisticPredictorTrainer(Trainer):
         else:
             print("Computing hardness scores for testing data. ")
             hp_scores, _, _ = self.get_full_output(model=self.model_hp, criterion=self.criterion_hp)
+            hp_scores = self.criterion_hp.broadcast(hp_scores)
             self.result_manager.update_outputs(split, hp_scores=hp_scores)
 
         ignore = np.logical_not(self.rejector(hp_scores))
@@ -319,7 +323,7 @@ class RealisticPredictorTrainer(Trainer):
             ["Variance", np.var(hp_scores)]
         ]))
 
-        if not self.args.hp_net_simple:
+        if True: #not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
             header = ["Attribute", "Hardness Score Mean", "Variance", "Average Precision", "Rejection Threshold",

@@ -28,6 +28,8 @@ def argument_parser():
                         help='randomly change the brightness, contrast and saturation')
     parser.add_argument('--color-aug', action='store_true',
                         help='randomly alter the intensities of RGB channels')
+    parser.add_argument('--random-translation', action='store_true',
+                        help='use random translation for data augmentation')
 
     # ************************************************************
     # Optimization options
@@ -89,10 +91,15 @@ def argument_parser():
                         help='newly added layers with default lr')
     parser.add_argument('--base-lr-mult', type=float, default=0.1,
                         help='learning rate multiplier for base layers')
+
+    parser.add_argument('--train-val', action='store_true',
+                        help='use validation split for training too')
+
     parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
                         help='name of the desired loss function')
     parser.add_argument('--loss-func-param', type=float, default=1,
                         help='the parameter for the main loss function')
+
     parser.add_argument('--no-hp-feedback', action='store_true',
                         help='do not use the hardness score as weighting for the main net loss function')
     parser.add_argument('--hp-train-sequentially', action='store_true',
@@ -226,6 +233,8 @@ def image_dataset_kwargs(parsed_args):
         'random_erase': parsed_args.random_erase,
         'color_jitter': parsed_args.color_jitter,
         'color_aug': parsed_args.color_aug,
+        'random_translation': parsed_args.random_translation,
+        'train_val': parsed_args.train_val
     }
 
 

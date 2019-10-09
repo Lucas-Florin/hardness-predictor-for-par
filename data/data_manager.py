@@ -62,18 +62,20 @@ class ImageDataManager(BaseDataManager):
     def __init__(self,
                  use_gpu,
                  dataset_name,
+                 train_val,
                  **kwargs
                  ):
         super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
-
+        dataset = init_img_dataset(root=self.root, name=dataset_name)
+        self.dataset = dataset
         print('=> Initializing TRAIN dataset')
         train = list()
         self.train = train
 
-        dataset = init_img_dataset(root=self.root, name=dataset_name)
-        self.dataset = dataset
-
         for img_path, label in dataset.train:
+                train.append((img_path, torch.tensor(label.astype(np.float32))))
+        if train_val:
+            for img_path, label in dataset.val:
                 train.append((img_path, torch.tensor(label.astype(np.float32))))
         self.attributes = list(dataset.attributes)
         self.num_attributes = dataset.num_attributes

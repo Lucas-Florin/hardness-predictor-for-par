@@ -9,9 +9,10 @@ class HardnessPredictorLoss(nn.Module):
     Hardness Predictor Loss as defined in:
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
-    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, sigma=1, use_gpu=True):
+    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, num_attributes, sigma=1, use_gpu=True):
         super().__init__()
         self.use_gpu = use_gpu
+        self.num_attributes = num_attributes
         self.use_deepmar_weighting = use_deepmar_weighting
         self.loss_function = F.binary_cross_entropy_with_logits
         self.logits_function = nn.Sigmoid()
@@ -42,8 +43,7 @@ class HardnessPredictorLoss(nn.Module):
         if not self.use_deepmar_weighting:
             deepmar_weights = None
         # In case there is only one hardness score for each image, broadcast it into the shape of main_net_predictions.
-        hp_broadcasted = hp_net_outputs.new_empty(main_net_predictions.shape)
-        hp_broadcasted[:] = hp_net_outputs
+        hp_broadcasted = self.broadcast(hp_net_outputs)
         # The prediction correctness is the probability that is predicted for the ground truth label.
         prediction_correctness = torch.where(ground_truth_labels.byte(), main_net_predictions, 1 - main_net_predictions)
         loss = self.loss_function(hp_broadcasted, 1 - prediction_correctness, weight=deepmar_weights)
@@ -51,3 +51,14 @@ class HardnessPredictorLoss(nn.Module):
 
     def logits(self, inputs):
         return self.logits_function(inputs)
+
+    def broadcast(self, hp_net_outputs):
+        if hp_net_outputs.shape[1] == self.num_attributes:
+            return hp_net_outputs
+        shape = (hp_net_outputs.shape[0], self.num_attributes)
+        if type(hp_net_outputs) == torch.Tensor:
+            hp_broadcasted = hp_net_outputs.new_empty(shape)
+        else:
+            hp_broadcasted = np.empty_like(hp_net_outputs, shape=shape)
+        hp_broadcasted[:] = hp_net_outputs
+        return hp_broadcasted
