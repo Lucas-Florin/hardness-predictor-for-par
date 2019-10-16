@@ -151,7 +151,7 @@ def argument_parser():
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
                         help='name of the desired evaluation split (test/val)')
-    parser.add_argument('--hard-att', type=str, default='', help='look at the hardness of a specific attribute')
+
     parser.add_argument('--use-confidence', action='store_true',
                         help='use inverse confidence instead of hardness score. ')
 
@@ -173,6 +173,8 @@ def argument_parser():
     # ************************************************************
     # Plot settings
     # ************************************************************
+    parser.add_argument('--select-atts', type=str, nargs="+", default=[],
+                        help='look at the hardness of specific attributes')
     parser.add_argument('--num-save-hard', type=int, default=0,
                         help='number of hard images that are saved to collage')
     parser.add_argument('--num-save-easy', type=int, default=0,

@@ -103,19 +103,21 @@ class RealisticPredictorAnalyzer:
         if ignored_attributes is not None:
             print("Ignoring attributes: " + str(np.array(attributes)[ignored_attributes.astype("bool")]))
         """
-        ignored_attributes = None
+        #ignored_attributes = None
         acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore=ignored_test_datapoints)
         average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
         mean_average_precision = metrics.hp_mean_average_precision(labels, predictions, hp_scores)
         print('Results ----------')
-        if ignored_attributes is None:
-            print(metrics.get_metrics_table(predictions, labels, ignore=ignored_test_datapoints))
+        #if ignored_attributes is None:
+        print(metrics.get_metrics_table(predictions, labels, ignore=ignored_test_datapoints))
+        """
         else:
             selected_attributes = np.logical_not(ignored_attributes)
             print(metrics.get_metrics_table(
                 predictions[:, selected_attributes],
                 labels[:, selected_attributes],
                 ignore=None if ignored_test_datapoints is None else ignored_test_datapoints[:, selected_attributes]))
+        """
         print('------------------')
         print('Mean Attribute Accuracies:')
         header = ["Attribute", "Accuracy", "Positivity Ratio", "Average Precision", "Mean Average Precision"]
@@ -126,15 +128,19 @@ class RealisticPredictorAnalyzer:
         print("Mean average precision of hardness prediction over all attributes: {:.2%}".format(average_precision.mean()))
         print('------------------')
         if args.plot_acc_hp or args.plot_pos_hp or args.num_save_hard + args.num_save_easy > 0:
-            print("Looking at Hard attribute " + args.hard_att)
-            att_idx = attributes.index(args.hard_att)
-            hard_att_labels = labels[:, att_idx]
-            hard_att_pred = predictions[:, att_idx]
-            hard_att_prob = prediction_probs[:, att_idx]
+
+            #att_idx = attributes.index(args.hard_att)
+            selected_attributes = args.select_atts
+            print("Analyzing attributes: " + str(selected_attributes))
+            att_idxs = [attributes.index(att) for att in selected_attributes]
+
+            hard_att_labels = labels[:, att_idxs]
+            hard_att_pred = predictions[:, att_idxs]
+            hard_att_prob = prediction_probs[:, att_idxs]
             if not loaded_args.hp_net_simple:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
-                hp_scores = hp_scores[:, att_idx]
+                hp_scores = hp_scores[:, att_idxs]
 
         if args.plot_acc_hp:
             filename = osp.join(args.save_experiment, ts + "accuracy_over_hardness.png")
@@ -144,10 +150,10 @@ class RealisticPredictorAnalyzer:
                                              hp_scores, save_plot=self.args.save_plot)
 
         if args.plot_pos_hp:
-            filename = osp.join(args.save_experiment, ts + "positivity_over_hardness.png")
-            title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
+            filename = osp.join(args.save_experiment, ts + "positivity_over_hardness")
+            #title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
-            plot.show_positivity_over_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred,
+            plot.show_positivity_over_hardness(filename, selected_attributes, hard_att_labels, hard_att_pred,
                                                hp_scores, save_plot=self.args.save_plot)
 
         if args.plot_pos_atts:

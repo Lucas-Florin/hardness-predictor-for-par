@@ -85,7 +85,7 @@ def show_img_grid(dataset, idxs, filename, title=None,
     plt.show()
 
 
-def show_accuracy_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, save_plot=False):
+def show_accuracy_over_hardness(filename, title, attribute_names, labels, predictions, hp_scores, save_plot=False):
     x = np.arange(0, 1, 0.01)
     y = np.zeros(x.shape)
     num_datapoints = labels.shape[0]
@@ -105,11 +105,12 @@ def show_accuracy_over_hardness(filename, title, attribute_name, labels, predict
         y[i] = macc
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    if attribute_name:
-        title += "; Attribute = " + attribute_name
+    if attribute_names:
+        title += "; Attribute = " + attribute_names
     fig.suptitle(title)
     plt.xlabel("Portion of rejected hard samples")
     plt.ylabel("Mean accuracy on remaining samples")
+    ax.legend(attribute_names)
     #plt.ylim(0, 1)
 
     if save_plot:
@@ -118,32 +119,37 @@ def show_accuracy_over_hardness(filename, title, attribute_name, labels, predict
     plt.show()
 
 
-def show_positivity_over_hardness(filename, title, attribute_name, labels, predictions, hp_scores, resolution=10, save_plot=False):
-    x = np.arange(resolution)
-    y = np.zeros(x.shape)
+def show_positivity_over_hardness(filename, attribute_names, labels, predictions, hp_scores, resolution=10, save_plot=False):
     num_datapoints = labels.shape[0]
-    predictions = predictions.reshape((num_datapoints, 1))
-    labels = labels.reshape((num_datapoints, 1))
-    num_select = int(num_datapoints // resolution)
+    num_attributes = len(attribute_names)
+    x = np.arange(0, 1, 1/resolution)
+    y = np.zeros((x.size, num_attributes))
+    #predictions = predictions.reshape((num_datapoints, 1))
+    num_select = num_datapoints // resolution
     num_rest = num_datapoints % resolution
-    sorted_idxs = hp_scores.argsort()
-    sorted_idxs = sorted_idxs[np.random.choice(sorted_idxs.shape[0], num_datapoints - num_rest, replace=False)]
+    sorted_idxs = hp_scores.argsort(0)
+    sorted_idxs = sorted_idxs[np.random.choice(num_datapoints, num_datapoints - num_rest, replace=False), :]
     print("Ignoring {} randomly selected samples to avoid rest. ". format(num_rest))
     assert num_select * resolution == sorted_idxs.shape[0]
-    for i in range(resolution):
-        selected_idx = sorted_idxs[num_select * i:num_select * (i + 1)]
-        y[i] = labels[selected_idx].sum() / num_select
+    for att_idx in range(num_attributes):
+        att_idxs = sorted_idxs[:, att_idx]
+        att_lables = labels[:, att_idx]
+        for i in range(resolution):
+            selected_idx = att_idxs[num_select * i:num_select * (i + 1)]
+            y[i, att_idx] = att_lables[selected_idx].sum(0) / num_select
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    if attribute_name:
-        title += "; Attribute = " + attribute_name
-    fig.suptitle(title)
-    plt.xlabel("Quantile by Hardness")
-    plt.ylabel("Positivity Rate")
+    #if attribute_name:
+    #    title += "; Attribute = " + attribute_name
+    #fig.suptitle(title)
+    plt.xlabel("Quantile sorted by hardness")
+    plt.ylabel("Positive label distribution")
+    #plt.yscale("log")
     #plt.ylim(0, 1)
-
+    ax.legend(attribute_names)
     if save_plot:
-        plt.savefig(filename, format="png")
+        plt.savefig(filename + ".png", format="png")
+        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
