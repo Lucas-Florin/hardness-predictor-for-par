@@ -84,7 +84,7 @@ class RealisticPredictorTrainer(Trainer):
                 else:
                     print("WARNING: Could not load args. ")
 
-                if "result_dict" in cp and self.args.evaluate:
+                if "result_dict" in cp and cp["result_dict"] is not None and self.args.evaluate:
                     self.result_dict = cp["result_dict"]
                     self.result_manager = ResultManager(self.result_dict)
                     print("Loaded result dict with keys: ")
@@ -126,6 +126,9 @@ class RealisticPredictorTrainer(Trainer):
 
         self.optimizer_main = init_optimizer(self.model_main, **optimizer_kwargs(args))
         self.scheduler_main = init_lr_scheduler(self.optimizer_main, **lr_scheduler_kwargs(args))
+
+        self.optimizer = self.optimizer_main
+        self.scheduler = self.scheduler_main
 
         op_args = optimizer_kwargs(args)
         op_args['lr'] *= op_args['base_lr_mult']
@@ -305,7 +308,7 @@ class RealisticPredictorTrainer(Trainer):
         ignore = np.logical_not(self.rejector(hp_scores))
         print("Rejecting the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
-        mean_acc = super().test(ignore)
+        mean_acc, _, _ = super().test(ignore)
         labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
         self.result_dict.update({
             "rejection_thresholds": self.rejector.attribute_thresholds,

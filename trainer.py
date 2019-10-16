@@ -83,7 +83,7 @@ class Trainer(object):
         """
         # Train non-fixbase epochs.
         for epoch in range(args.start_epoch, args.max_epoch):
-            print(self.scheduler_main.get_lr())
+            print(self.scheduler.get_lr())
             loss = self.train()
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
@@ -217,7 +217,7 @@ class Trainer(object):
         })
         self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels,
                                            predictions=predictions)
-        return acc_atts.mean()
+        return acc_atts.mean(), prediction_probs, predictions
 
     def init_f1_calibration_threshold(self):
         if self.f1_calibration_thresholds is not None:

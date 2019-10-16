@@ -49,6 +49,7 @@ class BaselineTrainer(Trainer):
         self.loaded_args = self.args
         load_file = osp.join(args.save_experiment, args.load_weights)
         if args.load_weights:
+            # TODO: implement result dict
             if check_isfile(load_file):
                 cp = load_pretrained_weights([self.model], load_file)
                 if "args" in cp:
@@ -73,6 +74,8 @@ class BaselineTrainer(Trainer):
             self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=self.use_gpu)
         else:
             self.criterion = None
+
+        self.f1_calibration_thresholds = None
 
         self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
         self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
@@ -123,13 +126,11 @@ class BaselineTrainer(Trainer):
             accs_atts.update(acc_atts)
 
             if (batch_idx + 1) % args.print_freq == 0:
-                print('Epoch: [{0}][{1}/{2}]\t' 
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t' 
-                      'Acc {acc.val:.2%} ({acc.avg:.2%})'.format(
-                          self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                          loss=losses,
-                          acc=accs
-                      ))
+                print('Epoch: [{0}][{1}/{2}]\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                    self.epoch + 1, batch_idx + 1, len(self.trainloader),
+                    loss=losses
+                ))
         return losses.avg
 
 
