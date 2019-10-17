@@ -182,7 +182,9 @@ def argument_parser():
     parser.add_argument('--plot-epoch-loss', action='store_true',
                         help='plot loss over epochs')
     parser.add_argument('--plot-acc-hp', action='store_true',
-                        help='plot accuracy over hardness')
+                        help='plot a metric over hardness')
+    parser.add_argument('--plot-metric', type=str, default='macc', choices=['macc', 'f1'],
+                        help='use a specific metric for the plot')
     parser.add_argument('--show-pos-samples', action='store_true',
                         help='only show examples with positive ground truth')
     parser.add_argument('--show-neg-samples', action='store_true',

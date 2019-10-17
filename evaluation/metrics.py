@@ -14,6 +14,7 @@ import tabulate as tab
 from sklearn.metrics import label_ranking_average_precision_score, average_precision_score
 
 
+
 def _get_conf_mat(output, target):
     with torch.no_grad():
         prediction = output > 0.5
@@ -290,4 +291,12 @@ def get_confidence(prediction_probs, decision_thresholds=None):
     return confidence
 
 
+def column_indexing(array, idxs, axis=0):
+    assert axis == 0
+    num_attributes = array.shape[1]
+    assert num_attributes == idxs.shape[1]
+    result = np.empty_like(array, shape=idxs.shape)
+    for att in range(num_attributes):
+        result[:, att] = array[:, att][idxs[:, att]]
+    return result
 

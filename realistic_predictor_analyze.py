@@ -69,13 +69,14 @@ class RealisticPredictorAnalyzer:
             print("WARNING: Could not load rejection thresholds. ")
         """
         split = self.args.eval_split
+        ignored_test_datapoints = None
 
         labels, prediction_probs, predictions, hp_scores = self.result_manager.get_outputs(split)
         loaded_args = result_dict["args"]
         f1_calibration_thresholds = result_dict["f1_thresholds"]
         attributes = result_dict["attributes"]
         positivity_ratio = result_dict["positivity_ratio"]
-        ignored_test_datapoints = result_dict["ignored_test_samples"]
+        #ignored_test_datapoints = result_dict["ignored_test_samples"]
         if self.args.use_confidence:
             if self.args.f1_calib:
                 decision_thresholds = f1_calibration_thresholds
@@ -150,11 +151,11 @@ class RealisticPredictorAnalyzer:
                 hp_scores = hp_scores[:, att_idxs]
 
         if args.plot_acc_hp:
-            filename = osp.join(args.save_experiment, ts + "accuracy_over_hardness.png")
-            title = "Mean Accuracy over hardness"  # for " + (args.load_weights if args.load_weights else ts)
+            filename = osp.join(args.save_experiment, ts + "accuracy-over-hardness")
+            #title = "Mean Accuracy over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
-            plot.show_accuracy_over_hardness(filename, title, args.hard_att, hard_att_labels, hard_att_pred,
-                                             hp_scores, save_plot=self.args.save_plot)
+            plot.show_accuracy_over_hardness(filename, selected_attributes, hard_att_labels, hard_att_pred,
+                                             hp_scores, metric=args.plot_metric, save_plot=self.args.save_plot)
 
         if args.plot_pos_hp:
             filename = osp.join(args.save_experiment, ts + "positivity-over-hardness")

@@ -13,6 +13,7 @@ from data.dataset_loader import read_image
 import torchvision.utils as vutils
 import torch
 import evaluation.metrics as metrics
+from evaluation.rejectors import QuantileRejector
 
 
 def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
@@ -85,37 +86,33 @@ def show_img_grid(dataset, idxs, filename, title=None,
     plt.show()
 
 
-def show_accuracy_over_hardness(filename, title, attribute_names, labels, predictions, hp_scores, save_plot=False):
+def show_accuracy_over_hardness(filename, attribute_names, labels, predictions, hp_scores, metric="macc", save_plot=False):
+    num_attributes = len(attribute_names)
     x = np.arange(0, 1, 0.01)
-    y = np.zeros(x.shape)
-    num_datapoints = labels.shape[0]
-    predictions = predictions.reshape((num_datapoints, 1))
-    labels = labels.reshape((num_datapoints, 1))
+    y = np.zeros((x.size, num_attributes))
+    sorted_idxs = hp_scores.argsort(0)
+    sorted_scores = metrics.column_indexing(hp_scores, sorted_idxs)
     for i in range(len(x)):
-
-        num_reject = int(num_datapoints * x[i])
-        ignore = np.zeros(labels.shape, dtype="int8")
-        sorted_idxs = hp_scores.argsort()
-        hard_idxs = sorted_idxs[-num_reject:]
-        if num_reject > 0:
-            ignore[hard_idxs] = 1
-        predictions = predictions.reshape((num_datapoints, 1))
-        labels = labels.reshape((num_datapoints, 1))
-        macc = metrics.mean_accuracy(predictions, labels, ignore)
-        y[i] = macc
+        rejector = QuantileRejector(x[i])
+        rejector.update_thresholds(labels, predictions, hp_scores, sorted_scores, verbose=False)
+        ignore = np.logical_not(rejector(hp_scores))
+        if metric == "macc":
+            macc = metrics.mean_attribute_accuracies(predictions, labels, ignore)
+        elif metric == "f1":
+            raise NotImplementedError
+        else:
+            raise ValueError("invalid metric name")
+        y[i, :] = macc
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    if attribute_names:
-        title += "; Attribute = " + attribute_names
-    fig.suptitle(title)
     plt.xlabel("Portion of rejected hard samples")
     plt.ylabel("Mean accuracy on remaining samples")
     ax.legend(attribute_names)
-    #plt.ylim(0, 1)
 
     if save_plot:
-        plt.savefig(filename, format="png")
-        print("Saved accuracy over hardness at " + filename)
+        plt.savefig(filename + ".png", format="png")
+        tikz.save(filename + ".tex")
+        print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
 
@@ -124,7 +121,6 @@ def show_positivity_over_hardness(filename, attribute_names, labels, predictions
     num_attributes = len(attribute_names)
     x = np.arange(0, 1, 1/resolution)
     y = np.zeros((x.size, num_attributes))
-    #predictions = predictions.reshape((num_datapoints, 1))
     num_select = num_datapoints // resolution
     num_rest = num_datapoints % resolution
     sorted_idxs = hp_scores.argsort(0)
