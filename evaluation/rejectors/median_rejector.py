@@ -18,7 +18,8 @@ class MedianRejector(QuantileRejector):
     def __init__(self, rejection_quantile):
         super().__init__(rejection_quantile)
 
-    def update_thresholds(self, labels, label_predictions, hp_scores, correctness_ratio_threshold=None):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True,
+                          correctness_ratio_threshold=None):
 
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
@@ -43,7 +44,7 @@ class MedianRejector(QuantileRejector):
         possible_attribute_thresholds = np.array(possible_attribute_thresholds)
         threshold_idxs = (correctness_ratios > correctness_ratio_threshold).argmax(0)
         self.attribute_thresholds = possible_attribute_thresholds[threshold_idxs, np.arange(num_attributes)]
-        self.print_percentage_rejected(hp_scores)
+        self.print_percentage_rejected(hp_scores, verbose)
 
 
 

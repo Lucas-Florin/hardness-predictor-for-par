@@ -53,7 +53,9 @@ class BaseRejector():
         """
         return self.attribute_thresholds is not None
 
-    def print_percentage_rejected(self, hp_scores):
+    def print_percentage_rejected(self, hp_scores, verbose=True):
+        if not verbose:
+            return
         print("Rejecting the {:.2%} hardest of training examples. ".format((np.logical_not(self(hp_scores))).mean()))
 
 

@@ -19,7 +19,7 @@ class MeanAccuracyRejector(QuantileRejector):
     def __init__(self, max_rejection_quantile):
         super().__init__(max_rejection_quantile)
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
         quantiles = np.arange(0, self.rejection_quantile, 0.001)
@@ -38,4 +38,4 @@ class MeanAccuracyRejector(QuantileRejector):
         maccs = np.array(maccs)
         possible_attribute_thresholds = np.array(possible_attribute_thresholds)
         self.attribute_thresholds = possible_attribute_thresholds[maccs.argmax(0), np.arange(num_attributes)]
-        self.print_percentage_rejected(hp_scores)
+        self.print_percentage_rejected(hp_scores, verbose)

@@ -20,12 +20,12 @@ class ThresholdRejector(QuantileRejector):
         assert 0 <= hp_score_threshold <= 1
         self.hp_score_threshold = hp_score_threshold
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         super().update_thresholds(labels, label_predictions, hp_scores)
         ideal_thresholds = np.full((1, hp_scores.shape[1]), self.hp_score_threshold)
         self.attribute_thresholds = np.where(
             self.attribute_thresholds > ideal_thresholds, self.attribute_thresholds, ideal_thresholds)
-        self.print_percentage_rejected(hp_scores)
+        self.print_percentage_rejected(hp_scores, verbose)
 
 
 

@@ -22,13 +22,15 @@ class QuantileRejector(BaseRejector):
         self.num_reject = None
         self.shape = None
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         self.num_datapoints = labels.shape[0]
         self.num_attributes = labels.shape[1]
         self.num_reject = int(self.num_datapoints * self.rejection_quantile) + 1
         self.shape = labels.shape
-        sorted_scores = np.sort(hp_scores, axis=0)
+        if sorted_scores is None:
+            # TODO: implement on other rejectors
+            sorted_scores = np.sort(hp_scores, axis=0)
         self.attribute_thresholds = sorted_scores[-self.num_reject, :]
-        self.print_percentage_rejected(hp_scores)
+        self.print_percentage_rejected(hp_scores, verbose)
 
 
