@@ -76,6 +76,13 @@ class RealisticPredictorAnalyzer:
         attributes = result_dict["attributes"]
         positivity_ratio = result_dict["positivity_ratio"]
         ignored_test_datapoints = result_dict["ignored_test_samples"]
+        if self.args.use_confidence:
+            if self.args.f1_calib:
+                decision_thresholds = f1_calibration_thresholds
+            else:
+                decision_thresholds = None
+            hp_scores = 1 - metrics.get_confidence(prediction_probs, decision_thresholds)
+            print("Using confidence scores as HP-scores. ")
         if args.f1_calib:
 
             predictions = prediction_probs > f1_calibration_thresholds
@@ -150,7 +157,7 @@ class RealisticPredictorAnalyzer:
                                              hp_scores, save_plot=self.args.save_plot)
 
         if args.plot_pos_hp:
-            filename = osp.join(args.save_experiment, ts + "positivity_over_hardness")
+            filename = osp.join(args.save_experiment, ts + "positivity-over-hardness")
             #title = "Positivity Rate over hardness"  # for " + (args.load_weights if args.load_weights else ts)
 
             plot.show_positivity_over_hardness(filename, selected_attributes, hard_att_labels, hard_att_pred,
