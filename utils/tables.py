@@ -1,0 +1,27 @@
+import numpy as np
+
+def bold_max(data):
+    for i in range(1, data.shape[1]):
+        col = data[:, i]
+        col = col.astype("float")
+        max_idx = col.argmax()
+        data[max_idx, i] = "\\mathbf{" + data[max_idx, i] + "}"
+
+def main():
+    input_filename = "./utils/table_input.csv"
+    output_filename = "./utils/table_output.csv"
+    output_delimiter = "$ &\t$"
+    output_newline = "$ \\\\\n"
+    data = np.loadtxt(input_filename, dtype="str", delimiter="\t")#.astype("<U22")
+    #data = np.loadtxt(input_filename, dtype="str", delimiter="%\t")
+    #data = np.transpose(data)
+    #print(data.dtype)
+    bold_max(data)
+    np.savetxt(output_filename, data, fmt="%s", delimiter=output_delimiter, newline=output_newline)
+    #np.savetxt(output_filename, data, fmt="%s", delimiter="\t")
+    print(data)
+
+
+if __name__ == "__main__":
+    main()
+

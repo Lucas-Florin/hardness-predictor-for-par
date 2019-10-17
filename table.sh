@@ -1,0 +1,1 @@
+python ./utils/tables.py
