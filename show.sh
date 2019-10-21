@@ -1,4 +1,4 @@
 python show_results.py \
-    -l /net/merkur/storage/deeplearning/users/floluc/baseline_rap/2019-10-04_19-56-36_checkpoint.pth.tar \
-    -s /net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
+    -l /net/merkur/storage/deeplearning/users/floluc/baseline_pa/2019-09-19_15-31-16_checkpoint.pth.tar \
+    -s /net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
     --use-cpu

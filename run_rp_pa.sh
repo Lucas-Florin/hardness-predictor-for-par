@@ -1,14 +1,12 @@
 python realistic_predictor_trainer.py \
     -d pa100k \
-    --gpu-devices 2 \
-    --max-epoch 180 \
+    --gpu-devices 0 \
+    --max-epoch 360 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
-    --stepsize 60 120 \
-    --loss-func scel \
+    --stepsize 120 240 \
+    --loss-func deepmar \
     --use-macc \
-    --no-hp-feedback
-    --use-deepmar-for-hp \
-    --hp-loss-param 0.5
-    --load-weights=2019-05-31_02-36-24_checkpoint.pth.tar \
-    --train-hp-only
+    --no-hp-feedback \
+    --random-translation \
+    --color-jitter

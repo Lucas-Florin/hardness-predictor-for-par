@@ -1,1 +1,1 @@
-setsid ./run_rp_r.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log1.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log1.txt &
+setsid ./run_frp_r.sh > /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log.txt 2>&1 < /net/merkur/storage/deeplearning/users/floluc/baseline_rap/log.txt &

@@ -2,9 +2,11 @@ python realistic_predictor_trainer.py \
     -d rap \
     --height 224 \
     --width 224 \
+    --optim sgd \
+    --lr 0.001 \
     --gpu-devices 2 \
-    --max-epoch 60 \
-    --stepsize 20 40 \
+    --max-epoch 42 \
+    --stepsize 14 28 \
     --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
     --loss-func deepmar \
