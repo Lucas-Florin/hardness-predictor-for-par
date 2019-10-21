@@ -135,7 +135,7 @@ class RealisticPredictorAnalyzer:
         print("Mean over all attributes of mean attribute accuracy of label prediction: {:.2%}".format(acc_atts.mean()))
         print("Mean average precision of hardness prediction over all attributes: {:.2%}".format(average_precision.mean()))
         print('------------------')
-        if args.plot_acc_hp or args.plot_pos_hp or args.num_save_hard + args.num_save_easy > 0:
+        if args.plot_acc_hp or args.plot_hp_hist or args.plot_pos_hp or args.num_save_hard + args.num_save_easy > 0:
 
             #att_idx = attributes.index(args.hard_att)
             selected_attributes = args.select_atts
@@ -166,10 +166,17 @@ class RealisticPredictorAnalyzer:
 
         if args.plot_pos_atts:
             filename = osp.join(args.save_experiment, ts + "positivity-ratio")
-            title = "Positivity Rate over Attributes"  # for " + (args.load_weights if args.load_weights else ts)
+            #title = "Positivity Rate over Attributes"  # for " + (args.load_weights if args.load_weights else ts)
 
             plot.plot_positivity_ratio_over_attributes(attributes, positivity_ratio, filename,
                                                        save_plot=self.args.save_plot)
+        if args.plot_hp_hist:
+            filename = osp.join(args.save_experiment, ts + "hardness-score-distribution")
+            #title = "Positivity Rate over Attributes"  # for " + (args.load_weights if args.load_weights else ts)
+
+            plot.plot_hardness_score_distribution(filename, selected_attributes, hard_att_labels, hard_att_pred,
+                                                  hp_scores,
+                                                  save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
         if args.num_save_hard + args.num_save_easy > 0:
             # This part only gets executed if the corresponding arguments are passed at the terminal.

@@ -193,6 +193,8 @@ def argument_parser():
                         help='plot positivity rate over hardness')
     parser.add_argument('--plot-pos-atts', action='store_true',
                         help='plot positivity ratio over attributes')
+    parser.add_argument('--plot-hp-hist', action='store_true',
+                        help='plot hardness score histogram')
     parser.add_argument('--save-plot', action='store_true',
                         help='save plots as TikZ')
 

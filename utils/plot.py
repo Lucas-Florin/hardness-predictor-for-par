@@ -7,6 +7,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import matplotlib.ticker as ticker
 import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
@@ -107,7 +108,8 @@ def show_accuracy_over_hardness(filename, attribute_names, labels, predictions, 
     ax.plot(x, y)
     plt.xlabel("Portion of rejected hard samples")
     plt.ylabel("Mean accuracy on remaining samples")
-    ax.legend(attribute_names)
+    ax.legend(attribute_names, fancybox=True, framealpha=0)
+    _format_ticks(ax)
 
     if save_plot:
         plt.savefig(filename + ".png", format="png")
@@ -138,11 +140,36 @@ def show_positivity_over_hardness(filename, attribute_names, labels, predictions
     #if attribute_name:
     #    title += "; Attribute = " + attribute_name
     #fig.suptitle(title)
-    plt.xlabel("Quantile sorted by hardness")
+    plt.xlabel("Rejected quantile sorted by hardness")
     plt.ylabel("Positive label distribution")
     #plt.yscale("log")
     #plt.ylim(0, 1)
     ax.legend(attribute_names)
+    if save_plot:
+        plt.savefig(filename + ".png", format="png")
+        tikz.save(filename + ".tex")
+        print("Saved positivity ratio by hardness at " + filename)
+    plt.show()
+
+
+def plot_hardness_score_distribution(filename, attribute_names, labels, predictions, hp_scores, save_plot=False,
+                                     confidnece=False):
+    num_datapoints = labels.shape[0]
+    num_attributes = len(attribute_names)
+    xl = "Inverse confidence score" if confidnece else "Hardness score"
+    """
+    plt.hist(hp_scores, bins="auto", histtype="step")
+    
+    plt.xlabel(xl)
+    plt.ylabel("Distribution")
+    plt.legend(attribute_names)
+    """
+    fig, axs = plt.subplots(num_attributes, 1, sharex="all", sharey="all")
+    for att in range(num_attributes):
+        ax = axs[att]
+        ax.hist(hp_scores[:, att], bins="auto", histtype="bar")
+        ax.set(xlabel=xl, ylabel="Distribution", title=attribute_names[att], xlim=(0, 0.25))
+
     if save_plot:
         plt.savefig(filename + ".png", format="png")
         tikz.save(filename + ".tex")
@@ -164,3 +191,9 @@ def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, fi
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
+
+def _format_ticks(ax):
+    ax.xaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
+    ax.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
+    #ax.xaxis.set_ticks_position('top')
+    #ax.yaxis.set_ticks_position('right')
