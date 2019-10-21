@@ -280,12 +280,20 @@ def hp_mean_average_precision(labels, predictions, hp_scores):
 def get_confidence(prediction_probs, decision_thresholds=None):
     if decision_thresholds is None:
         decision_thresholds = 0.5
+    elif type(prediction_probs) == torch.Tensor:
+        decision_thresholds = prediction_probs.new_tensor(decision_thresholds)
     negative_multiplicator = 1 / decision_thresholds
     positive_multiplicator = 1 / (1 - decision_thresholds)
     predictions = prediction_probs > decision_thresholds
-    confidence = np.abs(prediction_probs - decision_thresholds)
+    not_predictions = 1 - predictions
+    if type(prediction_probs) == torch.Tensor:
+        confidence = (prediction_probs - decision_thresholds).abs()
+        predictions = prediction_probs.new_tensor(predictions)
+        not_predictions = prediction_probs.new_tensor(not_predictions)
+    else:
+        confidence = np.abs(prediction_probs - decision_thresholds)
     confidence = ((predictions * confidence * positive_multiplicator) +
-                  (np.logical_not(predictions) * confidence * negative_multiplicator))
+                  (not_predictions * confidence * negative_multiplicator))
     assert confidence.max() <= 1
     assert confidence.min() >= 0
     return confidence

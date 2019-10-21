@@ -243,10 +243,20 @@ class RealisticPredictorTrainer(Trainer):
 
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
-            hardness_predictions = self.model_hp(imgs)
+            label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
+            if not self.args.use_confidence:
+                hardness_predictions = self.model_hp(imgs)
             if train_main or train_main_finetuning:
-                hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
-                hardness_predictions_logits = self.criterion_hp.broadcast(hardness_predictions_logits)
+                if not self.args.use_confidence:
+                    hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
+                    hardness_predictions_logits = self.criterion_hp.broadcast(hardness_predictions_logits)
+                else:
+                    if self.args.f1_calib:
+                        decision_thresholds = self.f1_calibration_thresholds
+                    else:
+                        decision_thresholds = None
+                    hardness_predictions_logits = 1 - metrics.get_confidence(label_predicitons_logits,
+                                                                             decision_thresholds)
                 if self.args.no_hp_feedback or not train_hp:
                     main_net_weights = label_prediciton_probs.new_ones(label_prediciton_probs.shape)
                 else:
@@ -265,7 +275,7 @@ class RealisticPredictorTrainer(Trainer):
 
             if train_hp:
                 # Compute HP loss, gradient and optimize HP net.
-                label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
+
                 loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
 
                 self.optimizer_hp.zero_grad()
@@ -329,10 +339,10 @@ class RealisticPredictorTrainer(Trainer):
         if True: #not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
-            header = ["Attribute", "Hardness Score Mean", "Variance", "Average Precision", "Rejection Threshold",
+            header = ["Attribute", "Hardness Score Mean", "SD", "Average Precision", "Rejection Threshold",
                       "Rejection Quantile"]
             mean = hp_scores.mean(0)
-            var = hp_scores.var(0)
+            var = np.sqrt(hp_scores.var(0))
             average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
             # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
 
