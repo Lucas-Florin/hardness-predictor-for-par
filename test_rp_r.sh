@@ -1,12 +1,12 @@
 python realistic_predictor_trainer.py \
     -d rap \
-    --gpu-devices 3 \
-    --eval-split val \
+    --gpu-devices 2 \
+    --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
     --load-weights=2019-09-19_15-31-32_checkpoint.pth.tar \
     --evaluate \
     --use-macc \
-    --rejector none \
+    --rejector macc \
     --max-rejection-quantile 0.25 \
-    --rejection-threshold 0.20
+    --rejection-threshold 0.20 \
     --use-confidence

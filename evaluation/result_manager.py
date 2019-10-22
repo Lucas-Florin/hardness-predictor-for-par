@@ -48,4 +48,8 @@ class ResultManager(object):
                 raise ValueError("Invalid output name: " + key)
             split_output[key] = value
 
+    def print_stored(self):
+        for split in self.output:
+            print("Split: {}".format(split))
+            print(list(self.output[split]))
 

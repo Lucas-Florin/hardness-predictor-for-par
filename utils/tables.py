@@ -1,7 +1,7 @@
 import numpy as np
 
 def bold_max(data):
-    for i in range(1, data.shape[1]):
+    for i in range(data.shape[1]):
         col = data[:, i]
         col = col.astype("float")
         max_idx = col.argmax()
@@ -15,7 +15,7 @@ def main():
     data = np.loadtxt(input_filename, dtype="str", delimiter="\t").astype("<U100")
     #data = np.loadtxt(input_filename, dtype="str", delimiter="%\t")
     #data = np.loadtxt(input_filename, dtype="float", delimiter=",")
-    data = np.transpose(data)
+    #data = np.transpose(data)
     #print(data.dtype)
     #bold_max(data)
     np.savetxt(output_filename, data, fmt="%s", delimiter=output_delimiter, newline=output_newline)

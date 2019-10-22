@@ -325,6 +325,8 @@ class RealisticPredictorTrainer(Trainer):
         })
         pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
         pickle_file = open(pickle_path, "wb")
+        assert self.result_dict is self.result_manager.result_dict
+        print(self.result_manager.print_stored())
         pickle.dump(self.result_dict, pickle_file)
         pickle_file.close()
         print("Saved Results at " + pickle_path)

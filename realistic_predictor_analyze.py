@@ -72,6 +72,7 @@ class RealisticPredictorAnalyzer:
         ignored_test_datapoints = None
 
         labels, prediction_probs, predictions, hp_scores = self.result_manager.get_outputs(split)
+        _, prediction_probs_train, _, hp_scores_train = self.result_manager.get_outputs("train")
         loaded_args = result_dict["args"]
         f1_calibration_thresholds = result_dict["f1_thresholds"]
         attributes = result_dict["attributes"]
@@ -83,6 +84,7 @@ class RealisticPredictorAnalyzer:
             else:
                 decision_thresholds = None
             hp_scores = 1 - metrics.get_confidence(prediction_probs, decision_thresholds)
+            hp_scores_train = 1 - metrics.get_confidence(prediction_probs_train, decision_thresholds)
             print("Using confidence scores as HP-scores. ")
         if args.f1_calib:
 
@@ -149,6 +151,7 @@ class RealisticPredictorAnalyzer:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
                 hp_scores = hp_scores[:, att_idxs]
+                hp_scores_train = hp_scores_train[:, att_idxs]
 
         if args.plot_acc_hp:
             filename = osp.join(args.save_experiment, ts + "accuracy-over-hardness")
@@ -172,10 +175,9 @@ class RealisticPredictorAnalyzer:
                                                        save_plot=self.args.save_plot)
         if args.plot_hp_hist:
             filename = osp.join(args.save_experiment, ts + "hardness-score-distribution")
-            #title = "Positivity Rate over Attributes"  # for " + (args.load_weights if args.load_weights else ts)
 
-            plot.plot_hardness_score_distribution(filename, selected_attributes, hard_att_labels, hard_att_pred,
-                                                  hp_scores,
+            plot.plot_hardness_score_distribution(filename, selected_attributes,
+                                                  hp_scores, hp_scores_train,
                                                   save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
         if args.num_save_hard + args.num_save_easy > 0:
@@ -183,6 +185,7 @@ class RealisticPredictorAnalyzer:
             print('Initializing image data manager')
             dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
             hp_scores = hp_scores.flatten()
+            hard_att_labels = hard_att_labels.flatten()
             sorted_idxs = hp_scores.argsort()
             if args.show_pos_samples:
                 sorted_idxs = sorted_idxs[hard_att_labels[sorted_idxs]]

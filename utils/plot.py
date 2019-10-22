@@ -152,9 +152,9 @@ def show_positivity_over_hardness(filename, attribute_names, labels, predictions
     plt.show()
 
 
-def plot_hardness_score_distribution(filename, attribute_names, labels, predictions, hp_scores, save_plot=False,
+def plot_hardness_score_distribution(filename, attribute_names, hp_scores_test, hp_scores_train, save_plot=False,
                                      confidnece=False):
-    num_datapoints = labels.shape[0]
+    num_datapoints = hp_scores_test.shape[0]
     num_attributes = len(attribute_names)
     xl = "Inverse confidence score" if confidnece else "Hardness score"
     """
@@ -167,8 +167,14 @@ def plot_hardness_score_distribution(filename, attribute_names, labels, predicti
     fig, axs = plt.subplots(num_attributes, 1, sharex="all", sharey="all")
     for att in range(num_attributes):
         ax = axs[att]
-        ax.hist(hp_scores[:, att], bins="auto", histtype="bar")
-        ax.set(xlabel=xl, ylabel="Distribution", title=attribute_names[att], xlim=(0, 0.25))
+        hp_scores_test_att = hp_scores_test[:, att]
+        ax.hist(hp_scores_test_att, bins="auto", histtype="step")
+        hp_scores_train_att = hp_scores_train[:, att]
+        ax.hist(hp_scores_train_att, bins="auto", histtype="step")
+        ax.set(xlim=(0, 1))
+        ax.set_title(attribute_names[att], y=0.2)
+    axs[-1].set(xlabel=xl, ylabel="Distribution")
+    axs[-1].legend(["Validation", "Train"], fancybox=True, framealpha=0)
 
     if save_plot:
         plt.savefig(filename + ".png", format="png")
