@@ -9,4 +9,5 @@ python realistic_predictor_trainer.py \
     --use-macc \
     --no-hp-feedback \
     --random-translation \
-    --color-jitter
+    --color-jitter \
+    --use-deepmar-for-hp

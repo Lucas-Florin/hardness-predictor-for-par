@@ -191,7 +191,9 @@ class Trainer(object):
             acc_atts = metrics.attribute_accuracies(predictions, labels, self.attribute_grouping)
 
             acc_name = 'Attribute Accuracies'
+        self.acc_atts = acc_atts
         positivity_ratio = self.dm.dataset.get_positive_attribute_ratio()
+        self.positivity_ratio = positivity_ratio
         print('Results ----------')
         print(metrics.get_metrics_table(predictions, labels, ignore))
         print('------------------')
@@ -238,6 +240,8 @@ class Trainer(object):
         if loader is None:
             loader = self.testloader_dict["train"]
         predictions, gt, _ = self.get_full_output(loader)
+        print(predictions.shape)
+        print(gt.shape)
 
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 
@@ -263,8 +267,12 @@ class Trainer(object):
                     imgs, labels = imgs.cuda(), labels.cuda()
 
                 outputs = model(imgs)
+                #print("---")
+                #print(imgs.shape)
+                #print(outputs.shape)
                 outputs = criterion.logits(outputs)
-
+                #print(outputs.shape)
+                #print(labels.shape)
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
                 imgs_path_list.extend(img_paths)

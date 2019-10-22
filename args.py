@@ -127,6 +127,7 @@ def argument_parser():
     # Architecture
     # ************************************************************
     parser.add_argument('-m', '--model', type=str, default='resnet50')
+    parser.add_argument('--hp-model', type=str, default='resnet50')
     parser.add_argument('--no-pretrained', action='store_true',
                         help='do not load pretrained weights')
     parser.add_argument('--hp-net-simple', action='store_true',

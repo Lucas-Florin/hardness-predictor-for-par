@@ -1,16 +1,14 @@
 python realistic_predictor_trainer.py \
+    --model squeezenet1_0 \
+    --hp-model squeezenet1_0 \
     -d rap \
-    --height 224 \
-    --width 224 \
-    --optim sgd \
-    --lr 0.001 \
     --gpu-devices 2 \
-    --max-epoch 42 \
-    --stepsize 14 28 \
-    --eval-split test \
+    --max-epoch 180 \
+    --stepsize 60 120 \
+    --eval-split val \
+    --random-translation \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
     --loss-func deepmar \
     --use-macc \
     --no-hp-feedback \
-    --use-deepmar-for-hp \
-    --train-val
+    --use-deepmar-for-hp

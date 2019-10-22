@@ -53,7 +53,7 @@ class RealisticPredictorTrainer(Trainer):
         # Determine the size of the output vector for the HP-Net.
         num_hp_net_outputs = 1 if self.args.hp_net_simple else self.dm.num_attributes
         # Init the HP-Net
-        self.model_hp = models.init_model(name="hp_net", num_classes=num_hp_net_outputs)
+        self.model_hp = models.init_model(name="hp_net_" + self.args.hp_model, num_classes=num_hp_net_outputs)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_hp)))
 
         if self.args.rejector == "none":
@@ -235,12 +235,10 @@ class RealisticPredictorTrainer(Trainer):
         else:
             open_all_layers(self.model_main)
             open_all_layers(self.model_hp)
-
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
 
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
-
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
             label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
@@ -250,7 +248,7 @@ class RealisticPredictorTrainer(Trainer):
                 if not self.args.use_confidence:
                     hardness_predictions_logits = self.criterion_hp.logits(hardness_predictions.detach())
                     hardness_predictions_logits = self.criterion_hp.broadcast(hardness_predictions_logits)
-                else:
+                elif train_main_finetuning:
                     if self.args.f1_calib:
                         decision_thresholds = self.f1_calibration_thresholds
                     else:
@@ -273,7 +271,7 @@ class RealisticPredictorTrainer(Trainer):
 
                 losses_main.update(loss_main.item(), labels.size(0))
 
-            if train_hp:
+            if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
 
                 loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
@@ -306,6 +304,7 @@ class RealisticPredictorTrainer(Trainer):
             else:
                 decision_thresholds = None
             hp_scores = 1 - metrics.get_confidence(prediction_probs, decision_thresholds)
+            self.result_manager.update_outputs(split, hp_scores=hp_scores)
             print("Using confidence scores as HP-scores. ")
         elif self.args.evaluate and self.result_manager.check_output_dict(split):
             _, _, _, hp_scores = self.result_manager.get_outputs(split)
@@ -339,7 +338,7 @@ class RealisticPredictorTrainer(Trainer):
         if True: #not self.args.hp_net_simple:
             # Display the hardness scores for every attribute.
             print("-" * 30)
-            header = ["Attribute", "Hardness Score Mean", "SD", "Average Precision", "Rejection Threshold",
+            header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "SD", "Average Precision", "Rejection Threshold",
                       "Rejection Quantile"]
             mean = hp_scores.mean(0)
             var = np.sqrt(hp_scores.var(0))
@@ -352,7 +351,8 @@ class RealisticPredictorTrainer(Trainer):
                 rejection_thresholds = np.ones_like(rejection_quantiles)
             else:
                 rejection_thresholds = rejection_thresholds.flatten()
-            data = list(zip(self.dm.attributes, mean, var, average_precision, rejection_thresholds, rejection_quantiles))
+            data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
+                            rejection_thresholds, rejection_quantiles))
             table = tab.tabulate(data, floatfmt='.4f', headers=header)
             print(table)
             data_mean_over_attributes = [hp_scores.mean(), hp_scores.var(), average_precision.mean(),

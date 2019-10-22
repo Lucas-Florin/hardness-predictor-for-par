@@ -12,11 +12,12 @@ def main():
     output_filename = "./utils/table_output.csv"
     output_delimiter = "$ &\t$"
     output_newline = "$ \\\\\n"
-    data = np.loadtxt(input_filename, dtype="str", delimiter="\t")#.astype("<U22")
+    data = np.loadtxt(input_filename, dtype="str", delimiter="\t").astype("<U100")
     #data = np.loadtxt(input_filename, dtype="str", delimiter="%\t")
-    #data = np.transpose(data)
+    #data = np.loadtxt(input_filename, dtype="float", delimiter=",")
+    data = np.transpose(data)
     #print(data.dtype)
-    bold_max(data)
+    #bold_max(data)
     np.savetxt(output_filename, data, fmt="%s", delimiter=output_delimiter, newline=output_newline)
     #np.savetxt(output_filename, data, fmt="%s", delimiter="\t")
     print(data)

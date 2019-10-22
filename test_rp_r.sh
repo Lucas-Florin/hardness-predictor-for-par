@@ -1,6 +1,6 @@
 python realistic_predictor_trainer.py \
     -d rap \
-    --gpu-devices 2 \
+    --gpu-devices 3 \
     --eval-split val \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
     --load-weights=2019-09-19_15-31-32_checkpoint.pth.tar \
