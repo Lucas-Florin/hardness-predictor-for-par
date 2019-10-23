@@ -140,6 +140,8 @@ def argument_parser():
                         help='load pretrained weights but ignore layers that don\'t match in size')
     parser.add_argument('--evaluate', action='store_true',
                         help='evaluate only')
+    parser.add_argument('--save-checkpoint', action='store_true',
+                        help='save resulting model after evaluation')
     parser.add_argument('--group-atts', action='store_true',
                         help='group binary attributes into non-binary ones')
     parser.add_argument('--use-macc', action='store_true',
@@ -151,7 +153,9 @@ def argument_parser():
     parser.add_argument('--start-eval', type=int, default=0,
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
-                        help='name of the desired evaluation split (test/val)')
+                        help='name of the desired evaluation split (train/test/val)')
+    parser.add_argument('--rejector-thresholds-split', type=str, default='train', choices=['test', 'val', 'train'],
+                        help='name of the desired split for determining the rejector thresholds (train/test/val)')
 
     parser.add_argument('--use-confidence', action='store_true',
                         help='use inverse confidence instead of hardness score. ')
@@ -168,6 +172,7 @@ def argument_parser():
                         help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
     parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
                         help='reject attributes that have a mean hardness score higher than this threshold')
+
 
     #
 

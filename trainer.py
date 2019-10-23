@@ -47,7 +47,7 @@ class Trainer(object):
         self.result_dict = dict()
         self.result_manager = ResultManager(self.result_dict)
         self.init_model()
-
+        self.epoch = 0
         if args.evaluate:
             print('Evaluate only')
             split = args.eval_split
@@ -58,6 +58,8 @@ class Trainer(object):
             elapsed = round(time.time() - self.time_start)
             elapsed = str(datetime.timedelta(seconds=elapsed))
             print('Testing Time: {}'.format(elapsed))
+            if args.save_checkpoint:
+                self.checkpoint()
             return
         elapsed = round(time.time() - self.time_start)
         elapsed = str(datetime.timedelta(seconds=elapsed))
@@ -66,7 +68,7 @@ class Trainer(object):
         self.ranklogger = AccLogger()
         print('=> Start training')
         self.epoch_losses = np.zeros(shape=(args.max_epoch, len(self.criterion_list)))
-        self.epoch = 0
+
         """
         # Train Fixbase epochs.
         if self.args.fixbase_epoch > 0:
@@ -98,6 +100,12 @@ class Trainer(object):
 
             self.epoch += 1
 
+        if self.args.max_epoch == 0:
+            self.checkpoint()
+            print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
+            self.test()
+            self.checkpoint()
+
         # Calculate elapsed time.
         elapsed = round(time.time() - self.time_start)
         elapsed = str(datetime.timedelta(seconds=elapsed))
@@ -114,10 +122,10 @@ class Trainer(object):
         filename = ts + 'checkpoint.pth.tar'
         save_checkpoint({
             'state_dicts': [model.state_dict() for model in self.model_list],
-            'epoch': self.epoch + 1,
+            'epoch': self.epoch + 1 if not self.args.evaluate else None,
             'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
-            'losses': self.epoch_losses,
-            'args': self.args,
+            'losses': self.epoch_losses if not self.args.evaluate else None,
+            'args': self.loaded_args if self.args.evaluate else self.args,
             'ts': self.ts,
             'result_dict': self.result_dict
         }, osp.join(self.args.save_experiment, filename))
@@ -240,8 +248,6 @@ class Trainer(object):
         if loader is None:
             loader = self.testloader_dict["train"]
         predictions, gt, _ = self.get_full_output(loader)
-        print(predictions.shape)
-        print(gt.shape)
 
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 
@@ -267,12 +273,7 @@ class Trainer(object):
                     imgs, labels = imgs.cuda(), labels.cuda()
 
                 outputs = model(imgs)
-                #print("---")
-                #print(imgs.shape)
-                #print(outputs.shape)
                 outputs = criterion.logits(outputs)
-                #print(outputs.shape)
-                #print(labels.shape)
                 predictions.extend(outputs.tolist())
                 ground_truth.extend(labels.tolist())
                 imgs_path_list.extend(img_paths)

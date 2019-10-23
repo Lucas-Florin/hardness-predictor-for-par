@@ -73,6 +73,11 @@ class RealisticPredictorAnalyzer:
 
         labels, prediction_probs, predictions, hp_scores = self.result_manager.get_outputs(split)
         _, prediction_probs_train, _, hp_scores_train = self.result_manager.get_outputs("train")
+        _, prediction_probs_val, _, hp_scores_val = self.result_manager.get_outputs("val")
+        if self.result_manager.check_output_dict("test"):
+            _, prediction_probs_test, _, hp_scores_test = self.result_manager.get_outputs("test")
+        else:
+            prediction_probs_test, hp_scores_test = None, None
         loaded_args = result_dict["args"]
         f1_calibration_thresholds = result_dict["f1_thresholds"]
         attributes = result_dict["attributes"]
@@ -85,6 +90,9 @@ class RealisticPredictorAnalyzer:
                 decision_thresholds = None
             hp_scores = 1 - metrics.get_confidence(prediction_probs, decision_thresholds)
             hp_scores_train = 1 - metrics.get_confidence(prediction_probs_train, decision_thresholds)
+            if hp_scores_test is not None:
+                hp_scores_test = 1 - metrics.get_confidence(prediction_probs_test, decision_thresholds)
+            hp_scores_val = 1 - metrics.get_confidence(prediction_probs_val, decision_thresholds)
             print("Using confidence scores as HP-scores. ")
         if args.f1_calib:
 
@@ -152,6 +160,13 @@ class RealisticPredictorAnalyzer:
                 # over all attributes is taken.
                 hp_scores = hp_scores[:, att_idxs]
                 hp_scores_train = hp_scores_train[:, att_idxs]
+                hp_scores_val = hp_scores_val[:, att_idxs]
+                if hp_scores_test is not None:
+                    hp_scores_test = hp_scores_test[:, att_idxs]
+                    print(hp_scores_val.shape)
+                    print(hp_scores_test.shape)
+                    print(hp_scores_test[:hp_scores_val.shape[0], :].shape)
+                    print((hp_scores_test - hp_scores_val[:hp_scores_test.shape[0], :]).mean())
 
         if args.plot_acc_hp:
             filename = osp.join(args.save_experiment, ts + "accuracy-over-hardness")
@@ -177,7 +192,7 @@ class RealisticPredictorAnalyzer:
             filename = osp.join(args.save_experiment, ts + "hardness-score-distribution")
 
             plot.plot_hardness_score_distribution(filename, selected_attributes,
-                                                  hp_scores, hp_scores_train,
+                                                  hp_scores_train, hp_scores_val, hp_scores_test,
                                                   save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
         if args.num_save_hard + args.num_save_easy > 0:

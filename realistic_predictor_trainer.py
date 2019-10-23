@@ -149,7 +149,7 @@ class RealisticPredictorTrainer(Trainer):
         #    args.start_epoch = resume_from_checkpoint(args.resume, model, optimizer=optimizer)
 
     def update_rejector_thresholds(self):
-        split = "train"
+        split = self.args.rejector_thresholds_split
         self.init_f1_calibration_threshold()
         if self.result_manager.check_output_dict(split):
             labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
