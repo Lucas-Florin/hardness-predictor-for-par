@@ -192,13 +192,15 @@ class RealisticPredictorAnalyzer:
             elif args.show_neg_samples:
                 sorted_idxs = sorted_idxs[np.logical_not(hard_att_labels[sorted_idxs])]
             # Select easy and hard examples as specified in the terminal.
-            hard_idxs = np.concatenate((sorted_idxs[:args.num_save_easy], sorted_idxs[-args.num_save_hard:]))
+            if args.num_save_hard <= 0:
+                hard_idxs = sorted_idxs[0:args.num_save_easy]
+            else:
+                hard_idxs = np.concatenate((sorted_idxs[0:args.num_save_easy], sorted_idxs[-args.num_save_hard:]))
             filename = osp.join(args.save_experiment,  ts + "hard_images.png")
             title = "Examples by hardness for " + (args.load_weights if args.load_weights else ts)
             # Display the image examples.
-            plot.show_img_grid(dm.split_dict[args.eval_split], hard_idxs, filename, title, args.hard_att,
-                               hard_att_labels[hard_idxs], hp_scores[hard_idxs], hard_att_prob[hard_idxs],
-                               hard_att_pred[hard_idxs], save_plot=self.args.save_plot)
+            plot.show_img_grid(dm.split_dict[args.eval_split], hard_idxs, filename, hp_scores[hard_idxs],
+                               save_plot=self.args.save_plot)
 
 
 
