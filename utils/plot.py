@@ -58,7 +58,7 @@ def show_img_grid(dataset, idxs, filename, hardness=None, save_plot=False):
     """
     batch = [(read_image(dataset[i][2])) for i in np.array(idxs).flatten()]
     num_imgs = len(batch)
-    grid_height = 4
+    grid_height = 2
     grid_width = num_imgs // grid_height if num_imgs % grid_height == 0 else num_imgs // grid_height + 1
     fig, ax = plt.subplots(grid_height, grid_width)#, figsize=(20, 10))
     for cell, img in zip(ax.flat, batch):

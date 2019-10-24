@@ -163,10 +163,11 @@ class RealisticPredictorAnalyzer:
                 hp_scores_val = hp_scores_val[:, att_idxs]
                 if hp_scores_test is not None:
                     hp_scores_test = hp_scores_test[:, att_idxs]
-                    print(hp_scores_val.shape)
-                    print(hp_scores_test.shape)
-                    print(hp_scores_test[:hp_scores_val.shape[0], :].shape)
-                    print((hp_scores_test - hp_scores_val[:hp_scores_test.shape[0], :]).mean())
+                    #print(hp_scores_val.shape)
+                    #print(hp_scores_test.shape)
+                    #print(hp_scores_train.shape)
+                    #print(hp_scores_test[:hp_scores_val.shape[0], :].shape)
+                    #print((hp_scores_test - hp_scores_val[:hp_scores_test.shape[0], :]).mean())
 
         if args.plot_acc_hp:
             filename = osp.join(args.save_experiment, ts + "accuracy-over-hardness")
@@ -196,6 +197,7 @@ class RealisticPredictorAnalyzer:
                                                   save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
         if args.num_save_hard + args.num_save_easy > 0:
+            assert len(self.args.select_atts) == 1
             # This part only gets executed if the corresponding arguments are passed at the terminal.
             print('Initializing image data manager')
             dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
