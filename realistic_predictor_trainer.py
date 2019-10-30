@@ -355,12 +355,14 @@ class RealisticPredictorTrainer(Trainer):
                 rejection_thresholds = rejection_thresholds.flatten()
             data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
                             rejection_thresholds, rejection_quantiles))
+            data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
+                     average_precision.mean(), rejection_thresholds.mean(), rejection_quantiles.mean()]]
             table = tab.tabulate(data, floatfmt='.4f', headers=header)
             print(table)
-            data_mean_over_attributes = [hp_scores.mean(), hp_scores.var(), average_precision.mean(),
-                                         rejection_thresholds.mean(), rejection_quantiles.mean()]
-            table = tab.tabulate([["Total"] + data_mean_over_attributes], floatfmt='.4f')
-            print(table)
+            #data_mean_over_attributes = [hp_scores.mean(), hp_scores.var(), average_precision.mean(),
+            #                             rejection_thresholds.mean(), rejection_quantiles.mean()]
+            #table = tab.tabulate([["Total"] + data_mean_over_attributes], floatfmt='.4f')
+            #print(table)
             print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
             csv_path = osp.join(self.args.save_experiment, "result_table.csv")
             np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter=",")
