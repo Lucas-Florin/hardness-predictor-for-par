@@ -196,6 +196,14 @@ class RealisticPredictorAnalyzer:
                                                   hp_scores_train, hp_scores_val, hp_scores_test,
                                                   save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
+        if args.num_save_hard + args.num_save_easy > 0 or args.show_example_imgs:
+            print('Initializing image data manager')
+            dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
+
+        if args.show_example_imgs:
+            filename = osp.join(args.save_experiment, ts + "example_images.png")
+            plot.show_example_imgs(dm.split_dict[split], filename, labels, attributes, save_plot=self.args.save_plot)
+
         if args.num_save_hard + args.num_save_easy > 0:
             assert len(self.args.select_atts) == 1
             # This part only gets executed if the corresponding arguments are passed at the terminal.
@@ -216,7 +224,7 @@ class RealisticPredictorAnalyzer:
             filename = osp.join(args.save_experiment,  ts + "hard_images.png")
             title = "Examples by hardness for " + (args.load_weights if args.load_weights else ts)
             # Display the image examples.
-            plot.show_img_grid(dm.split_dict[args.eval_split], hard_idxs, filename, hp_scores[hard_idxs],
+            plot.show_img_grid(dm.split_dict[split], hard_idxs, filename, hp_scores[hard_idxs],
                                save_plot=self.args.save_plot)
 
 
