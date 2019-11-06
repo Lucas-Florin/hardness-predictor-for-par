@@ -1,0 +1,18 @@
+python realistic_predictor_trainer.py \
+    -d pa100k \
+    --gpu-devices 1 \
+    --max-epoch 20 \
+    --stepsize 0 0 \
+    --main-net-finetuning-epochs 20 \
+    --eval-split val \
+    --rejector-thresholds-split train \
+    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
+    --loss-func scel \
+    --f1-calib \
+    --use-macc \
+    --no-hp-feedback \
+    --load-weights=2019-10-28_10-28-13_checkpoint.pth.tar \
+    --rejector threshold \
+    --max-rejection-quantile 0.1 \
+    --rejection-threshold 0.05
+    --use-confidence
