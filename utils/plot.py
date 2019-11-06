@@ -253,10 +253,13 @@ def get_plot_hist(scores):
 
 
 def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, filename, save_plot=False):
+    idxs = (- positivity_ratios).argsort()
     fig, ax = plt.subplots()
     y_pos = np.arange(len(attribute_names)) + 1
-    ax.bar(y_pos, positivity_ratios)
-    plt.xticks(y_pos, attribute_names, rotation=90)
+    ax.bar(y_pos, positivity_ratios[idxs])
+
+    attribute_names = np.array(attribute_names)
+    plt.xticks(y_pos, attribute_names[idxs], rotation=90)
     plt.ylabel("Positivity ratio")
     plt.xlabel("Attributes")
     plt.tight_layout()
