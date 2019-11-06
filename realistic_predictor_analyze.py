@@ -193,7 +193,7 @@ class RealisticPredictorAnalyzer:
             filename = osp.join(args.save_experiment, ts + "hardness-score-distribution")
 
             plot.plot_hardness_score_distribution(filename, selected_attributes,
-                                                  hp_scores_train, hp_scores_val, hp_scores_test,
+                                                  hp_scores_train, hp_scores_val, hp_scores_test, args.plot_x_max,
                                                   save_plot=self.args.save_plot, confidnece=self.args.use_confidence)
 
         if args.num_save_hard + args.num_save_easy > 0 or args.show_example_imgs:

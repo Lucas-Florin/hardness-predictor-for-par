@@ -200,11 +200,11 @@ def show_positivity_over_hardness(filename, attribute_names, labels, predictions
     plt.show()
 
 
-def plot_hardness_score_distribution(filename, attribute_names, hp_scores_train, hp_scores_val, hp_scores_test=None, save_plot=False,
+def plot_hardness_score_distribution(filename, attribute_names, hp_scores_train, hp_scores_val, hp_scores_test=None, x_max=1, save_plot=False,
                                      confidnece=False):
     num_datapoints = hp_scores_val.shape[0]
     num_attributes = len(attribute_names)
-    xl = "Inverse confidence score" if confidnece else "Hardness score"
+    xl = "Uncertainty score" if confidnece else "Hardness score"
     """
     plt.hist(hp_scores, bins="auto", histtype="step")
     
@@ -217,22 +217,39 @@ def plot_hardness_score_distribution(filename, attribute_names, hp_scores_train,
         ax = axs[att]
 
         hp_scores_train_att = hp_scores_train[:, att]
-        ax.hist(hp_scores_train_att, bins="auto", histtype="step")
+        y_avg, x_avg = get_plot_hist(hp_scores_train_att)
+        ax.plot(x_avg, y_avg)
+        #ax.hist(hp_scores_train_att, bins="auto", histtype="step")
+
         hp_scores_val_att = hp_scores_val[:, att]
-        ax.hist(hp_scores_val_att, bins="auto", histtype="step")
+        y_avg, x_avg = get_plot_hist(hp_scores_val_att)
+        ax.plot(x_avg, y_avg)
+        #ax.hist(hp_scores_val_att, bins="auto", histtype="step")
         if hp_scores_test is not None:
             hp_scores_test_att = hp_scores_test[:, att]
-            ax.hist(hp_scores_test_att, bins="auto", histtype="step")
-        ax.set(xlim=(0, 1))
+            y_avg, x_avg = get_plot_hist(hp_scores_test_att)
+            ax.plot(x_avg, y_avg)
+            #ax.hist(hp_scores_test_att, bins="auto", histtype="step")
+        ax.set(xlim=(0, x_max))
         ax.set_title(attribute_names[att], y=0.2)
-    axs[-1].set(xlabel=xl, ylabel="Distribution")
-    axs[-1].legend(["Train", "Validation", "Test"], fancybox=True, framealpha=0)
+    axs[0].set(ylabel="Distribution")
+    axs[-1].set(xlabel=xl)
+    axs[0].legend(["Train", "Validation", "Test"], fancybox=True, framealpha=0)
 
     if save_plot:
         plt.savefig(filename + ".png", format="png")
         tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
+
+def get_plot_hist(scores):
+    y_val, x_val = np.histogram(scores, bins="auto")
+    x_val_avg = [x_val[0]] + [(x_val[i] + x_val[i + 1]) / 2 for i in range(len(y_val))]
+    y_val_avg = [0] + y_val.tolist()
+    if x_val_avg[0] != 0:
+        x_val_avg = [0] + x_val_avg
+        y_val_avg = [0] + y_val_avg
+    return y_val_avg, x_val_avg
 
 
 def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, filename, save_plot=False):
