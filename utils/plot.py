@@ -43,7 +43,7 @@ def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
     plt.show()
 
 
-def show_img_grid(dataset, idxs, filename, hardness=None, save_plot=False):
+def show_img_grid(dataset, idxs, filename, sample_labels=None, save_plot=False):
     """
     Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
     label and hardness of each image are displayed above it.
@@ -53,12 +53,12 @@ def show_img_grid(dataset, idxs, filename, hardness=None, save_plot=False):
     :param title: (Optional) Title for the figure.
     :param attribute_name: (Optional) The name of the attribute for which the hardness is analysed.
     :param labels: (Optional) An array of the ground truth labels for each image.
-    :param hardness: (Optional) An array of the hardness scores for each image.
+    :param sample_labels: (Optional) An array of the labels to be shown above each image.
     :return:
     """
     batch = [(read_image(dataset[i][2])) for i in np.array(idxs).flatten()]
     num_imgs = len(batch)
-    grid_height = 2
+    grid_height = 4
     grid_width = num_imgs // grid_height if num_imgs % grid_height == 0 else num_imgs // grid_height + 1
     fig, ax = plt.subplots(grid_height, grid_width)#, figsize=(20, 10))
     for cell, img in zip(ax.flat, batch):
@@ -70,9 +70,9 @@ def show_img_grid(dataset, idxs, filename, hardness=None, save_plot=False):
                                           predictions.flatten(), hardness.flatten()):
             cell.title.set_text("{};{:.2f};{};{:.2f}".format(int(l), prob, int(pred), h))
     """
-    if hardness is not None:
+    if sample_labels is not None:
         # Display only hardness score for each image.
-        for cell, h in zip(ax.flat, hardness.flatten()):
+        for cell, h in zip(ax.flat, sample_labels.flatten()):
             cell.title.set_text("{0:.2f}".format(h))
 
     for cell in ax.flat:

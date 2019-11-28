@@ -180,7 +180,7 @@ def argument_parser():
     # Plot settings
     # ************************************************************
     parser.add_argument('--select-atts', type=str, nargs="+", default=[],
-                        help='look at the hardness of specific attributes')
+                        help='select attributes for analysis')
     parser.add_argument('--num-save-hard', type=int, default=0,
                         help='number of hard images that are saved to collage')
     parser.add_argument('--num-save-easy', type=int, default=0,
@@ -205,6 +205,8 @@ def argument_parser():
                         help='x axis limit')
     parser.add_argument('--show-example-imgs', action='store_true',
                         help='show example images with labels')
+    parser.add_argument('--show-label-examples', action='store_true',
+                        help='show example images for a specific attribute')
     parser.add_argument('--save-plot', action='store_true',
                         help='save plots as TikZ')
 
