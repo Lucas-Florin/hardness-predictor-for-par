@@ -66,7 +66,7 @@ class ImageDataManager(BaseDataManager):
                  **kwargs
                  ):
         super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
-        dataset = init_img_dataset(root=self.root, name=dataset_name)
+        dataset = init_img_dataset(root=self.root, name=dataset_name, full_attributes=kwargs["full_attributes"])
         self.dataset = dataset
         print('=> Initializing TRAIN dataset')
         train = list()

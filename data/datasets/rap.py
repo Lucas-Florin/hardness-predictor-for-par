@@ -27,7 +27,7 @@ class RAPv2(BaseDataset):
     dataset_dir = 'RAP'
     split_idx = 0
 
-    def __init__(self, root, verbose=True, **kwargs):
+    def __init__(self, root, verbose=True, full_attributes=False, **kwargs):
         super(RAPv2, self).__init__(root)
 
         # parse directories.
@@ -42,7 +42,8 @@ class RAPv2(BaseDataset):
         attributes = data["attribute"]  # List of all annotated attributes.
         # List of the indexes of the attributes selected for PAR.
         selected_attributes = np.array(data["selected_attribute"]) - 1
-        attributes = [attributes[i] for i in selected_attributes]
+        if not full_attributes:
+            attributes = [attributes[i] for i in selected_attributes]
         labels = np.array(data["data"])  # The labels for each image.
         labels = labels[:, selected_attributes]  # Discard the labels not used for PAR.
         img_file_names = data["name"]  # Filenames for the images.
@@ -63,7 +64,7 @@ class RAPv2(BaseDataset):
         self.train = train
         self.val = val
         self.test = test
-        self.attributes = attributes
+        self.attributes = np.array(attributes)
         self.num_attributes = len(attributes)
         self.attribute_grouping = list(range(self.num_attributes))
         self.labels = labels

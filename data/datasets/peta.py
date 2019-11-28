@@ -47,7 +47,7 @@ class PETA(BaseDataset):
     shuffle_fname = "data/datasets/peta_shuffle.csv"
     discarded_attributes_fname = "data/datasets/peta_discarded_attributes.csv"
 
-    def __init__(self, root, verbose=True, **kwargs):
+    def __init__(self, root, verbose=True, full_attributes=False, **kwargs):
         super(PETA, self).__init__(root)
 
         # parse directories.
@@ -74,7 +74,7 @@ class PETA(BaseDataset):
                 # has to be extracted from it.
                 ped_id = int(line[0].split(".")[0])
                 # All following elements are positive labels. Discarded attributes are ignored.
-                labels = set(line[1:]) - self.discarded_attributes
+                labels = set(line[1:]) if full_attributes else set(line[1:]) - self.discarded_attributes
                 # If the second version of a combined attribute is present, it is converted to the first.
                 for att_set in self.combined_attributes:
                     if att_set[1] in labels:
@@ -125,7 +125,7 @@ class PETA(BaseDataset):
             group_counter += 1
         assert len(attribute_grouping) == len(attributes)
         assert group_counter == len(grouped_atts)
-        self.attributes = attributes
+        self.attributes = np.array(attributes)
         self.attribute_grouping = attribute_grouping
         num_attributes = len(attributes)
         self.num_attributes = num_attributes

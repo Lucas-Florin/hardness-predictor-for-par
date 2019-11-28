@@ -1,8 +1,8 @@
 python dataset_analyzer.py \
-    -d pa100k \
+    -d peta \
     --use-cpu \
-    --eval-split test \
-    --select-att AgeOver60 \
-    --num-save-hard 20 \
-    --num-save-easy 20 \
+    --select-att accessoryShawl \
+    --num-save-hard 40 \
+    --num-save-easy 0 \
     --show-label-examples \
+    --full-attributes

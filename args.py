@@ -18,6 +18,8 @@ def argument_parser():
                         help='height of an image')
     parser.add_argument('--width', type=int, default=128,
                         help='width of an image')
+    parser.add_argument('--full-attributes', action='store_true',
+                        help='use all attributes available, not only the ones selected in the original paper')
 
     # ************************************************************
     # Data augmentation
@@ -252,7 +254,8 @@ def image_dataset_kwargs(parsed_args):
         'color_jitter': parsed_args.color_jitter,
         'color_aug': parsed_args.color_aug,
         'random_translation': parsed_args.random_translation,
-        'train_val': parsed_args.train_val
+        'train_val': parsed_args.train_val,
+        'full_attributes': parsed_args.full_attributes
     }
 
 
