@@ -45,7 +45,8 @@ class RAPv2(BaseDataset):
         if not full_attributes:
             attributes = [attributes[i] for i in selected_attributes]
         labels = np.array(data["data"])  # The labels for each image.
-        labels = labels[:, selected_attributes]  # Discard the labels not used for PAR.
+        if not full_attributes:
+            labels = labels[:, selected_attributes]  # Discard the labels not used for PAR.
         img_file_names = data["name"]  # Filenames for the images.
         partitions = data["partition_attribute"][self.split_idx]  # Dataset partition.
         train_idx = np.array(partitions["train_index"]) - 1

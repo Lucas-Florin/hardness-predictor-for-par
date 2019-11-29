@@ -55,7 +55,9 @@ class DatasetAnalyzer:
         idxs = np.arange(labels.size)
         pos_idxs = idxs[labels]
         neg_idxs = idxs[np.logical_not(labels)]
-        sel_idxs = np.random.choice(pos_idxs, num_pos).tolist() + np.random.choice(neg_idxs, num_neg).tolist()
+        replace = pos_idxs.size < num_pos
+        sel_idxs = (np.random.choice(pos_idxs, num_pos, replace=replace).tolist()
+                    + np.random.choice(neg_idxs, num_neg, replace=False).tolist())
         # Display the image examples.
         plot.show_img_grid(dataset, sel_idxs, None, labels[sel_idxs],
                            save_plot=False)
