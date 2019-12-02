@@ -8,6 +8,7 @@ import random
 import numpy as np
 import torch
 
+# TODO: remove
 
 def set_random_seed(seed):
     random.seed(seed)

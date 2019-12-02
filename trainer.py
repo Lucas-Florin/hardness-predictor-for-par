@@ -26,7 +26,10 @@ from utils.plot import plot_epoch_losses
 import tabulate as tab
 from evaluation.result_manager import ResultManager
 
-
+# For all Trainers:
+# TODO: Console output
+# TODO: Documentation
+# TODO: Machine-Friendly results saving (csv)
 
 
 class Trainer(object):

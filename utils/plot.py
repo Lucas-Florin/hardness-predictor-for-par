@@ -16,6 +16,11 @@ import torch
 import evaluation.metrics as metrics
 from evaluation.rejectors import QuantileRejector
 
+# TODO: remove unnecessary imports
+# TODO: document
+# TODO: remove unnecessary function parameters -> check with calling object
+# TODO: Optional titles
+
 
 def plot_epoch_losses(epoch_losses, save_dir=None, ts=None):
     x = np.arange(1, 1 + epoch_losses.shape[0])

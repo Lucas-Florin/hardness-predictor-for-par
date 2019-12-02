@@ -9,6 +9,8 @@ from collections import OrderedDict
 
 import torch
 
+# TODO: Remove unneccesary parts
+
 
 def mkdir_if_missing(directory):
     if not osp.exists(directory):
@@ -39,6 +41,7 @@ def write_json(obj, fpath):
 
 
 def save_checkpoint(state, fpath='checkpoint.pth.tar', is_best=False):
+    # TODO: Restructure, couple with result_dict
     if len(osp.dirname(fpath)) != 0:
         mkdir_if_missing(osp.dirname(fpath))
     # remove 'module.' in state_dict's keys if necessary

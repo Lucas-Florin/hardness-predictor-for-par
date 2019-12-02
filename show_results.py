@@ -9,6 +9,10 @@ import numpy as np
 import re
 from utils.plot import plot_epoch_losses
 
+# TODO: Document
+# TODO: Maybe move to utils
+# TODO: Maybe integrate with other program
+
 
 def main():
     global args

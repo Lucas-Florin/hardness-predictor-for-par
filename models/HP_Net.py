@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
+# TODO: make code DRY: join with main model setups.
+
+
 class HP_VGG16(nn.Module):
 
     def __init__(self):

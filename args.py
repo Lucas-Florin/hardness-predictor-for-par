@@ -1,5 +1,8 @@
 import argparse
 
+# TODO: Remove unnecessary options
+# TODO: Simplify usage through standard options
+# TODO: Unify nomenclature
 
 
 def argument_parser():

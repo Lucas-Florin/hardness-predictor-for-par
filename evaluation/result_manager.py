@@ -1,4 +1,8 @@
 
+# TODO: Documentation
+# TODO: Make dict keys consistent with the rest of the code
+
+
 class ResultManager(object):
     output_str = "output"
     predictions_str = "predictions"

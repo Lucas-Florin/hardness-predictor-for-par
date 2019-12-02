@@ -37,6 +37,8 @@ class RealisticPredictorAnalyzer:
     """
     # TODO: Complete conversion to class.
     # TODO: Use result manager
+    # TODO: Document better
+    # TODO: Implement runtime menu
     def __init__(self, args):
         self.args = args
         # Decide which processor (CPU or GPU) to use.

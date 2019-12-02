@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# TODO: Join with DeepMAR?
+
 class SigmoidCrossEntropyLoss(nn.Module):
     """
     Sigmoid cross-entropy loss

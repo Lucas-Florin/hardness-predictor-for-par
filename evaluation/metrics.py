@@ -14,6 +14,9 @@ import tabulate as tab
 from sklearn.metrics import label_ranking_average_precision_score, average_precision_score
 
 
+# TODO: Remove unused functions
+# TODO: Document functions (Add references to used definitions)
+
 
 def _get_conf_mat(output, target):
     with torch.no_grad():

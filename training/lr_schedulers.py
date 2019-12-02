@@ -1,5 +1,7 @@
 import torch
 
+# TODO: Document
+
 
 def init_lr_scheduler(optimizer,
                       lr_scheduler='multi_step', # learning rate scheduler

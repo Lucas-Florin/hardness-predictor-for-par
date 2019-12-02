@@ -21,6 +21,10 @@ from .mlfn import *
 from .HP_Net import HP_RES50, HP_Squeezenet, HP_Densenet
 
 
+# TODO: Rely more on library definitions.
+# TODO: Remove untested models.
+
+
 __model_factory = {
     # image classification models
     'resnet50': resnet50,

@@ -21,3 +21,6 @@ from .median_rejector import MedianRejector
 from .threshold_rejector import ThresholdRejector
 from .quantile_rejector import QuantileRejector
 from .f1_rejector import F1Rejector
+
+# TODO: Documentation
+# TODO: Look over and formulate TODOs. 

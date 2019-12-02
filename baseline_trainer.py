@@ -26,6 +26,10 @@ from training.lr_schedulers import init_lr_scheduler
 from utils.plot import plot_epoch_losses
 from trainer import Trainer
 
+# TODO: Document
+# TODO: Console output
+# TODO: Join with RealisticPredictorTrainer
+
 
 class BaselineTrainer(Trainer):
     """

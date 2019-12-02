@@ -1,5 +1,7 @@
 import numpy as np
 
+# TODO: Document
+
 def bold_max(data):
     for i in range(data.shape[1]):
         col = data[:, i]

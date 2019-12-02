@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 
 
+# TODO: Document
+
+
 def init_optimizer(model,
                    optim='adam',  # optimizer choices
                    lr=0.003,  # learning rate
