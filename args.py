@@ -211,6 +211,8 @@ def argument_parser():
                         help='show example images for a specific attribute')
     parser.add_argument('--save-plot', action='store_true',
                         help='save plots as TikZ')
+    parser.add_argument('--menu', action='store_true',
+                        help='input commands at runtime')
 
 
 

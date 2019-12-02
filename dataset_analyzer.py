@@ -40,27 +40,40 @@ class DatasetAnalyzer:
             self.label_examples()
 
     def label_examples(self):
+        attributes = self.attributes.tolist()
         dataset = self.data_manager.split_dict["train"]
         labels = list()
         for (_, label) in self.data_manager.dataset.train:
             labels.append(label)
         labels = np.array(labels, dtype="bool")
         att_list = self.args.select_atts
-        assert len(att_list) == 1
-        att = att_list[0]
-        att_idx = self.attributes.tolist().index(att)
-        num_pos = self.args.num_save_hard
-        num_neg = self.args.num_save_easy
-        labels = labels[:, att_idx].flatten()
-        idxs = np.arange(labels.size)
-        pos_idxs = idxs[labels]
-        neg_idxs = idxs[np.logical_not(labels)]
-        replace = pos_idxs.size < num_pos
-        sel_idxs = (np.random.choice(pos_idxs, num_pos, replace=replace).tolist()
-                    + np.random.choice(neg_idxs, num_neg, replace=False).tolist())
-        # Display the image examples.
-        plot.show_img_grid(dataset, sel_idxs, None, labels[sel_idxs],
-                           save_plot=False)
+        while True:
+            if not self.args.menu:
+                assert len(att_list) == 1
+                att = att_list[0]
+            else:
+                att = input("Attribute name: ")
+                if att == "exit":
+                    break
+                elif att not in attributes:
+                    continue
+            att_idx = attributes.index(att)
+            num_pos = self.args.num_save_hard
+            num_neg = self.args.num_save_easy
+            att_labels = labels[:, att_idx].flatten()
+            idxs = np.arange(att_labels.size)
+            pos_idxs = idxs[att_labels]
+            neg_idxs = idxs[np.logical_not(att_labels)]
+            num_pos = min(pos_idxs.size, num_pos)
+            num_neg = min(neg_idxs.size, num_neg)
+
+            sel_idxs = (np.random.choice(pos_idxs, num_pos, replace=False).tolist()
+                        + np.random.choice(neg_idxs, num_neg, replace=False).tolist())
+            # Display the image examples.
+            plot.show_img_grid(dataset, sel_idxs, None, att_labels[sel_idxs],
+                               save_plot=False)
+            if not self.args.menu:
+                break
 
 
     def positive_label_ratio(self):

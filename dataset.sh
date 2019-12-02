@@ -1,8 +1,9 @@
 python dataset_analyzer.py \
-    -d peta \
+    -d rap \
     --use-cpu \
-    --select-att accessoryShawl \
-    --num-save-hard 40 \
+    --select-att ub-Tight \
+    --num-save-hard 80 \
     --num-save-easy 0 \
     --show-label-examples \
-    --full-attributes
+    --full-attributes \
+    --menu
