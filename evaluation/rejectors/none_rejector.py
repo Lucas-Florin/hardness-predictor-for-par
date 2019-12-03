@@ -15,7 +15,7 @@ class NoneRejector(BaseRejector):
     This rejector does not reject any samples. It selects all samples.
     """
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         print("Rejecting nothing. ")
         self.attribute_thresholds = None  # redundant
         self.print_percentage_rejected(hp_scores)

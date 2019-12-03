@@ -18,8 +18,7 @@ class MedianRejector(QuantileRejector):
     def __init__(self, rejection_quantile):
         super().__init__(rejection_quantile)
 
-    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True,
-                          correctness_ratio_threshold=None):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
 
         num_datapoints = labels.shape[0]
         num_attributes = labels.shape[1]
@@ -28,8 +27,7 @@ class MedianRejector(QuantileRejector):
         correctness_ratios = list()
         possible_attribute_thresholds = list()
         correct_label_predictions = labels == label_predictions
-        if correctness_ratio_threshold is None:
-            correctness_ratio_threshold = correct_label_predictions.mean(0)
+        correctness_ratio_threshold = correct_label_predictions.mean(0)
         sorted_idxs = hp_scores.argsort(0)
         for i in range(len(quantiles) - 1):
             num_reject_start = int(num_datapoints * quantiles[i]) + 1

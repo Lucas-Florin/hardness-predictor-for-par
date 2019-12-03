@@ -18,7 +18,7 @@ class BaseRejector():
 
     def __call__(self, hp_scores):
         """
-        Call the rejector.
+        Reject samples based on their hardness scores.
         :param hp_scores: The hardness scores in a torch tensor.
         :return: an array of the same type as hp_scores. A 1 means the sample is selected, a 0 means the sample is
             rejected.
@@ -28,14 +28,17 @@ class BaseRejector():
                 return hp_scores.new_tensor(hp_scores < hp_scores.new_tensor(self.attribute_thresholds))
             return hp_scores < self.attribute_thresholds
         else:
+            # If rejector is not initialized or if its of type "none", no samples are rejected.
             return np.ones(hp_scores.shape, dtype="bool")
 
-    def update_thresholds(self, labels, label_predictions, hp_scores):
+    def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         """
         Update the rejection thresholds based on the training dataset.
         :param labels: the ground truth labels
         :param label_predictions: the binary predictions for the labels.
         :param hp_scores: the hardness scores.
+        :param sorted_scores: hardness scores already sorted to avoid redundant computation.
+        :param verbose: pass True if results are to be printed.
         """
         raise NotImplementedError
 

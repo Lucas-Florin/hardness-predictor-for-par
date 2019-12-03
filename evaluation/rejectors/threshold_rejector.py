@@ -23,6 +23,7 @@ class ThresholdRejector(QuantileRejector):
     def update_thresholds(self, labels, label_predictions, hp_scores, sorted_scores=None, verbose=True):
         super().update_thresholds(labels, label_predictions, hp_scores)
         ideal_thresholds = np.full((1, hp_scores.shape[1]), self.hp_score_threshold)
+        # Check if ideal thresholds would reject too many samples.
         self.attribute_thresholds = np.where(
             self.attribute_thresholds > ideal_thresholds, self.attribute_thresholds, ideal_thresholds)
         self.print_percentage_rejected(hp_scores, verbose)

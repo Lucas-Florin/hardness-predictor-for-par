@@ -5,7 +5,6 @@
 
 import numpy as np
 import torch
-from .base_rejector import BaseRejector
 from .quantile_rejector import QuantileRejector
 from ..metrics import mean_attribute_accuracies
 
