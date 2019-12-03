@@ -11,22 +11,7 @@ https://arxiv.org/abs/1901.07474v1
 import numpy as np
 import torch
 import tabulate as tab
-from sklearn.metrics import label_ranking_average_precision_score, average_precision_score
-
-
-# TODO: Remove unused functions
-# TODO: Document functions (Add references to used definitions)
-
-
-def _get_conf_mat(output, target):
-    with torch.no_grad():
-        prediction = output > 0.5
-        tp = np.logical_and(target == 1, prediction == 1).sum(1)  # Number of true positives.
-        fn = np.logical_and(target == 1, prediction == 0).sum(1)  # Number of false negatives.
-        fp = np.logical_and(target == 0, prediction == 1).sum(1)  # Number of false positives.
-        tn = np.logical_and(target == 0, prediction == 0).sum(1)  # Number of true negatives.
-
-    return tp, fn, fp, tn
+from sklearn.metrics import average_precision_score
 
 
 def mean_accuracy(output, target, ignore=None):
@@ -35,23 +20,27 @@ def mean_accuracy(output, target, ignore=None):
 
 def mean_attribute_accuracies(output, target, ignore=None):
     """
-    Get the average between the positive and negative accuracy for each attribute. As proposed in RAPv2.0 Paper
-    :param output:
-    :param target:
-    :return:
+    Get the mean between the positive and negative accuracy for each attribute (label based). As proposed in RAPv2.0 Paper.
+    All inputs are 2D arrays of the same shape.
+    If for an attribute there are no ground truth positive or negative samples, the positive or negative accuracy is
+    set to zero. In that case the mean accuracy for that attribute is capped at 50%
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: 1D array with the mean accuracy for each attribute.
     """
     with torch.no_grad():
         if ignore is None:
             # If ignore argument is not passed, nothing is ignored.
             ignore = np.zeros(target.shape, "int8")
         use = np.logical_not(ignore)
-        prediction = output > 0.5
-        p = (np.logical_and(use, target == 1)).sum(0)  # Number of positive samples.
+        prediction = output > 0.5  # in case thresholding was not already done. This also ensures boolean data type.
+        p = (np.logical_and(use, target == 1)).sum(0)  # Number of positive samples that are not ignored.
         p[p == 0] = 1  # Prevent division by zero
-        tp = np.logical_and(use, np.logical_and(target == 1, prediction == 1)).sum(0)  # Number of true positives.
-        n = np.logical_and(use, (target == 0)).sum(0)  # Number of negative samples.
+        tp = np.logical_and(use, np.logical_and(target == 1, prediction == 1)).sum(0)  # Number of true positives that are not ignored.
+        n = np.logical_and(use, (target == 0)).sum(0)  # Number of negative samples that are not ignored.
         n[n == 0] = 1  # Prevent division by zero
-        tn = np.logical_and(use, np.logical_and(target == 0, prediction == 0)).sum(0)  # Number of true negatives.
+        tn = np.logical_and(use, np.logical_and(target == 0, prediction == 0)).sum(0)  # Number of true negatives that are not ignored.
 
         m_acc = (tp.astype("float64") / p + tn.astype("float64") / n) / 2
 
@@ -60,12 +49,12 @@ def mean_attribute_accuracies(output, target, ignore=None):
 
 def attribute_accuracies(output, target, attribute_groupings=None):
     """
-    Get the raw accuracy for each attribute as defined in Market1501 Attribute Paper.
+    Get the raw accuracy (label based) for each attribute as defined in Market1501 Attribute Paper.
     If attribute groupings are given, the average for each group is calculated.
-    :param output:
-    :param target:
-    :param attribute_groupings:
-    :return:
+    :param output: Attribute probabilities put out by the Sigmoid layer (2D array).
+    :param target: Ground truth labels (2D array).
+    :param attribute_groupings: Attribute groupings as defined in the dataset.
+    :return: The accuracies for each attribute.
     """
     with torch.no_grad():
         prediction = output > 0.5
@@ -87,6 +76,14 @@ def attribute_accuracies(output, target, attribute_groupings=None):
 
 
 def accuracy(output, target, ignore=None):
+    """
+    Instance based accuracy as defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: scalar accuracy measure
+    """
     if ignore is None:
         # If ignore argument is not passed, nothing is ignored.
         ignore = np.zeros(target.shape, "int8")
@@ -100,6 +97,14 @@ def accuracy(output, target, ignore=None):
 
 
 def precision(output, target, ignore=None):
+    """
+    Instance based precision as defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: scalar precision measure
+    """
     if ignore is None:
         # If ignore argument is not passed, nothing is ignored.
         ignore = np.zeros(target.shape, "int8")
@@ -113,6 +118,14 @@ def precision(output, target, ignore=None):
 
 
 def recall(output, target, ignore=None):
+    """
+    Instance based recall as defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: scalar recall measure
+    """
     if ignore is None:
         # If ignore argument is not passed, nothing is ignored.
         ignore = np.zeros(target.shape, "int8")
@@ -126,12 +139,28 @@ def recall(output, target, ignore=None):
 
 
 def f1measure(output, target, ignore=None):
+    """
+    Instance based F1 measure as defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: scalar F1 measure
+    """
     pre = precision(output, target, ignore)
     rec = recall(output, target, ignore)
     return 2 * (pre * rec) / (pre + rec)
 
 
 def get_metrics(output, target, ignore=None):
+    """
+    A tuple with all the instance based metrics defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: tuple of scalar instance based metrics.
+    """
     return (
         mean_accuracy(output, target, ignore),
         accuracy(output, target, ignore),
@@ -142,6 +171,14 @@ def get_metrics(output, target, ignore=None):
 
 
 def get_metrics_table(output, target, ignore=None):
+    """
+    A printable table with all the instance based metrics defined in "Pedestrian Attribute Recognition: A survey".
+    All inputs are 2D arrays of the same shape.
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :return: printable string of a table with all the instance based metrics.
+    """
     metrics = get_metrics(output, target, ignore)
     metric_names = [
         "Mean Accuracy",
@@ -157,9 +194,10 @@ def get_metrics_table(output, target, ignore=None):
 def group_attributes(output, attribute_grouping):
     """
     Group binary attributes into non-binary ones. As proposed in Market1501-Attribute Paper.
-    :param output:
-    :param attribute_grouping:
-    :return:
+    For each attribute group for each sample there is exactly one positive prediction.
+    :param output: 2D array of attribute probabilities.
+    :param attribute_grouping: Attribute groupings as defined in the dataset.
+    :return: 2D array with label predictions.
     """
     with torch.no_grad():
         attg = np.array(attribute_grouping, dtype='int16')
@@ -182,10 +220,11 @@ def get_f1_calibration_thresholds(output, target, ignore=None, resolution=100):
     Calculate the thresholds for F1 Calibration as defined in:
     [Bekele et al. 2019] The Deeper, the Better: Analysis of Person Attributes Recognition
     https://arxiv.org/abs/1901.03756
-    :param output:
-    :param target:
-    :param resolution:
-    :return:
+    :param output: Attribute probabilities put out by the Sigmoid layer.
+    :param target: Ground truth labels.
+    :param ignore: Boolean array determining which attributes of which samples are ignored.
+    :param resolution: Number of datapoints calculated for the ROC curve.
+    :return: 1D array with the decision thresholds for each attribute.
     """
     if ignore is None:
         # If ignore argument is not passed, nothing is ignored.
@@ -220,14 +259,6 @@ def average_precision(target, score):
     :param score: the ranking score
     :return: the average precision for that query
     """
-    # Make sure the arrays are in the correct format.
-    """
-    if score.ndim == 1:
-        score = score.reshape((1, score.size))
-    if target.ndim == 1:
-        target = target.reshape((1, target.size))
-    """
-    #assert (target.shape == score.shape).all()
     # Calculate the average precision using the function from scikit-learn
     return average_precision_score(target, score)
 
@@ -251,36 +282,13 @@ def hp_average_precision(labels, predictions, hp_scores):
     return np.array(attribute_average_precisions)
 
 
-def hp_mean_average_precision(labels, predictions, hp_scores):
-    """
-    Get the mean average precision metric for a hardness predictor for each attribute.
-    Each attribute is treated as a separate query. For each attribute, the average precision for the positive and for
-    the negative samples is calculated separately and then averaged. Falsely predicted labels are ground truth
-    relevant. The hardness score is the predicted relevancy score.
-    :param labels: The ground truth attribute labels.
-    :param predictions: The predicted attribute labels.
-    :param hp_scores: The hardness scores given by the hardness predictor.
-    :return: An array with the average precision for each attribute.
-    """
-    # Transpose the arrays so that each attribute can be analyzed separately.
-    labels = labels.transpose()
-    predictions = predictions.transpose()
-    hp_scores = hp_scores.transpose()
-    attribute_average_precisions = []
-    # Compute the mean average precision score for each attribute.
-    for l, p, s in zip(labels, predictions, hp_scores):
-        # Compute the score for the positive and the negative samples separately
-        ap_cor = average_precision(l != p, s)
-        ap_err = average_precision(l == p, 1 - s)
-        if np.isnan(ap_cor):
-            ap_cor = 0
-        if np.isnan(ap_err):
-            ap_err = 0
-        attribute_average_precisions.append((ap_cor + ap_err) / 2)
-    return np.array(attribute_average_precisions)
-
-
 def get_confidence(prediction_probs, decision_thresholds=None):
+    """
+    Get the confidence scores based on the attribute probabilities.
+    :param prediction_probs: (2D array) attribute probabilities put out by the Sigmoid layer.
+    :param decision_thresholds: (optional) decision thresholds from F1 calibration.
+    :return: (2D array) confidence scores for each attribute of each sample.
+    """
     if decision_thresholds is None:
         decision_thresholds = 0.5
     elif type(prediction_probs) == torch.Tensor:
@@ -302,8 +310,25 @@ def get_confidence(prediction_probs, decision_thresholds=None):
     return confidence
 
 
-def column_indexing(array, idxs, axis=0):
-    assert axis == 0
+def get_uncertainty(prediction_probs, decision_thresholds=None):
+    """
+    Get the uncertainty scores based on the attribute probabilities.
+    The uncertainty are the inverse of the confidence scores.
+    :param prediction_probs: (2D array) attribute probabilities put out by the Sigmoid layer.
+    :param decision_thresholds: (optional) decision thresholds from F1 calibration.
+    :return: (2D array) uncertainty scores for each attribute of each sample.
+    """
+    return 1 - get_confidence(prediction_probs, decision_thresholds)
+
+
+def column_indexing(array, idxs):
+    """
+    For each column in a 2D array, select a specified set of cells. The indices of those cells are saved in the
+    corresponding column of the idxs 2D-array.
+    :param array: 2D array.
+    :param idxs: 2D array of scalars with same number of columns as the other parameter.
+    :return: 2D array of the type of array with the shape of idxs.
+    """
     num_attributes = array.shape[1]
     assert num_attributes == idxs.shape[1]
     result = np.empty_like(array, shape=idxs.shape)
