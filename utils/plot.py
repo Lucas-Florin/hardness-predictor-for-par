@@ -6,17 +6,13 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import matplotlib.ticker as ticker
 import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
-import torchvision.utils as vutils
-import torch
 import evaluation.metrics as metrics
 from evaluation.rejectors import QuantileRejector
 
-# TODO: remove unnecessary imports
 # TODO: document
 # TODO: remove unnecessary function parameters -> check with calling object
 # TODO: Optional titles

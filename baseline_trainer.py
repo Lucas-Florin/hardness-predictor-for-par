@@ -19,7 +19,6 @@ from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
 from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, load_pretrained_weights
-from utils.generaltools import set_random_seed
 import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler

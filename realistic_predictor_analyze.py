@@ -14,20 +14,8 @@ import torch.backends.cudnn as cudnn
 
 from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_scheduler_kwargs
 from data.data_manager import ImageDataManager
-from data.dataset_loader import read_image
-import models
-from training.losses import SigmoidCrossEntropyLoss, HardnessPredictorLoss, DeepMARLoss, SplitSoftmaxCrossEntropyLoss
-from utils.iotools import check_isfile, save_checkpoint
-from utils.avgmeter import AverageMeter
-from utils.loggers import Logger, AccLogger
-from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, load_pretrained_weights
-from utils.generaltools import set_random_seed
 import evaluation.metrics as metrics
-from training.optimizers import init_optimizer
-from training.lr_schedulers import init_lr_scheduler
 import utils.plot as plot
-from trainer import Trainer
-import evaluation.rejectors as rejectors
 from evaluation.result_manager import ResultManager
 
 
