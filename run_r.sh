@@ -3,10 +3,9 @@ python baseline_trainer.py \
     --gpu-devices 1 \
     --max-epoch 180 \
     --stepsize 60 120 \
-    --random-translation \
-    --color-jitter \
-    --eval-split val \
+    --eval-split test \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --loss-func deepmar \
+    --loss-func scel \
+    --f1-calib \
+    --f1-calib-split val \
     --use-macc \
-    --train-val \

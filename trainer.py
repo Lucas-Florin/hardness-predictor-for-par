@@ -188,6 +188,7 @@ class Trainer(object):
         """
         labels, prediction_probs, predictions = self.get_label_predictions(self.args.eval_split)
         if self.args.use_macc:
+            # TODO: Make this the default option.
             # Use mA for each attribute.
             acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore)
             acc_name = 'Mean Attribute Accuracies'
@@ -234,17 +235,16 @@ class Trainer(object):
         else:
             self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
 
-    def get_f1_calibration_threshold(self, loader=None):
+    def get_f1_calibration_threshold(self):
         """
 
         :param loader:
         :return:
         """
-        print("Computing F1-calibration thresholds")
+        print("Computing F1-calibration thresholds on " + self.args.f1_calib_split)
         # TODO: ignore rejected samples?
-        if loader is None:
-            loader = self.testloader_dict["train"]
-        predictions, gt, _ = self.get_full_output(loader)
+
+        predictions, gt, _ = self.get_full_output(split=self.args.f1_calib_split)
 
         return metrics.get_f1_calibration_thresholds(predictions, gt)
 

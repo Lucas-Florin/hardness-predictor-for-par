@@ -33,8 +33,6 @@ def argument_parser():
                         help='randomly change the brightness, contrast and saturation')
     parser.add_argument('--color-aug', action='store_true',
                         help='randomly alter the intensities of RGB channels')
-    parser.add_argument('--random-translation', action='store_true',
-                        help='use random translation for data augmentation')
 
     # ************************************************************
     # Optimization options
@@ -153,17 +151,15 @@ def argument_parser():
                         help='use mean accuracy instead of normal accuracy')
     parser.add_argument('--f1-calib', action='store_true',
                         help='use F1 calibration')
+    parser.add_argument('--f1-calib-split', type=str, default='train', choices=['test', 'val', 'train'],
+                        help='name of the desired split for determining the f1-calibration thresholds (train/test/val)')
     parser.add_argument('--eval-freq', type=int, default=-1,
                         help='evaluation frequency (set to -1 to test only in the end)')
     parser.add_argument('--start-eval', type=int, default=0,
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
                         help='name of the desired evaluation split (train/test/val)')
-    parser.add_argument('--rejector-thresholds-split', type=str, default='train', choices=['test', 'val', 'train'],
-                        help='name of the desired split for determining the rejector thresholds (train/test/val)')
 
-    parser.add_argument('--use-confidence', action='store_true',
-                        help='use inverse confidence instead of hardness score. ')
 
     # Rejection arguments.
     parser.add_argument('--rejector', type=str, default='none',
@@ -178,6 +174,10 @@ def argument_parser():
     parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
                         help='reject attributes that have a mean hardness score higher than this threshold')
 
+    parser.add_argument('--rejector-thresholds-split', type=str, default='train', choices=['test', 'val', 'train'],
+                        help='name of the desired split for determining the rejector thresholds (train/test/val)')
+    parser.add_argument('--use-confidence', action='store_true',
+                        help='use inverse confidence instead of hardness score. ')
 
     #
 
