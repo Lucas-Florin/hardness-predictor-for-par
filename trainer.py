@@ -66,7 +66,8 @@ class Trainer(object):
         elapsed = str(datetime.timedelta(seconds=elapsed))
         print('Loading Time: {}'.format(elapsed))
         self.time_start = time.time()
-        self.ranklogger = AccLogger()
+        self.test_acc_logger = AccLogger()
+
         print('=> Start training')
         self.epoch_losses = np.zeros(shape=(args.max_epoch, len(self.criterion_list)))
 
@@ -86,17 +87,18 @@ class Trainer(object):
         """
         # Train non-fixbase epochs.
         for epoch in range(args.start_epoch, args.max_epoch):
-            print(self.scheduler.get_lr())
             loss = self.train()
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
                 scheduler.step()
+            self.print_elapsed_time(self.time_start)
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
+                print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
                 self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
                 acc, _, _ = self.test()
-                self.ranklogger.write(epoch + 1, acc)
+                self.test_acc_logger.write(epoch + 1, acc)
                 self.checkpoint()
 
             self.epoch += 1
@@ -108,10 +110,9 @@ class Trainer(object):
             self.checkpoint()
 
         # Calculate elapsed time.
-        elapsed = round(time.time() - self.time_start)
-        elapsed = str(datetime.timedelta(seconds=elapsed))
-        print('Training Time {}'.format(elapsed))
-        self.ranklogger.show_summary()
+        self.print_elapsed_time(self.time_start)
+        print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2**20 / 1000))
+        self.test_acc_logger.show_summary()
 
         if args.plot_epoch_loss:
             # Plot loss over epochs.
@@ -132,6 +133,10 @@ class Trainer(object):
         }, osp.join(self.args.save_experiment, filename))
         print("Saved model checkpoint at " + filename)
 
+    def print_elapsed_time(self, start_time):
+        elapsed = round(time.time() - start_time)
+        elapsed = str(datetime.timedelta(seconds=elapsed))
+        print('Training Time {}'.format(elapsed))
 
     def init_environment(self, args):
         # Decide which processor (CPU or GPU) to use.
@@ -225,10 +230,11 @@ class Trainer(object):
         })
         self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels,
                                            predictions=predictions)
-        return acc_atts.mean(), prediction_probs, predictions
+        return metrics.f1measure(predictions, labels, ignore), prediction_probs, predictions
 
     def init_f1_calibration_threshold(self):
-        if self.f1_calibration_thresholds is not None:
+        if self.f1_calibration_thresholds is not None and (self.epoch + 1 == self.args.max_epoch
+                                                           or -1 == self.args.max_epoch):
             return
         if self.args.evaluate and "f1_thresholds" in self.result_dict:
             self.f1_calibration_thresholds = self.result_dict["f1_thresholds"]
@@ -265,7 +271,7 @@ class Trainer(object):
         model.eval()
         with torch.no_grad():
             predictions, ground_truth, imgs_path_list = list(), list(), list()
-            for batch_idx, (imgs, labels, img_paths) in enumerate(loader):
+            for imgs, labels, img_paths in loader:
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
 
@@ -278,7 +284,6 @@ class Trainer(object):
 
     def get_label_predictions(self, split):
         self.init_f1_calibration_threshold()
-
         if self.args.evaluate and self.result_manager.check_output_dict(split):
             labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
