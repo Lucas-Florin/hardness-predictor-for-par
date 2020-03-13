@@ -189,3 +189,4 @@ fabric.properties
 *.tar
 
 *log.txt
+scp.sh
