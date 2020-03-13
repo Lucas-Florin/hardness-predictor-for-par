@@ -258,7 +258,6 @@ def image_dataset_kwargs(parsed_args):
         'random_erase': parsed_args.random_erase,
         'color_jitter': parsed_args.color_jitter,
         'color_aug': parsed_args.color_aug,
-        'random_translation': parsed_args.random_translation,
         'train_val': parsed_args.train_val,
         'full_attributes': parsed_args.full_attributes
     }
