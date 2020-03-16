@@ -316,19 +316,13 @@ class RealisticPredictorTrainer(Trainer):
         ignore = np.logical_not(self.rejector(hp_scores))
         print("Rejecting the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
-        mean_acc, _, _ = super().test(ignore)
+        f1_measure, _, _ = super().test(ignore)
         labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
         self.result_dict.update({
             "rejection_thresholds": self.rejector.attribute_thresholds,
             "ignored_test_samples": ignore
         })
-        pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
-        pickle_file = open(pickle_path, "wb")
-        assert self.result_dict is self.result_manager.result_dict
-        print(self.result_manager.print_stored())
-        pickle.dump(self.result_dict, pickle_file)
-        pickle_file.close()
-        print("Saved Results at " + pickle_path)
+        self.save_result_dict()
 
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
@@ -399,7 +393,7 @@ class RealisticPredictorTrainer(Trainer):
             show_img_grid(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
                           hard_att_labels, hp_scores[hard_idxs], hard_att_pred)
 
-        return mean_acc, prediction_probs, predictions  # Return the values from the super-function.
+        return f1_measure, prediction_probs, predictions  # Return the values from the super-function.
 
 
 

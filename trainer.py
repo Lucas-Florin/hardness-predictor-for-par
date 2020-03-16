@@ -5,6 +5,7 @@ import datetime
 import os.path as osp
 import numpy as np
 import warnings
+import pickle
 
 import torch
 import torch.nn as nn
@@ -208,6 +209,10 @@ class Trainer(object):
         print('Results ----------')
         print(metrics.get_metrics_table(predictions, labels, ignore))
         print('------------------')
+        csv_path = osp.join(self.args.save_experiment, self.ts + "general_metrics.csv")
+        np.savetxt(csv_path, 100*np.array((metrics.get_metrics(predictions, labels, ignore), )),
+                   fmt="%s", delimiter="\t")
+        print("Saved Table at " + csv_path)
         print(acc_name + ':')
         if self.args.f1_calib and not self.args.group_atts:
             header = ["Attribute", "Accuracy", "Positivity Ratio", "F1-Calibration Threshold"]
@@ -299,3 +304,12 @@ class Trainer(object):
             label_predictions = metrics.group_attributes(label_predictions, self.attribute_grouping)
             print("Grouping attributes. ")
         return labels, prediction_probs, label_predictions
+
+    def save_result_dict(self):
+        pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
+        pickle_file = open(pickle_path, "wb")
+        assert self.result_dict is self.result_manager.result_dict
+        print(self.result_manager.print_stored())
+        pickle.dump(self.result_dict, pickle_file)
+        pickle_file.close()
+        print("Saved Results at " + pickle_path)

@@ -141,6 +141,13 @@ class BaselineTrainer(Trainer):
         ))
         return losses.avg
 
+    def test(self, ignore=None):
+        return_data = super().test(ignore)
+        self.save_result_dict()
+        return return_data
+
+
+
 
 if __name__ == '__main__':
     # global variables

@@ -76,7 +76,7 @@ def argument_parser():
                         help='after the HP-Net has finished training and hard examples have been discarded, continue '
                              'training the main-Net. ')
 
-    parser.add_argument('--train-batch-size', default=32, type=int,
+    parser.add_argument('--train-batch-size', default=128, type=int,
                         help='training batch size')
     parser.add_argument('--test-batch-size', default=100, type=int,
                         help='test batch size')
