@@ -19,17 +19,21 @@ class ResultManager(object):
     f1_string = "f1_thresholds"
     positivity_ratio_str = "positivity_ratio"
 
-    def __init__(self, result_dict):
+    def __init__(self, result_dict, use_cache=True):
         """
         Initialize a new result manager.
         :param result_dict: dict with the results. If no results are available this dict is empty.
         """
         self.result_dict = result_dict
+        self.use_cache = use_cache
         if self.output_str in result_dict:
             self.output = result_dict[self.output_str]
         else:
             self.output = dict()
         result_dict[self.output_str] = self.output
+
+    def set_use_cache(self, use_cache):
+        self.use_cache = use_cache
 
     def check_output_dict(self, split):
         """
@@ -37,6 +41,8 @@ class ResultManager(object):
         :param split: a string of the split name.
         :return: True if all the outputs for that split are present.
         """
+        if not self.use_cache:
+            return False
         if self.output is None:
             return False
         if split not in self.output:
