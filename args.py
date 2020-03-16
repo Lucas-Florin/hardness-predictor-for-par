@@ -147,8 +147,10 @@ def argument_parser():
                         help='save resulting model after evaluation')
     parser.add_argument('--group-atts', action='store_true',
                         help='group binary attributes into non-binary ones')
-    parser.add_argument('--use-macc', action='store_true',
-                        help='use mean accuracy instead of normal accuracy')
+    #parser.add_argument('--use-macc', action='store_true',
+    #                    help='use mean accuracy instead of normal accuracy')
+    parser.add_argument('--use-raw-acc', action='store_true',
+                        help='use raw accuracy instead of mean accuracy')
     parser.add_argument('--f1-calib', action='store_true',
                         help='use F1 calibration')
     parser.add_argument('--f1-calib-split', type=str, default='train', choices=['test', 'val', 'train'],

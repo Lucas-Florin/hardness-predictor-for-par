@@ -128,6 +128,7 @@ class Trainer(object):
             'epoch': self.epoch + 1 if not self.args.evaluate else None,
             'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
             'losses': self.epoch_losses if not self.args.evaluate else None,
+            'performance_evolution': self.test_acc_logger.get_data(),
             'args': self.loaded_args if self.args.evaluate else self.args,
             'ts': self.ts,
             'result_dict': self.result_dict
@@ -174,7 +175,7 @@ class Trainer(object):
         if self.args.group_atts:
             # Each group has exactly one positive attribute.
             self.attribute_grouping = self.dm.dataset.attribute_grouping
-            if not self.args.use_macc:
+            if self.args.use_raw_acc:
                 self.attributes = self.dm.dataset.grouped_attribute_names
         else:
             self.attribute_grouping = None
@@ -193,7 +194,7 @@ class Trainer(object):
         :return:
         """
         labels, prediction_probs, predictions = self.get_label_predictions(self.args.eval_split)
-        if self.args.use_macc:
+        if not self.args.use_raw_acc:
             # TODO: Make this the default option.
             # Use mA for each attribute.
             acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore)

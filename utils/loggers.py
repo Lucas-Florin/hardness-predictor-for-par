@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import sys
 import os
 import os.path as osp
+import tabulate as tab
 
 from .iotools import mkdir_if_missing
 
@@ -51,14 +52,18 @@ class AccLogger(object):
     to show the summarized results, which are convenient for analysis.
     """
     def __init__(self):
-        self.logger = {'epoch': [], 'acc': []}
+        self.epochs = []
+        self.performance = []
 
-    def write(self, epoch, acc):
-        self.logger['epoch'].append(epoch)
-        self.logger['acc'].append(acc)
+    def write(self, epoch, performance):
+        self.epochs.append(epoch)
+        self.performance.append(performance)
+
+    def get_data(self):
+        return [self.epochs, self.performance]
 
     def show_summary(self):
-        print('=> Show summary')
-
-        for epoch, acc in zip(self.logger['epoch'], self.logger['acc']):
-            print('- epoch {}\t accuracy {:.2%}'.format(epoch, acc))
+        print('=> Performance Evolution')
+        headers = ["Epoch", "Performance"]
+        table = tab.tabulate(zip(self.epochs, self.performance), floatfmt='.2%', headers=headers)
+        print(table)
