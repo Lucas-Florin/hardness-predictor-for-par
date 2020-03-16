@@ -101,6 +101,7 @@ class Trainer(object):
                 acc, _, _ = self.test()
                 self.test_acc_logger.write(epoch + 1, acc)
                 self.checkpoint()
+                self.clear_output_cache()
 
             self.epoch += 1
 
@@ -118,6 +119,13 @@ class Trainer(object):
         if args.plot_epoch_loss:
             # Plot loss over epochs.
             plot_epoch_losses(self.epoch_losses, self.args.save_experiment, self.ts)
+
+    def clear_output_cache(self):
+        self.f1_calibration_thresholds = None
+        self.result_dict = dict()
+        self.result_manager = ResultManager(self.result_dict)
+        self.acc_atts = None
+
 
     def checkpoint(self, ts=None):
         if ts is None:
@@ -242,8 +250,6 @@ class Trainer(object):
         if self.f1_calibration_thresholds is not None and (self.epoch + 1 == self.args.max_epoch
                                                            or -1 == self.args.max_epoch):
             return
-        if self.args.evaluate and "f1_thresholds" in self.result_dict:
-            self.f1_calibration_thresholds = self.result_dict["f1_thresholds"]
         else:
             self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
 
@@ -254,11 +260,15 @@ class Trainer(object):
         :return:
         """
         print("Computing F1-calibration thresholds on " + self.args.f1_calib_split)
-        # TODO: ignore rejected samples?
+        split = self.args.f1_calib_split
+        if self.args.evaluate and self.result_manager.check_output_dict(split):
+            labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
+        else:
+            print("Computing label predictions. ")
+            prediction_probs, labels, _ = self.get_full_output(split=split)
+            self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels)
 
-        predictions, gt, _ = self.get_full_output(split=self.args.f1_calib_split)
-
-        return metrics.get_f1_calibration_thresholds(predictions, gt)
+        return metrics.get_f1_calibration_thresholds(prediction_probs, labels)
 
     def get_full_output(self, loader=None, model=None, criterion=None, split=None):
         """
