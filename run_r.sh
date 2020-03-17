@@ -4,8 +4,8 @@ python baseline_trainer.py \
     --max-epoch 180 \
     --stepsize 60 120 \
     --eval-split test \
+    --eval-freq 30 \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
-    --loss-func scel \
+    --loss-func deepmar
     --f1-calib \
-    --f1-calib-split val \
-    --use-macc \
+    --f1-calib-split val
