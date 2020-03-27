@@ -4,6 +4,7 @@ import sys
 import os
 import os.path as osp
 import tabulate as tab
+import numpy as np
 
 from .iotools import mkdir_if_missing
 
@@ -61,6 +62,9 @@ class AccLogger(object):
 
     def get_data(self):
         return [self.epochs, self.performance]
+
+    def get_max(self):
+        return np.max(self.performance) if not len(self.performance) == 0 else 0
 
     def show_summary(self):
         print('=> Performance Evolution')

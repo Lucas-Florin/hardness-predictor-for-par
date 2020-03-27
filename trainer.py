@@ -72,21 +72,7 @@ class Trainer(object):
         print('=> Start training')
         self.epoch_losses = np.zeros(shape=(args.max_epoch, len(self.criterion_list)))
 
-        """
-        # Train Fixbase epochs.
-        if self.args.fixbase_epoch > 0:
-            print('Train {} for {} epochs while keeping other layers frozen'.format(self.args.open_layers,
-                                                                                    self.args.fixbase_epoch))
-            initial_optim_state = self.optimizer.state_dict()
-
-            for epoch in range(args.fixbase_epoch):
-                self.epoch_losses[epoch] = self.train(fixbase=True)
-                self.epoch += 1
-
-            print('Done. All layers are open to train for {} epochs'.format(args.max_epoch))
-            self.optimizer.load_state_dict(initial_optim_state)
-        """
-        # Train non-fixbase epochs.
+        # Train
         for epoch in range(args.start_epoch, args.max_epoch):
             loss = self.train()
             self.epoch_losses[epoch, :] = loss
@@ -98,9 +84,9 @@ class Trainer(object):
                 print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
                 self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
-                acc= self.test()
+                acc = self.test()
+                self.checkpoint(best=acc > self.test_acc_logger.get_max())
                 self.test_acc_logger.write(epoch + 1, acc)
-                self.checkpoint()
                 self.clear_output_cache()
 
             self.epoch += 1
@@ -126,12 +112,12 @@ class Trainer(object):
         self.result_manager = ResultManager(self.result_dict)
         self.acc_atts = None
 
-
-    def checkpoint(self, ts=None):
+    def checkpoint(self, ts=None, best=False):
         if ts is None:
             ts = self.ts
         filename = ts + 'checkpoint.pth.tar'
-        save_checkpoint({
+        filename_best = ts + 'best_checkpoint.pth.tar'
+        state = {
             'state_dicts': [model.state_dict() for model in self.model_list],
             'epoch': self.epoch + 1 if not self.args.evaluate else None,
             'optimizers': [optimizer.state_dict() for optimizer in self.optimizer_list],
@@ -140,8 +126,13 @@ class Trainer(object):
             'args': self.loaded_args if self.args.evaluate else self.args,
             'ts': self.ts,
             'result_dict': self.result_dict
-        }, osp.join(self.args.save_experiment, filename))
+        }
+        save_checkpoint(state, osp.join(self.args.save_experiment, filename))
+        if best:
+            save_checkpoint(state, osp.join(self.args.save_experiment, filename_best))
         print("Saved model checkpoint at " + filename)
+        if best:
+            print("Also saved as best checkpoint. ")
 
     def print_elapsed_time(self, start_time):
         elapsed = round(time.time() - start_time)
