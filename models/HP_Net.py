@@ -43,13 +43,13 @@ class HP_RES50(nn.Module):
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
 
-    def __init__(self, num_classes=1):
+    def __init__(self, num_classes=1, pretrained=True):
         """
 
         :param num_classes: number of dimensions of the output vector. Can be one or the number of attributes.
         """
         super(HP_RES50, self).__init__()
-        trunk_net = torchvision.models.resnet50(pretrained=True)
+        trunk_net = torchvision.models.resnet50(pretrained=pretrained)
         for p in trunk_net.parameters():
             p.requires_grad = True
 
@@ -85,13 +85,13 @@ class HP_Squeezenet(nn.Module):
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
 
-    def __init__(self, num_classes=1):
+    def __init__(self, num_classes=1, pretrained=True):
         """
 
         :param num_classes: number of dimensions of the output vector. Can be one or the number of attributes.
         """
         super(HP_Squeezenet, self).__init__()
-        trunk_net = torchvision.models.squeezenet1_0(pretrained=True)
+        trunk_net = torchvision.models.squeezenet1_0(pretrained=pretrained)
         for p in trunk_net.parameters():
             p.requires_grad = True
 
@@ -127,13 +127,13 @@ class HP_Densenet(nn.Module):
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
 
-    def __init__(self, num_classes=1):
+    def __init__(self, num_classes=1, pretrained=True):
         """
 
         :param num_classes: number of dimensions of the output vector. Can be one or the number of attributes.
         """
         super(HP_Densenet, self).__init__()
-        trunk_net = torchvision.models.densenet121(pretrained=True)
+        trunk_net = torchvision.models.densenet121(pretrained=pretrained)
         for p in trunk_net.parameters():
             p.requires_grad = True
 
