@@ -45,7 +45,7 @@ class BaselineTrainer(Trainer):
     def init_model(self):
         print('Initializing model: {}'.format(args.model))
         self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
-                                       pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
+                                       pretrained=self.args.pretrained, use_gpu=self.use_gpu)
         print('Model size: {:.3f} M'.format(count_num_param(self.model)))
 
         # Load pretrained weights if specified in args.
@@ -135,7 +135,7 @@ class BaselineTrainer(Trainer):
                     loss=losses
                 ))
         print('Epoch: [{0}][{1}/{2}]\t'
-              'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+              'Loss {loss.avg:.4f}'.format(
             self.epoch + 1, batch_idx + 1, len(self.trainloader),
             loss=losses
         ))

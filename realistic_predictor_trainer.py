@@ -45,7 +45,7 @@ class RealisticPredictorTrainer(Trainer):
     def init_model(self):
         print('Initializing main model: {}'.format(args.model))
         self.model_main = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
-                                            pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
+                                            pretrained=self.args.pretrained, use_gpu=self.use_gpu)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_main)))
 
         print('Initializing HP Net. ')
@@ -53,7 +53,7 @@ class RealisticPredictorTrainer(Trainer):
         num_hp_net_outputs = 1 if self.args.hp_net_simple else self.dm.num_attributes
         # Init the HP-Net
         self.model_hp = models.init_model(name="hp_net_" + self.args.hp_model, num_classes=num_hp_net_outputs,
-                                          pretrained=not self.args.no_pretrained)
+                                          pretrained=self.args.pretrained)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_hp)))
 
         if self.args.rejector == "none":
