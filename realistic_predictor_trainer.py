@@ -214,7 +214,6 @@ class RealisticPredictorTrainer(Trainer):
         train_hp = (self.args.hp_epoch_offset <= self.epoch < self.args.hp_net_train_epochs
                     + self.args.hp_epoch_offset)
 
-
         if rejection_epoch:
             self.update_rejector_thresholds()
         if train_main or train_main_finetuning:
@@ -319,11 +318,7 @@ class RealisticPredictorTrainer(Trainer):
         # Run the standard accuracy testing.
         f1_measure, _, _ = super().test(ignore)
         labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
-        self.result_dict.update({
-            "rejection_thresholds": self.rejector.attribute_thresholds,
-            "ignored_test_samples": ignore
-        })
-        self.save_result_dict()
+
 
         print("HP-Net Hardness Scores: ")
         print(tab.tabulate([
@@ -331,36 +326,42 @@ class RealisticPredictorTrainer(Trainer):
             ["Variance", np.var(hp_scores)]
         ]))
 
-        if True: #not self.args.hp_net_simple:
-            # Display the hardness scores for every attribute.
-            print("-" * 30)
-            header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "SD", "Average Precision", "Rejection Threshold",
-                      "Rejection Quantile"]
-            mean = hp_scores.mean(0)
-            var = np.sqrt(hp_scores.var(0))
-            average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
-            # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
+        # Display the hardness scores for every attribute.
+        print("-" * 30)
+        header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "SD", "Average Precision", "cAP", "Rejection Threshold",
+                  "Rejection Quantile"]
+        mean = hp_scores.mean(0)
+        var = np.sqrt(hp_scores.var(0))
+        average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
+        self.baseline_average_precision = self.get_baseline_average_precision()
+        comparative_average_precision = (average_precision > self.baseline_average_precision).astype("int8")
+        # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
 
-            rejection_quantiles = ignore.mean(0).flatten()
-            rejection_thresholds = self.rejector.attribute_thresholds
-            if rejection_thresholds is None:
-                rejection_thresholds = np.ones_like(rejection_quantiles)
-            else:
-                rejection_thresholds = rejection_thresholds.flatten()
-            data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
-                            rejection_thresholds, rejection_quantiles))
-            data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
-                     average_precision.mean(), rejection_thresholds.mean(), rejection_quantiles.mean()]]
-            table = tab.tabulate(data, floatfmt='.4f', headers=header)
-            print(table)
-            #data_mean_over_attributes = [hp_scores.mean(), hp_scores.var(), average_precision.mean(),
-            #                             rejection_thresholds.mean(), rejection_quantiles.mean()]
-            #table = tab.tabulate([["Total"] + data_mean_over_attributes], floatfmt='.4f')
-            #print(table)
-            print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
-            csv_path = osp.join(self.args.save_experiment, "result_table.csv")
-            np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter=",")
-            print("Saved Table at " + csv_path)
+        rejection_quantiles = ignore.mean(0).flatten()
+        rejection_thresholds = self.rejector.attribute_thresholds
+        if rejection_thresholds is None:
+            rejection_thresholds = np.ones_like(rejection_quantiles)
+        else:
+            rejection_thresholds = rejection_thresholds.flatten()
+        data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
+                        comparative_average_precision, rejection_thresholds, rejection_quantiles))
+        data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
+                 average_precision.mean(), comparative_average_precision.mean(), rejection_thresholds.mean(),
+                  rejection_quantiles.mean()]]
+        table = tab.tabulate(data, floatfmt='.4f', headers=header)
+        print(table)
+        print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
+        print("Comparative mean average precision: {:.2%}".format(comparative_average_precision.mean()))
+        csv_path = osp.join(self.args.save_experiment, "result_table.csv")
+        np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter=",")
+        print("Saved Table at " + csv_path)
+
+        self.result_dict.update({
+            "rejection_thresholds": self.rejector.attribute_thresholds,
+            "ignored_test_samples": ignore,
+            "average_precision": average_precision
+        })
+        self.save_result_dict()
 
         hard_att_labels = None
         hard_att_pred = None
@@ -396,7 +397,18 @@ class RealisticPredictorTrainer(Trainer):
 
         return f1_measure, prediction_probs, predictions  # Return the values from the super-function.
 
+    def get_baseline_average_precision(self):
+        load_file = osp.join(self.args.save_experiment, self.args.ap_baseline)
+        if self.args.ap_baseline and check_isfile(load_file):
+            checkpoint = torch.load(load_file)
 
+            if "result_dict" in checkpoint and checkpoint["result_dict"] is not None:
+                result_dict = checkpoint["result_dict"]
+                if "average_precision" in result_dict and result_dict["average_precision"] is not None:
+                    return result_dict["average_precision"]
+
+        print("WARNING: Could not load basline average precision")
+        return 0
 
 if __name__ == '__main__':
     # global variables

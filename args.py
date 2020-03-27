@@ -163,7 +163,7 @@ def argument_parser():
                         help='name of the desired evaluation split (train/test/val)')
 
 
-    # Rejection arguments.
+    # Realistic Prediction
     parser.add_argument('--rejector', type=str, default='none',
                         choices=['none', 'macc', 'median', 'quantile', 'threshold', 'f1'],
                         help='name of the desired rejection strategy')
@@ -180,6 +180,8 @@ def argument_parser():
                         help='name of the desired split for determining the rejector thresholds (train/test/val)')
     parser.add_argument('--use-confidence', action='store_true',
                         help='use inverse confidence instead of hardness score. ')
+    parser.add_argument('--ap-baseline', type=str, default='',
+                        help='load baseline average precision from previous model')
 
     #
 
