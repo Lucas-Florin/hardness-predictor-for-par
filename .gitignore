@@ -186,6 +186,7 @@ fabric.properties
 # Custom ignores
 
 /datasets/
+/storage/
 *.tar
 
 *log.txt
