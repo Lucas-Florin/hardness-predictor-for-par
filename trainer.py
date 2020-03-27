@@ -98,7 +98,7 @@ class Trainer(object):
                 print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
                 self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
-                acc, _, _ = self.test()
+                acc= self.test()
                 self.test_acc_logger.write(epoch + 1, acc)
                 self.checkpoint()
                 self.clear_output_cache()
@@ -244,7 +244,7 @@ class Trainer(object):
         })
         self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels,
                                            predictions=predictions)
-        return metrics.f1measure(predictions, labels, ignore), prediction_probs, predictions
+        return metrics.f1measure(predictions, labels, ignore)
 
     def init_f1_calibration_threshold(self):
         if self.f1_calibration_thresholds is not None and (self.epoch + 1 == self.args.max_epoch

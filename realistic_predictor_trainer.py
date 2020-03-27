@@ -316,7 +316,7 @@ class RealisticPredictorTrainer(Trainer):
         ignore = np.logical_not(self.rejector(hp_scores))
         print("Rejecting the {:.2%} hardest of testing examples. ".format(ignore.mean()))
         # Run the standard accuracy testing.
-        f1_measure, _, _ = super().test(ignore)
+        super().test(ignore)
         labels, prediction_probs, predictions, _ = self.result_manager.get_outputs(split)
 
 
@@ -395,7 +395,7 @@ class RealisticPredictorTrainer(Trainer):
             show_img_grid(self.dm.split_dict[self.args.eval_split], hard_idxs, filename, title, self.args.hard_att,
                           hard_att_labels, hp_scores[hard_idxs], hard_att_pred)
 
-        return f1_measure, prediction_probs, predictions  # Return the values from the super-function.
+        return comparative_average_precision.mean()
 
     def get_baseline_average_precision(self):
         load_file = osp.join(self.args.save_experiment, self.args.ap_baseline)
