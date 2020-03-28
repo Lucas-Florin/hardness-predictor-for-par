@@ -18,7 +18,7 @@ from .mudeep import *
 from .hacnn import *
 from .pcb import *
 from .mlfn import *
-from .HP_Net import HP_RES50, HP_Squeezenet, HP_Densenet
+from .HP_Net import *
 
 
 # TODO: Rely more on library definitions.
@@ -56,6 +56,7 @@ __model_factory = {
     'pcb_p4': pcb_p4,
     'mlfn': mlfn,
     'hp_net_resnet50': HP_RES50,
+    'hp_net_resnet50_nh': HP_RES50_nh,
     'hp_net_squeezenet1_0': HP_Squeezenet,
     'hp_net_densenet121': HP_Densenet
 }
