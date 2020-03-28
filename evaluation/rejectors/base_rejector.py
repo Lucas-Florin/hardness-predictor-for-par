@@ -56,6 +56,9 @@ class BaseRejector():
         """
         return self.attribute_thresholds is not None
 
+    def reset(self):
+        self.attribute_thresholds = None
+
     def print_percentage_rejected(self, hp_scores, verbose=True):
         if not verbose:
             return

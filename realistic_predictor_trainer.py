@@ -338,8 +338,8 @@ class RealisticPredictorTrainer(Trainer):
         mean = hp_scores.mean(0)
         var = np.sqrt(hp_scores.var(0))
         average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
-        self.baseline_average_precision = self.get_baseline_average_precision()
-        comparative_average_precision = (average_precision > self.baseline_average_precision).astype("int8")
+        baseline_average_precision = self.get_baseline_average_precision()
+        comparative_average_precision = (average_precision > baseline_average_precision).astype("int8")
         # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
 
         rejection_quantiles = ignore.mean(0).flatten()
@@ -414,6 +414,11 @@ class RealisticPredictorTrainer(Trainer):
 
         print("WARNING: Could not load basline average precision")
         return 0
+
+    def clear_output_cache(self):
+        super().clear_output_cache()
+        self.rejector.reset()
+
 
 if __name__ == '__main__':
     # global variables
