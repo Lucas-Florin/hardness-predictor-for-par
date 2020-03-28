@@ -48,7 +48,7 @@ class RealisticPredictorTrainer(Trainer):
                                             pretrained=self.args.pretrained, use_gpu=self.use_gpu)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_main)))
 
-        print('Initializing HP Net. ')
+        print('Initializing HP model: {}'.format(args.hp_model))
         # Determine the size of the output vector for the HP-Net.
         num_hp_net_outputs = 1 if self.args.hp_net_simple else self.dm.num_attributes
         # Init the HP-Net
