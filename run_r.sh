@@ -1,11 +1,9 @@
 python baseline_trainer.py \
     -d rap \
-    --gpu-devices 1 \
+    --gpu-devices 7 \
     --max-epoch 180 \
     --stepsize 60 120 \
     --eval-split test \
-    --eval-freq 30 \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_rap/ \
+    --eval-freq 20 \
+    --save-experiment=./storage/baseline_rap/ \
     --loss-func deepmar
-    --f1-calib \
-    --f1-calib-split val
