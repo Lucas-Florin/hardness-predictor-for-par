@@ -130,7 +130,7 @@ class BaselineTrainer(Trainer):
 
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                      'Loss {loss.avg:.4f}'.format(
                     self.epoch + 1, batch_idx + 1, len(self.trainloader),
                     loss=losses
                 ))

@@ -283,10 +283,15 @@ class RealisticPredictorTrainer(Trainer):
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t' 
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                      'Loss {loss.avg:.4f}'.format(
                           self.epoch + 1, batch_idx + 1, len(self.trainloader),
                           loss=losses
                       ))
+        print('Epoch: [{0}][{1}/{2}]\t'
+              'Loss {loss.avg:.4f}'.format(
+            self.epoch + 1, batch_idx + 1, len(self.trainloader),
+            loss=losses
+        ))
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
