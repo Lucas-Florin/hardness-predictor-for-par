@@ -358,7 +358,7 @@ class RealisticPredictorTrainer(Trainer):
         print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
         print("Comparative mean average precision: {:.2%}".format(comparative_average_precision.mean()))
         csv_path = osp.join(self.args.save_experiment, "result_table.csv")
-        np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter=",")
+        np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter="\t")
         print("Saved Table at " + csv_path)
 
         self.result_dict.update({
