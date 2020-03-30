@@ -161,6 +161,8 @@ def argument_parser():
                         help='start to evaluate after a specific epoch')
     parser.add_argument('--eval-split', type=str, default='test', choices=['test', 'val', 'train'],
                         help='name of the desired evaluation split (train/test/val)')
+    parser.add_argument('--no-cache', action='store_true',
+                        help='do not use cached output data')
 
 
     # Realistic Prediction

@@ -296,7 +296,7 @@ class RealisticPredictorTrainer(Trainer):
 
     def test(self, predictions=None, ground_truth=None):
         split = self.args.eval_split
-        if not self.rejector.is_initialized():
+        if not self.rejector.is_initialized() or self.args.no_cache:
             self.update_rejector_thresholds()
 
         # Get Hardness scores.
@@ -310,7 +310,7 @@ class RealisticPredictorTrainer(Trainer):
             hp_scores = 1 - metrics.get_confidence(prediction_probs, decision_thresholds)
             self.result_manager.update_outputs(split, hp_scores=hp_scores)
             print("Using confidence scores as HP-scores. ")
-        elif self.args.evaluate and self.result_manager.check_output_dict(split):
+        elif self.args.evaluate and self.result_manager.check_output_dict(split) and not self.args.no_cache:
             _, _, _, hp_scores = self.result_manager.get_outputs(split)
         else:
             print("Computing hardness scores for testing data. ")

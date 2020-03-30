@@ -194,7 +194,6 @@ class Trainer(object):
         """
         labels, prediction_probs, predictions = self.get_label_predictions(self.args.eval_split)
         if not self.args.use_raw_acc:
-            # TODO: Make this the default option.
             # Use mA for each attribute.
             acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore)
             acc_name = 'Mean Attribute Accuracies'
@@ -239,7 +238,7 @@ class Trainer(object):
 
     def init_f1_calibration_threshold(self):
         if self.f1_calibration_thresholds is not None and (self.epoch + 1 == self.args.max_epoch
-                                                           or -1 == self.args.max_epoch):
+                or -1 == self.args.max_epoch) and not self.args.no_cache:
             return
         else:
             self.f1_calibration_thresholds = self.get_f1_calibration_threshold()
@@ -252,7 +251,7 @@ class Trainer(object):
         """
         print("Computing F1-calibration thresholds on " + self.args.f1_calib_split)
         split = self.args.f1_calib_split
-        if self.args.evaluate and self.result_manager.check_output_dict(split):
+        if self.args.evaluate and self.result_manager.check_output_dict(split) and not self.args.no_cache:
             labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
             print("Computing label predictions. ")
@@ -291,7 +290,7 @@ class Trainer(object):
 
     def get_label_predictions(self, split):
         self.init_f1_calibration_threshold()
-        if self.args.evaluate and self.result_manager.check_output_dict(split):
+        if self.args.evaluate and self.result_manager.check_output_dict(split) and not self.args.no_cache:
             labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
             print("Computing label predictions. ")
