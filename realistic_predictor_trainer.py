@@ -20,7 +20,8 @@ from training.losses import SigmoidCrossEntropyLoss, HardnessPredictorLoss, Deep
 from utils.iotools import check_isfile, save_checkpoint
 from utils.avgmeter import AverageMeter
 from utils.loggers import Logger, AccLogger
-from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, load_pretrained_weights
+from utils.torchtools import count_num_param, open_all_layers, open_specified_layers, accuracy, \
+    load_pretrained_weights, freeze_all_layers
 import evaluation.metrics as metrics
 from training.optimizers import init_optimizer
 from training.lr_schedulers import init_lr_scheduler
@@ -217,25 +218,20 @@ class RealisticPredictorTrainer(Trainer):
         if rejection_epoch:
             self.update_rejector_thresholds()
         if train_main or train_main_finetuning:
-            self.model_main.train()
+            open_all_layers(self.model_main)
             losses = losses_main
         else:
-            self.model_main.eval()
+            freeze_all_layers(self.model_main)
             losses = losses_hp
 
         if train_hp:
-            self.model_hp.train()
-        else:
-            self.model_hp.eval()
-
-        if fixbase or self.args.always_fixbase:
-            open_specified_layers(self.model_main, self.args.open_layers)
-            open_specified_layers(self.model_hp, self.args.open_layers)
-        else:
-            open_all_layers(self.model_main)
             open_all_layers(self.model_hp)
-        for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
+        else:
+            freeze_all_layers(self.model_hp)
 
+        for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
+            self.optimizer_main.zero_grad()
+            self.optimizer_hp.zero_grad()
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             # Run the batch through both nets.
@@ -264,7 +260,7 @@ class RealisticPredictorTrainer(Trainer):
                     main_net_weights = main_net_weights * select
                 # Compute main loss, gradient and optimize main net.
                 loss_main = self.criterion_main(label_prediciton_probs, labels, main_net_weights)
-                self.optimizer_main.zero_grad()
+
                 loss_main.backward()
                 self.optimizer_main.step()
 
@@ -275,7 +271,7 @@ class RealisticPredictorTrainer(Trainer):
 
                 loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
 
-                self.optimizer_hp.zero_grad()
+
                 loss_hp.backward()
                 self.optimizer_hp.step()
 

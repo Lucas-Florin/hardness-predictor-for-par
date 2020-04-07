@@ -42,6 +42,18 @@ def open_all_layers(model):
         p.requires_grad = True
 
 
+def freeze_all_layers(model):
+    """
+    Freeze all layers in model for training.
+
+    Args:
+    - model (nn.Module): neural net model.
+    """
+    model.eval()
+    for p in model.parameters():
+        p.requires_grad = False
+
+
 def open_specified_layers(model, open_layers):
     """
     Open specified layers in model for training while keeping
