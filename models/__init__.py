@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from .resnet import *
+from .resnet_lib import *
 from .resnetmid import *
 from .resnext import *
 from .senet import *
@@ -28,6 +29,7 @@ from .HP_Net import *
 __model_factory = {
     # image classification models
     'resnet50': resnet50,
+    'resnet50_lib': resnet50_lib,
     'resnet50_fc512': resnet50_fc512,
     'resnext50_32x4d': resnext50_32x4d,
     'resnext50_32x4d_fc512': resnext50_32x4d_fc512,
