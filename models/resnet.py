@@ -248,7 +248,7 @@ resnet152: block=Bottleneck, layers=[3, 8, 36, 3]
 """
 
 
-def resnet50(num_classes, loss, pretrained='imagenet', **kwargs):
+def resnet50(num_classes, loss, pretrained=False, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
@@ -264,7 +264,7 @@ def resnet50(num_classes, loss, pretrained='imagenet', **kwargs):
     return model
 
 
-def resnet50_fc512(num_classes, loss, pretrained='imagenet', **kwargs):
+def resnet50_fc512(num_classes, loss, pretrained=False, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
