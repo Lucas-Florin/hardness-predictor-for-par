@@ -218,16 +218,16 @@ class RealisticPredictorTrainer(Trainer):
         if rejection_epoch:
             self.update_rejector_thresholds()
         if train_main or train_main_finetuning:
-            open_all_layers(self.model_main)
+            self.model_main.train()
             losses = losses_main
         else:
-            freeze_all_layers(self.model_main)
+            self.model_main.eval()
             losses = losses_hp
 
         if train_hp:
-            open_all_layers(self.model_hp)
+            self.model_hp.train()
         else:
-            freeze_all_layers(self.model_hp)
+            self.model_hp.eval()
 
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
