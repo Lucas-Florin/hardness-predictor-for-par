@@ -335,6 +335,8 @@ class RealisticPredictorTrainer(Trainer):
         var = np.sqrt(hp_scores.var(0))
         average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
         baseline_average_precision = self.get_baseline_average_precision()
+        if baseline_average_precision is None:
+            baseline_average_precision = 0
         comparative_average_precision = (average_precision > baseline_average_precision).astype("int8")
         # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
 
