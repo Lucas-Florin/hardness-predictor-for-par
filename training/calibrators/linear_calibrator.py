@@ -14,10 +14,12 @@ class LinearCalibrator(BaseCalibrator):
     threshold. All values in [0, t] are linearly mapped to [0, 0.5] and values in (t, 1] are mapped to (0.5, 1].
     """
 
-    def __init__(self, thresholds):
+    def __init__(self, thresholds=None):
         super().__init__()
-        self.thresholds_torch = torch.tensor(thresholds)
-        self.thresholds_np = self.thresholds_torch.numpy()
+
+        self.thresholds_torch = None
+        self.thresholds_np = None
+        self.update_thresholds(thresholds)
 
     def __call__(self, probs):
         """
@@ -45,3 +47,13 @@ class LinearCalibrator(BaseCalibrator):
         not_predictions = 1 - predictions
         return where(predictions, pos_probs, neg_probs)
 
+    def is_initialized(self):
+        return self.thresholds_np is not None and self.thresholds_torch is not None
+
+    def update_thresholds(self, thresholds):
+        if thresholds is not None:
+            self.thresholds_torch = torch.tensor(thresholds)
+            self.thresholds_np = self.thresholds_torch.numpy()
+        else:
+            self.thresholds_torch = None
+            self.thresholds_np = None
