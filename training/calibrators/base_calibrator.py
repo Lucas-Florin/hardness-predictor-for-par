@@ -29,10 +29,12 @@ class BaseCalibrator():
     def is_initialized(self):
         return self.thresholds_np is not None and self.thresholds_torch is not None
 
-    def update_thresholds(self, thresholds):
+    def update_thresholds(self, thresholds, use_gpu=True):
         if thresholds is not None:
             self.thresholds_torch = torch.tensor(thresholds)
             self.thresholds_np = self.thresholds_torch.numpy()
+            if use_gpu:
+                self.thresholds_torch = self.thresholds_torch.cuda()
         else:
             self.thresholds_torch = None
             self.thresholds_np = None

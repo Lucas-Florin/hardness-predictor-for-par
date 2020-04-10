@@ -44,6 +44,5 @@ class LinearCalibrator(BaseCalibrator):
         positive_multiplicator = 1 / (1 - thresholds) / 2
         pos_probs = (probs - thresholds) * positive_multiplicator + 0.5
         predictions = probs > thresholds
-        not_predictions = 1 - predictions
         return where(predictions, pos_probs, neg_probs)
 

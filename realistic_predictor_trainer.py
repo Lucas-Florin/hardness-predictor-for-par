@@ -72,6 +72,7 @@ class RealisticPredictorTrainer(Trainer):
             self.rejector = rejectors.F1Rejector(self.args.max_rejection_quantile)
         else:
             raise ValueError("Unsupported rejection strategy: '{}'".format(self.args.rejector))
+        print("Using rejection strategy '{}'".format(self.args.rejector))
 
         if self.args.hp_calib == 'none':
             self.hp_calibrator = NoneCalibrator()
@@ -79,8 +80,8 @@ class RealisticPredictorTrainer(Trainer):
             self.hp_calibrator = LinearCalibrator()
         else:
             raise ValueError("Unsupported calibrator: '{}'".format(self.args.hp_calib))
+        print("Using calibrator for HP-Loss '{}'".format(self.args.hp_calib))
 
-        print("Using rejection strategy '{}'".format(self.args.rejector))
 
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
@@ -186,8 +187,10 @@ class RealisticPredictorTrainer(Trainer):
         self.rejector.update_thresholds(labels, predictions, hp_scores)
 
     def update_hp_calibrator_thresholds(self):
+        if self.args.hp_calib == "none":
+            return
         if self.args.hp_calib_thr == "f1":
-            thresholds = self.get_f1_calibration_threshold()
+            thresholds = self.get_baseline_f1_calibration_thresholds()
         else:
             raise ValueError("Unsupported HP-Loss calibration threshold: '{}'".format(self.args.hp_calib_thr))
         self.hp_calibrator.update_thresholds(thresholds)
