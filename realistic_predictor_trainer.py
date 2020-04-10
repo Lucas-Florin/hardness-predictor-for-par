@@ -29,6 +29,7 @@ from utils.plot import plot_epoch_losses, show_img_grid
 from trainer import Trainer
 import evaluation.rejectors as rejectors
 from evaluation.result_manager import ResultManager
+from training.calibrators import NoneCalibrator, LinearCalibrator
 
 
 class RealisticPredictorTrainer(Trainer):
@@ -70,7 +71,14 @@ class RealisticPredictorTrainer(Trainer):
         elif self.args.rejector == 'f1':
             self.rejector = rejectors.F1Rejector(self.args.max_rejection_quantile)
         else:
-            self.rejector = None
+            raise ValueError("Unsupported rejection strategy: '{}'".format(self.args.rejector))
+
+        if self.args.hp_calib == 'none':
+            self.hp_calibrator = NoneCalibrator()
+        elif self.args.hp_calib == 'linear':
+            self.hp_calibrator = LinearCalibrator()
+        else:
+            raise ValueError("Unsupported calibrator: '{}'".format(self.args.hp_calib))
 
         print("Using rejection strategy '{}'".format(self.args.rejector))
 
@@ -177,6 +185,13 @@ class RealisticPredictorTrainer(Trainer):
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, predictions, hp_scores)
 
+    def update_hp_calibrator_thresholds(self):
+        if self.args.hp_calib_thr == "f1":
+            thresholds = self.get_f1_calibration_threshold()
+        else:
+            raise ValueError("Unsupported HP-Loss calibration threshold: '{}'".format(self.args.hp_calib_thr))
+        self.hp_calibrator.update_thresholds(thresholds)
+
     def init_epochs(self):
         # Initialize the epoch thresholds.
         if self.args.max_epoch < 0 and (self.args.main_net_train_epochs < 0 or self.args.hp_net_train_epochs < 0):
@@ -217,6 +232,9 @@ class RealisticPredictorTrainer(Trainer):
 
         if rejection_epoch:
             self.update_rejector_thresholds()
+        if self.args.hp_epoch_offset == self.epoch:
+            self.update_hp_calibrator_thresholds()
+
         if train_main or train_main_finetuning:
             self.model_main.train()
             losses = losses_main
@@ -269,7 +287,7 @@ class RealisticPredictorTrainer(Trainer):
             if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
 
-                loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
+                loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels)
 
 
                 loss_hp.backward()
@@ -402,7 +420,7 @@ class RealisticPredictorTrainer(Trainer):
         return self.get_baseline_data(self.args.ap_baseline, "average_precision", "baseline average precision")
 
     def get_baseline_f1_calibration_thresholds(self):
-        return self.get_baseline_data(self.args.ap_baseline, "f1_thresholds", "baseline F1 calibration thresholds")
+        return self.get_baseline_data(self.args.f1_baseline, "f1_thresholds", "baseline F1 calibration thresholds")
 
     def get_baseline_data(self, filename, key, name):
         load_file = osp.join(self.args.save_experiment, filename)

@@ -26,6 +26,7 @@ class LinearCalibrator(BaseCalibrator):
         :param probs: An array of doubles to be calibrated.
         :return: An array of the same type as probs, but with the values calibrated.
         """
+        assert self.is_initialized()
         if torch.is_tensor(probs):
             return self.calibrate_torch(probs)
         else:
