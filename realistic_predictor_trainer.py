@@ -414,6 +414,7 @@ class RealisticPredictorTrainer(Trainer):
             if "result_dict" in checkpoint and checkpoint["result_dict"] is not None:
                 result_dict = checkpoint["result_dict"]
                 if key in result_dict and result_dict[key] is not None:
+                    print("Loaded {} from file: {}".format(name, filename))
                     return result_dict[key]
 
         print("WARNING: Could not load {}. ".format(name))
