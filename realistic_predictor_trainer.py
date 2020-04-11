@@ -133,7 +133,7 @@ class RealisticPredictorTrainer(Trainer):
 
         op_args = optimizer_kwargs(args)
         sc_args = lr_scheduler_kwargs(args)
-        op_args['lr'] *= sc_args['gamma']
+        op_args['lr'] *= self.args.hp_net_lr_multiplier
         self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
         sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
