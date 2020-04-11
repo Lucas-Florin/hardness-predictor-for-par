@@ -214,6 +214,7 @@ class RealisticPredictorTrainer(Trainer):
                            - self.args.main_net_finetuning_epochs)
         train_hp = (self.args.hp_epoch_offset <= self.epoch < self.args.hp_net_train_epochs
                     + self.args.hp_epoch_offset)
+        num_batch = len(self.trainloader)
 
         if rejection_epoch:
             self.update_rejector_thresholds()
@@ -232,6 +233,7 @@ class RealisticPredictorTrainer(Trainer):
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
             self.optimizer_hp.zero_grad()
+
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             # Run the batch through both nets.
@@ -279,15 +281,19 @@ class RealisticPredictorTrainer(Trainer):
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t' 
-                      'Loss {loss.avg:.4f}'.format(
-                          self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                          loss=losses
+                      'Main loss {loss.avg:.4f}\t'
+                      'HP-Net loss {hp_loss.avg:.4f}'.format(
+                          self.epoch + 1, batch_idx + 1, num_batch,
+                          loss=losses_main,
+                          hp_loss=losses_hp
                       ))
         print('Epoch: [{0}][{1}/{2}]\t'
-              'Loss {loss.avg:.4f}'.format(
-            self.epoch + 1, batch_idx + 1, len(self.trainloader),
-            loss=losses
-        ))
+              'Main loss {loss.avg:.4f}\t'
+              'HP-Net loss {hp_loss.avg:.4f}'.format(
+                self.epoch + 1, batch_idx + 1, num_batch,
+                loss=losses_main,
+                hp_loss=losses_hp
+              ))
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
