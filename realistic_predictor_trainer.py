@@ -132,9 +132,9 @@ class RealisticPredictorTrainer(Trainer):
         self.scheduler = self.scheduler_main
 
         op_args = optimizer_kwargs(args)
-        op_args['lr'] *= op_args['base_lr_mult']
-        self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
         sc_args = lr_scheduler_kwargs(args)
+        op_args['lr'] *= sc_args['gamma']
+        self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
         sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
 
@@ -401,17 +401,23 @@ class RealisticPredictorTrainer(Trainer):
         return comparative_average_precision.mean()
 
     def get_baseline_average_precision(self):
-        load_file = osp.join(self.args.save_experiment, self.args.ap_baseline)
-        if self.args.ap_baseline and check_isfile(load_file):
+        return self.get_baseline_data(self.args.ap_baseline, "average_precision", "baseline average precision")
+
+    def get_baseline_f1_calibration_thresholds(self):
+        return self.get_baseline_data(self.args.ap_baseline, "f1_thresholds", "baseline F1 calibration thresholds")
+
+    def get_baseline_data(self, filename, key, name):
+        load_file = osp.join(self.args.save_experiment, filename)
+        if filename and check_isfile(load_file):
             checkpoint = torch.load(load_file)
 
             if "result_dict" in checkpoint and checkpoint["result_dict"] is not None:
                 result_dict = checkpoint["result_dict"]
-                if "average_precision" in result_dict and result_dict["average_precision"] is not None:
-                    return result_dict["average_precision"]
+                if key in result_dict and result_dict[key] is not None:
+                    return result_dict[key]
 
-        print("WARNING: Could not load basline average precision")
-        return 0
+        print("WARNING: Could not load {}. ".format(name))
+        return None
 
     def clear_output_cache(self):
         super().clear_output_cache()

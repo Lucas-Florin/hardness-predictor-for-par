@@ -62,6 +62,8 @@ def argument_parser():
     # ************************************************************
     # Training hyperparameters
     # ************************************************************
+
+    # Epoch schedule
     parser.add_argument('--max-epoch', default=-1, type=int,
                         help='maximum epochs to run training function')
     parser.add_argument('--main-net-train-epochs', default=-1, type=int,
@@ -76,33 +78,23 @@ def argument_parser():
                         help='after the HP-Net has finished training and hard examples have been discarded, continue '
                              'training the main-Net. ')
 
+    # Batch size
     parser.add_argument('--train-batch-size', default=128, type=int,
                         help='training batch size')
     parser.add_argument('--test-batch-size', default=100, type=int,
                         help='test batch size')
 
-    parser.add_argument('--always-fixbase', action='store_true',
-                        help='always fix base network and only train specified layers')
-    parser.add_argument('--fixbase-epoch', type=int, default=0,
-                        help='how many epochs to fix base network (only train randomly initialized classifier)')
-    parser.add_argument('--open-layers', type=str, nargs='+', default=['classifier'],
-                        help='open specified layers for training while keeping others frozen')
-
-    parser.add_argument('--staged-lr', action='store_true',
-                        help='set different lr to different layers')
-    parser.add_argument('--new-layers', type=str, nargs='+', default=['classifier'],
-                        help='newly added layers with default lr')
-    parser.add_argument('--base-lr-mult', type=float, default=0.1,
-                        help='learning rate multiplier for base layers')
-
+    # Training Data
     parser.add_argument('--train-val', action='store_true',
                         help='use validation split for training too')
 
+    # Loss Function
     parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
                         help='name of the desired loss function')
     parser.add_argument('--loss-func-param', type=float, default=1,
                         help='the parameter for the main loss function')
 
+    # Realistic Predictor
     parser.add_argument('--no-hp-feedback', action='store_true',
                         help='do not use the hardness score as weighting for the main net loss function')
     parser.add_argument('--hp-train-sequentially', action='store_true',
@@ -113,6 +105,8 @@ def argument_parser():
                         help='use DeepMAR weighting for the HP loss')
     parser.add_argument('--hp-loss-param', type=float, default=1,
                         help='the parameter for the HP loss function')
+
+    # HP-Loss calibration
 
 
 
@@ -165,7 +159,13 @@ def argument_parser():
                         help='do not use cached output data')
 
 
-    # Realistic Prediction
+    # Realistic Predictor
+    parser.add_argument('--use-confidence', action='store_true',
+                        help='use inverse confidence instead of hardness score. ')
+    parser.add_argument('--ap-baseline', type=str, default='',
+                        help='load baseline average precision from previous model')
+
+    # Hard sample rejection
     parser.add_argument('--rejector', type=str, default='none',
                         choices=['none', 'macc', 'median', 'quantile', 'threshold', 'f1'],
                         help='name of the desired rejection strategy')
@@ -177,15 +177,8 @@ def argument_parser():
                         help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
     parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
                         help='reject attributes that have a mean hardness score higher than this threshold')
-
     parser.add_argument('--rejector-thresholds-split', type=str, default='train', choices=['test', 'val', 'train'],
                         help='name of the desired split for determining the rejector thresholds (train/test/val)')
-    parser.add_argument('--use-confidence', action='store_true',
-                        help='use inverse confidence instead of hardness score. ')
-    parser.add_argument('--ap-baseline', type=str, default='',
-                        help='load baseline average precision from previous model')
-
-    #
 
     # ************************************************************
     # Plot settings
@@ -284,9 +277,6 @@ def optimizer_kwargs(parsed_args):
         'rmsprop_alpha': parsed_args.rmsprop_alpha,
         'adam_beta1': parsed_args.adam_beta1,
         'adam_beta2': parsed_args.adam_beta2,
-        'staged_lr': parsed_args.staged_lr,
-        'new_layers': parsed_args.new_layers,
-        'base_lr_mult': parsed_args.base_lr_mult,
     }
 
 
