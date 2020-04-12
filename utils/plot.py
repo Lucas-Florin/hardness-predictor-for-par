@@ -85,7 +85,7 @@ def show_img_grid(dataset, idxs, filename, sample_labels=None, save_plot=False):
     plt.show()
 
 
-def show_example_imgs(dataset, filename, labels, attribute_names, save_plot=False):
+def show_example_imgs(dataset, filename, save_plot=False, num_imgs=2):
     """
     Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
     label and hardness of each image are displayed above it.
@@ -98,10 +98,12 @@ def show_example_imgs(dataset, filename, labels, attribute_names, save_plot=Fals
     :param hardness: (Optional) An array of the hardness scores for each image.
     :return:
     """
-    attribute_names = np.array(attribute_names)
-    num_imgs = 2
-    idxs = np.random.choice(np.arange(len(dataset)), size=num_imgs)
-    batch = [(read_image(dataset[i][2])) for i in np.array(idxs).flatten()]
+    attribute_names = dataset.attributes
+    labels = dataset.labels.astype("bool")
+    filenames = dataset.filenames
+    dataset_size = labels.shape[0]
+    idxs = np.random.choice(np.arange(dataset_size), size=num_imgs)
+    batch = [(read_image(filenames[i])) for i in np.array(idxs).flatten()]
     selected_labels = [attribute_names[labels[idxs[i], :]] for i in range(num_imgs)]
     selected_labels_strings = []
     for label_list in selected_labels:
@@ -118,14 +120,6 @@ def show_example_imgs(dataset, filename, labels, attribute_names, save_plot=Fals
         label_cell = ax.flat[i * 2 + 1]
         img_cell.imshow(batch[i])
         label_cell.text(0, 0.25, selected_labels_strings[i])
-    """
-    if labels is not None and hardness is not None and prediction_probs is not None and predictions is not None:
-        # Display label and hardness score for each image.
-        for cell, l, prob, pred, h in zip(ax.flat, labels.flatten(), prediction_probs.flatten(),
-                                          predictions.flatten(), hardness.flatten()):
-            cell.title.set_text("{};{:.2f};{};{:.2f}".format(int(l), prob, int(pred), h))
-    """
-
 
     for cell in ax.flat:
         cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
@@ -134,6 +128,7 @@ def show_example_imgs(dataset, filename, labels, attribute_names, save_plot=Fals
         plt.savefig(filename, format="png")
         print("Saved by hardness examples at " + filename)
     plt.show()
+
 
 def show_accuracy_over_hardness(filename, attribute_names, labels, predictions, hp_scores, metric="macc", save_plot=False):
     num_attributes = len(attribute_names)
