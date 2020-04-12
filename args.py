@@ -124,11 +124,13 @@ def argument_parser():
                         help='stepsize to decay learning rate')
     parser.add_argument('--gamma', default=0.1, type=float,
                         help='learning rate decay')
+    parser.add_argument('--hp-net-lr-multiplier', default=0.1, type=float,
+                        help='initial learning rate multiplier for the HP-Net w.r.t. the main model')
 
     # ************************************************************
     # Architecture
     # ************************************************************
-    parser.add_argument('-m', '--model', type=str, default='resnet50_lib')
+    parser.add_argument('-m', '--model', type=str, default='resnet50')
     parser.add_argument('--hp-model', type=str, default='resnet50')
     parser.add_argument('--pretrained', action='store_true',
                         help='load pretrained weights')

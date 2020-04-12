@@ -142,7 +142,7 @@ class RealisticPredictorTrainer(Trainer):
 
         op_args = optimizer_kwargs(args)
         sc_args = lr_scheduler_kwargs(args)
-        op_args['lr'] *= sc_args['gamma']
+        op_args['lr'] *= self.args.hp_net_lr_multiplier
         self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
         sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
@@ -232,6 +232,7 @@ class RealisticPredictorTrainer(Trainer):
                            - self.args.main_net_finetuning_epochs)
         train_hp = (self.args.hp_epoch_offset <= self.epoch < self.args.hp_net_train_epochs
                     + self.args.hp_epoch_offset)
+        num_batch = len(self.trainloader)
 
         if rejection_epoch:
             self.update_rejector_thresholds()
@@ -253,6 +254,7 @@ class RealisticPredictorTrainer(Trainer):
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
             self.optimizer_hp.zero_grad()
+
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             # Run the batch through both nets.
@@ -300,15 +302,19 @@ class RealisticPredictorTrainer(Trainer):
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t' 
-                      'Loss {loss.avg:.4f}'.format(
-                          self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                          loss=losses
+                      'Main loss {loss.avg:.4f}\t'
+                      'HP-Net loss {hp_loss.avg:.4f}'.format(
+                          self.epoch + 1, batch_idx + 1, num_batch,
+                          loss=losses_main,
+                          hp_loss=losses_hp
                       ))
         print('Epoch: [{0}][{1}/{2}]\t'
-              'Loss {loss.avg:.4f}'.format(
-            self.epoch + 1, batch_idx + 1, len(self.trainloader),
-            loss=losses
-        ))
+              'Main loss {loss.avg:.4f}\t'
+              'HP-Net loss {hp_loss.avg:.4f}'.format(
+                self.epoch + 1, batch_idx + 1, num_batch,
+                loss=losses_main,
+                hp_loss=losses_hp
+              ))
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
@@ -356,6 +362,8 @@ class RealisticPredictorTrainer(Trainer):
         var = np.sqrt(hp_scores.var(0))
         average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
         baseline_average_precision = self.get_baseline_average_precision()
+        if baseline_average_precision is None:
+            baseline_average_precision = 0
         comparative_average_precision = (average_precision > baseline_average_precision).astype("int8")
         # mean_average_precision = metrics.hp_mean_average_precision(labels, label_predictions, hp_scores)
 
@@ -433,6 +441,7 @@ class RealisticPredictorTrainer(Trainer):
             if "result_dict" in checkpoint and checkpoint["result_dict"] is not None:
                 result_dict = checkpoint["result_dict"]
                 if key in result_dict and result_dict[key] is not None:
+                    print("Loaded {} from file: {}".format(name, filename))
                     return result_dict[key]
 
         print("WARNING: Could not load {}. ".format(name))
