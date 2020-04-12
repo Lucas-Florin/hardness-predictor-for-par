@@ -186,11 +186,15 @@ class RealisticPredictorTrainer(Trainer):
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, predictions, hp_scores)
 
-    def update_hp_calibrator_thresholds(self):
+    def update_hp_calibrator_thresholds(self, thresholds=None):
         if self.args.hp_calib == "none":
             return
         if self.args.hp_calib_thr == "f1":
+            if self.hp_calibrator.is_initialized():
+                return
             thresholds = self.get_baseline_f1_calibration_thresholds()
+        elif self.args.hp_calib_thr == "mean":
+            thresholds = 0.5 if thresholds is None else thresholds
         else:
             raise ValueError("Unsupported HP-Loss calibration threshold: '{}'".format(self.args.hp_calib_thr))
         self.hp_calibrator.update_thresholds(thresholds)
@@ -251,6 +255,16 @@ class RealisticPredictorTrainer(Trainer):
         else:
             self.model_hp.eval()
 
+        positive_logits_sum = torch.zeros(self.dm.num_attributes)
+        negative_logits_sum = torch.zeros(self.dm.num_attributes)
+        positive_num = torch.zeros(self.dm.num_attributes)
+        negative_num = torch.zeros(self.dm.num_attributes)
+        if self.use_gpu:
+            positive_logits_sum = positive_logits_sum.cuda()
+            negative_logits_sum = negative_logits_sum.cuda()
+            positive_num = positive_num.cuda()
+            negative_num = negative_num.cuda()
+
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
             self.optimizer_hp.zero_grad()
@@ -260,6 +274,12 @@ class RealisticPredictorTrainer(Trainer):
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
             label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
+
+            positive_logits_sum += label_predicitons_logits[labels].sum(0)
+            negative_logits_sum += label_predicitons_logits[np.logical_not(labels)].sum(0)
+            positive_num = labels.sum(0)
+            negative_num = np.logical_not(labels).sum(0)
+
             if not self.args.use_confidence:
                 hardness_predictions = self.model_hp(imgs)
             if train_main or train_main_finetuning:
@@ -315,6 +335,10 @@ class RealisticPredictorTrainer(Trainer):
                 loss=losses_main,
                 hp_loss=losses_hp
               ))
+        positive_logits_sum /= positive_num
+        negative_logits_sum /= negative_num
+        self.update_hp_calibrator_thresholds((positive_logits_sum + negative_logits_sum) / 2)
+
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
