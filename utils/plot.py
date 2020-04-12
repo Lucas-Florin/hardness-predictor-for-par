@@ -139,6 +139,7 @@ def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
     origin_coordinate_idx = dataset.origin_coordinate_idx
     filenames = dataset.filenames
     dataset_size = labels.shape[0]
+    colors = ['b', 'g', 'r', 'y', 'c', 'm', '0.75', 'k']
     while True:
         idx = np.random.randint(0, dataset_size)
         print("Image index: {}".format(idx))
@@ -155,10 +156,9 @@ def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
                            img_labels[l + 3]]
                           for l in bb_coordinate_idxs]
 
-        print(np.array(bb_coordinates))
 
-        for c in bb_coordinates:
-            bb = patches.Rectangle((c[0], c[1]), c[2], c[3], linewidth=4, edgecolor="r", facecolor="none")
+        for coord, color in zip(bb_coordinates, colors):
+            bb = patches.Rectangle((coord[0], coord[1]), coord[2], coord[3], linewidth=4, edgecolor=color, facecolor="none")
             ax.add_patch(bb)
 
         if save_plot:
