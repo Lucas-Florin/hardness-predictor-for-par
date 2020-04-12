@@ -45,6 +45,10 @@ class PA100K(BaseDataset):
         test = [(osp.join(self.img_dir, filename), label)
                 for filename, label in zip(data["test_images_name"], test_labels)]
 
+        filenames = data["train_images_name"] + data["val_images_name"] + data["test_images_name"]
+        filenames = [osp.join(self.img_dir, file) for file in filenames]
+
+        self.filenames = filenames
         self.labels = np.concatenate((train_labels, val_labels, test_labels), axis=0)
         self.train = train
         self.val = val

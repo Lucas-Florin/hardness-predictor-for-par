@@ -53,15 +53,13 @@ class RAPv2(BaseDataset):
         val_idx = np.array(partitions["val_index"]) - 1
         test_idx = np.array(partitions["test_index"]) - 1
 
-        train = [(osp.join(self.img_dir, img_file_names[idx]), label)
-                 for idx, label in zip(train_idx, labels[train_idx, :])]
+        filenames = [osp.join(self.img_dir, file) for file in img_file_names]
 
-        val = [(osp.join(self.img_dir, img_file_names[idx]), label)
-               for idx, label in zip(val_idx, labels[val_idx, :])]
+        train = [(filenames[idx], label) for idx, label in zip(train_idx, labels[train_idx, :])]
+        val = [(filenames[idx], label) for idx, label in zip(val_idx, labels[val_idx, :])]
+        test = [(filenames[idx], label) for idx, label in zip(test_idx, labels[test_idx, :])]
 
-        test = [(osp.join(self.img_dir, img_file_names[idx]), label)
-                for idx, label in zip(test_idx, labels[test_idx, :])]
-
+        self.filenames = filenames
         self.train = train
         self.val = val
         self.test = test
