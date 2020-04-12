@@ -97,32 +97,33 @@ def show_example_imgs(dataset, filename, save_plot=False, num_imgs=2):
     labels = dataset.labels.astype("bool")
     filenames = dataset.filenames
     dataset_size = labels.shape[0]
-    idxs = np.random.choice(np.arange(dataset_size), size=num_imgs)
-    batch = [(read_image(filenames[i])) for i in np.array(idxs).flatten()]
-    selected_labels = [attribute_names[labels[idxs[i], :]] for i in range(num_imgs)]
-    selected_labels_strings = []
-    for label_list in selected_labels:
-        s = ""
-        for l in label_list:
-            s += l + "\n"
-        selected_labels_strings.append(s)
-    grid_height = 1
-    grid_width = num_imgs * 2
+    while True:
+        idxs = np.random.choice(np.arange(dataset_size), size=num_imgs)
+        batch = [(read_image(filenames[i])) for i in np.array(idxs).flatten()]
+        selected_labels = [attribute_names[labels[idxs[i], :]] for i in range(num_imgs)]
+        selected_labels_strings = []
+        for label_list in selected_labels:
+            s = ""
+            for l in label_list:
+                s += l + "\n"
+            selected_labels_strings.append(s)
+        grid_height = 1
+        grid_width = num_imgs * 2
 
-    fig, ax = plt.subplots(grid_height, grid_width)
-    for i in range(num_imgs):
-        img_cell = ax.flat[i * 2]
-        label_cell = ax.flat[i * 2 + 1]
-        img_cell.imshow(batch[i])
-        label_cell.text(0, 0.25, selected_labels_strings[i])
+        fig, ax = plt.subplots(grid_height, grid_width)
+        for i in range(num_imgs):
+            img_cell = ax.flat[i * 2]
+            label_cell = ax.flat[i * 2 + 1]
+            img_cell.imshow(batch[i])
+            label_cell.text(0, 0.25, selected_labels_strings[i])
 
-    for cell in ax.flat:
-        cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
+        for cell in ax.flat:
+            cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
 
-    if save_plot:
-        plt.savefig(filename, format="png")
-        print("Saved by hardness examples at " + filename)
-    plt.show()
+        if save_plot:
+            plt.savefig(filename, format="png")
+            print("Saved by hardness examples at " + filename)
+        plt.show()
 
 
 def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
@@ -134,35 +135,36 @@ def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
     :return:
     """
     labels = dataset.labels
-    bb_idxs = dataset.bb_idxs
+    bb_coordinate_idxs = dataset.bb_coordinate_idxs
+    origin_coordinate_idx = dataset.origin_coordinate_idx
     filenames = dataset.filenames
     dataset_size = labels.shape[0]
-    idx = np.random.randint(0, dataset_size)
-    idx = 50428
-    print("Image index: {}".format(idx))
-    img = read_image(filenames[idx])
+    while True:
+        idx = np.random.randint(0, dataset_size)
+        print("Image index: {}".format(idx))
+        img = read_image(filenames[idx])
 
-    fig, ax = plt.subplots(1)
-    img_labels = labels[idx, :]
+        fig, ax = plt.subplots(1)
+        img_labels = labels[idx, :]
 
-    ax.imshow(img)
+        ax.imshow(img)
+        origin_coordinates = [img_labels[origin_coordinate_idx + 0], img_labels[origin_coordinate_idx + 1]]
+        bb_coordinates = [[img_labels[l + 0] - origin_coordinates[0],
+                           img_labels[l + 1] - origin_coordinates[1],
+                           img_labels[l + 2],
+                           img_labels[l + 3]]
+                          for l in bb_coordinate_idxs]
 
-    bb_coordinates = [[img_labels[l + 0],
-                       img_labels[l + 1],
-                       img_labels[l + 2],
-                       img_labels[l + 3]]
-                            for l in bb_idxs]
+        print(np.array(bb_coordinates))
 
-    print(np.array(bb_coordinates))
+        for c in bb_coordinates:
+            bb = patches.Rectangle((c[0], c[1]), c[2], c[3], linewidth=4, edgecolor="r", facecolor="none")
+            ax.add_patch(bb)
 
-    for c in bb_coordinates:
-        bb = patches.Rectangle((c[0], c[1]), c[2], c[3], linewidth=1, edgecolor="r", facecolor="none")
-        ax.add_patch(bb)
-
-    if save_plot:
-        plt.savefig(filename, format="png")
-        print("Saved by hardness examples at " + filename)
-    plt.show()
+        if save_plot:
+            plt.savefig(filename, format="png")
+            print("Saved by hardness examples at " + filename)
+        plt.show()
 
 
 def show_accuracy_over_hardness(filename, attribute_names, labels, predictions, hp_scores, metric="macc", save_plot=False):

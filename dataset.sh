@@ -3,3 +3,4 @@ python dataset_analyzer.py \
     --use-cpu \
     --show-example-bbs \
     --full-attributes \
+    --menu
