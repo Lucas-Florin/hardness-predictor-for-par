@@ -185,22 +185,26 @@ def argument_parser():
     # ************************************************************
     # Plot settings
     # ************************************************************
+
+    # Show easy/hard images
     parser.add_argument('--select-atts', type=str, nargs="+", default=[],
                         help='select attributes for analysis')
     parser.add_argument('--num-save-hard', type=int, default=0,
                         help='number of hard images that are saved to collage')
     parser.add_argument('--num-save-easy', type=int, default=0,
                         help='number of easy images that are saved to collage')
+    parser.add_argument('--show-pos-samples', action='store_true',
+                        help='only show examples with positive ground truth')
+    parser.add_argument('--show-neg-samples', action='store_true',
+                        help='only show examples with negative ground truth')
+
+    # Plot data
     parser.add_argument('--plot-epoch-loss', action='store_true',
                         help='plot loss over epochs')
     parser.add_argument('--plot-acc-hp', action='store_true',
                         help='plot a metric over hardness')
     parser.add_argument('--plot-metric', type=str, default='macc', choices=['macc', 'f1'],
                         help='use a specific metric for the plot')
-    parser.add_argument('--show-pos-samples', action='store_true',
-                        help='only show examples with positive ground truth')
-    parser.add_argument('--show-neg-samples', action='store_true',
-                        help='only show examples with negative ground truth')
     parser.add_argument('--plot-pos-hp', action='store_true',
                         help='plot positivity rate over hardness')
     parser.add_argument('--plot-pos-atts', action='store_true',
@@ -209,6 +213,8 @@ def argument_parser():
                         help='plot hardness score histogram')
     parser.add_argument('--plot-x-max', type=float, default=1,
                         help='x axis limit')
+
+    # Example images
     parser.add_argument('--show-example-imgs', action='store_true',
                         help='show example images with labels')
     parser.add_argument('--show-label-examples', action='store_true',
@@ -218,6 +224,8 @@ def argument_parser():
     parser.add_argument('--menu', action='store_true',
                         help='input commands at runtime')
 
+    parser.add_argument('--show-example-bbs', action='store_true',
+                        help='show example images with bounding boxes')
 
 
     # ************************************************************

@@ -31,6 +31,7 @@ class DatasetAnalyzer:
         if self.args.show_label_examples:
             self.label_examples()
         if self.args.show_example_bbs:
+            assert self.args.full_attributes
             self.bb_examples()
         if self.args.show_example_imgs:
             assert not self.args.full_attributes
@@ -84,7 +85,8 @@ class DatasetAnalyzer:
         plot.show_example_imgs(self.data_manager.dataset, filename, save_plot=self.args.save_plot)
 
     def bb_examples(self):
-        pass
+        filename = osp.join(args.save_experiment, self.ts + "example_bbs.png")
+        plot.show_example_bbs(self.data_manager.dataset, filename, save_plot=self.args.save_plot)
 
 
 if __name__ == '__main__':

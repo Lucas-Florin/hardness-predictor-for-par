@@ -26,6 +26,7 @@ class RAPv2(BaseDataset):
     """
     dataset_dir = 'RAP'
     split_idx = 0
+    bb_idxs = np.array(list(range(120, 152, 4)))
 
     def __init__(self, root, verbose=True, full_attributes=False, **kwargs):
         super(RAPv2, self).__init__(root)

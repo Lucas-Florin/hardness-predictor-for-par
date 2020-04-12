@@ -7,6 +7,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.patches as patches
 import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
@@ -87,15 +88,9 @@ def show_img_grid(dataset, idxs, filename, sample_labels=None, save_plot=False):
 
 def show_example_imgs(dataset, filename, save_plot=False, num_imgs=2):
     """
-    Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
-    label and hardness of each image are displayed above it.
+    Show example images from dataset.
     :param dataset: the ImageDataset from which the images are selected.
-    :param idxs: The idxs in the dataset of the images to be selected.
     :param filename: The path to which to save the images.
-    :param title: (Optional) Title for the figure.
-    :param attribute_name: (Optional) The name of the attribute for which the hardness is analysed.
-    :param labels: (Optional) An array of the ground truth labels for each image.
-    :param hardness: (Optional) An array of the hardness scores for each image.
     :return:
     """
     attribute_names = dataset.attributes
@@ -123,6 +118,46 @@ def show_example_imgs(dataset, filename, save_plot=False, num_imgs=2):
 
     for cell in ax.flat:
         cell.set_axis_off()  # Turn off the axis. It is irrelevant here.
+
+    if save_plot:
+        plt.savefig(filename, format="png")
+        print("Saved by hardness examples at " + filename)
+    plt.show()
+
+
+def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
+    """
+    Create a grid of specific images from a dataset. If parameters labels and hardness are passed, the
+    label and hardness of each image are displayed above it.
+    :param dataset: the ImageDataset from which the images are selected.
+    :param filename: The path to which to save the images.
+    :return:
+    """
+    labels = dataset.labels
+    bb_idxs = dataset.bb_idxs
+    filenames = dataset.filenames
+    dataset_size = labels.shape[0]
+    idx = np.random.randint(0, dataset_size)
+    idx = 50428
+    print("Image index: {}".format(idx))
+    img = read_image(filenames[idx])
+
+    fig, ax = plt.subplots(1)
+    img_labels = labels[idx, :]
+
+    ax.imshow(img)
+
+    bb_coordinates = [[img_labels[l + 0],
+                       img_labels[l + 1],
+                       img_labels[l + 2],
+                       img_labels[l + 3]]
+                            for l in bb_idxs]
+
+    print(np.array(bb_coordinates))
+
+    for c in bb_coordinates:
+        bb = patches.Rectangle((c[0], c[1]), c[2], c[3], linewidth=1, edgecolor="r", facecolor="none")
+        ax.add_patch(bb)
 
     if save_plot:
         plt.savefig(filename, format="png")
