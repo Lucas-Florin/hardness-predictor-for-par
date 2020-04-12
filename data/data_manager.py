@@ -122,33 +122,6 @@ class ImageDataManager(BaseDataManager):
         )
         self.split_dict["val"] = val_dataset
 
-    def discard_examples(self, examples_to_discard, split="train"):
-        if split == "train":
-            split_data = self.train
-        else:
-            split_data = None
-
-        split_data_new = [sample for sample, discard in zip(split_data, examples_to_discard) if not discard]
-
-        self.testloader_dict[split] = DataLoader(
-            ImageDataset(split_data_new, transform=self.transform_test),
-            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
-        )
-
-    def reset_split(self, split="train"):
-        if split == "train":
-            split_data = self.train
-        else:
-            split_data = None
-
-        self.testloader_dict[split] = DataLoader(
-            ImageDataset(split_data, transform=self.transform_test),
-            batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
-        )
-
-
 
 
 
