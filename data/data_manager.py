@@ -71,7 +71,7 @@ class ImageDataManager(BaseDataManager):
         print('=> Initializing TRAIN dataset')
         train = list()
         self.train = train
-
+        # TODO: Change label dtype to long or bool
         for img_path, label in dataset.train:
                 train.append((img_path, torch.tensor(label.astype(np.float32))))
         if train_val:

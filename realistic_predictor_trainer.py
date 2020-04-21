@@ -268,17 +268,17 @@ class RealisticPredictorTrainer(Trainer):
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
             self.optimizer_hp.zero_grad()
-
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
             label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
 
-            positive_logits_sum += label_predicitons_logits[labels].sum(0)
-            negative_logits_sum += label_predicitons_logits[np.logical_not(labels)].sum(0)
-            positive_num = labels.sum(0)
-            negative_num = np.logical_not(labels).sum(0)
+            labels_bool = labels > 0.5  # TODO: make nicer
+            positive_logits_sum += label_predicitons_logits[labels_bool].sum(0)
+            negative_logits_sum += label_predicitons_logits[~labels_bool].sum(0)
+            positive_num = labels_bool.sum(0)
+            negative_num = (~labels_bool).sum(0)
 
             if not self.args.use_confidence:
                 hardness_predictions = self.model_hp(imgs)
