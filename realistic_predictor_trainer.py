@@ -380,7 +380,7 @@ class RealisticPredictorTrainer(Trainer):
 
         # Display the hardness scores for every attribute.
         print("-" * 30)
-        header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "SD", "Average Precision", "cAP", "Rejection Threshold",
+        header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "Average Precision", "cAP", "Rejection Threshold",
                   "Rejection Quantile"]
         mean = hp_scores.mean(0)
         var = np.sqrt(hp_scores.var(0))
@@ -397,7 +397,7 @@ class RealisticPredictorTrainer(Trainer):
             rejection_thresholds = np.ones_like(rejection_quantiles)
         else:
             rejection_thresholds = rejection_thresholds.flatten()
-        data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
+        data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, average_precision,
                         comparative_average_precision, rejection_thresholds, rejection_quantiles))
         data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
                  average_precision.mean(), comparative_average_precision.mean(), rejection_thresholds.mean(),
@@ -412,6 +412,7 @@ class RealisticPredictorTrainer(Trainer):
 
         self.result_dict.update({
             "rejection_thresholds": self.rejector.attribute_thresholds,
+            "calibration_thresholds": self.hp_calibrator.thresholds_np,
             "ignored_test_samples": ignore,
             "average_precision": average_precision
         })
