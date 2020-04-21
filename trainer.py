@@ -140,7 +140,7 @@ class Trainer(object):
         if progress is None:
             print('Training Time {}'.format(elapsed_str))
         else:
-            remaining = elapsed / progress - elapsed
+            remaining = round(elapsed / progress - elapsed)
             remaining_str = str(datetime.timedelta(seconds=remaining))
             print('Training Time {} ({} remaining)'.format(elapsed_str, remaining_str))
 
