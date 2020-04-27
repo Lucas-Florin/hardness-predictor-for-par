@@ -135,6 +135,7 @@ def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
     :return:
     """
     labels = dataset.labels
+    visibility = dataset.visibility
     bb_coordinate_idxs = dataset.bb_coordinate_idxs
     origin_coordinate_idx = dataset.origin_coordinate_idx
     filenames = dataset.filenames
@@ -142,11 +143,14 @@ def show_example_bbs(dataset, filename, save_plot=False, num_imgs=1):
     colors = ['b', 'g', 'r', 'y', 'c', 'm', '0.75', 'k']
     while True:
         idx = np.random.randint(0, dataset_size)
+        img_labels = labels[idx, :]
+        img_visibility = visibility[idx, :]
         print("Image index: {}".format(idx))
+        print(img_visibility.astype("int"))
         img = read_image(filenames[idx])
 
         fig, ax = plt.subplots(1)
-        img_labels = labels[idx, :]
+
 
         ax.imshow(img)
         origin_coordinates = [img_labels[origin_coordinate_idx + 0], img_labels[origin_coordinate_idx + 1]]
