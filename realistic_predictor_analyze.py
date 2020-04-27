@@ -192,7 +192,7 @@ class RealisticPredictorAnalyzer:
 
         if args.show_example_imgs:
             filename = osp.join(args.save_experiment, ts + "example_images.png")
-            plot.show_example_imgs(dm.split_dict[split], filename, labels, attributes, save_plot=self.args.save_plot)
+            plot.show_example_imgs(dm.dataset, filename, save_plot=self.args.save_plot)
 
         if args.num_save_hard + args.num_save_easy > 0:
             assert len(self.args.select_atts) == 1

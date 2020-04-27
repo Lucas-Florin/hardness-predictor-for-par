@@ -1,20 +1,10 @@
-import os
-import sys
 import time
-import datetime
 import os.path as osp
 import numpy as np
-import matplotlib.pyplot as plt
-import warnings
-
-import torch
-import torch.nn as nn
-import torch.backends.cudnn as cudnn
 
 from data.data_manager import ImageDataManager
 from args import argument_parser, image_dataset_kwargs, optimizer_kwargs, lr_scheduler_kwargs
 
-from data.datasets import init_img_dataset
 import tabulate as tab
 import utils.plot as plot
 
@@ -26,11 +16,13 @@ class DatasetAnalyzer:
 
     def __init__(self):
         global args
+        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
         self.args = args
         self.data_manager = ImageDataManager(not args.use_cpu, **image_dataset_kwargs(args))
         self.dataset = self.data_manager.dataset
         self.attributes = self.dataset.attributes
         self.positive_label_ratio = self.dataset.get_positive_attribute_ratio()
+        self.split = self.args.eval_split
         self.menu()
 
     def menu(self):
@@ -38,6 +30,12 @@ class DatasetAnalyzer:
             self.positive_label_ratio()
         if self.args.show_label_examples:
             self.label_examples()
+        if self.args.show_example_bbs:
+            assert self.args.full_attributes
+            self.bb_examples()
+        if self.args.show_example_imgs:
+            assert not self.args.full_attributes
+            self.example_images_with_labels()
 
     def label_examples(self):
         attributes = self.attributes.tolist()
@@ -75,13 +73,20 @@ class DatasetAnalyzer:
             if not self.args.menu:
                 break
 
-
     def positive_label_ratio(self):
         table = tab.tabulate(zip(self.attributes, self.positive_label_ratio), floatfmt='.2%')
         print("----------------------")
         print("Analyzing Dataset: " + args.dataset_name)
         print("Total Positive Quota: ")
         print(table)
+
+    def example_images_with_labels(self):
+        filename = osp.join(args.save_experiment, self.ts + "example_images.png")
+        plot.show_example_imgs(self.data_manager.dataset, filename, save_plot=self.args.save_plot)
+
+    def bb_examples(self):
+        filename = osp.join(args.save_experiment, self.ts + "example_bbs.png")
+        plot.show_example_bbs(self.data_manager.dataset, filename, save_plot=self.args.save_plot)
 
 
 if __name__ == '__main__':
