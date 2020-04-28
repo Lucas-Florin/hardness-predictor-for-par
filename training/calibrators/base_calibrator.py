@@ -31,8 +31,12 @@ class BaseCalibrator():
 
     def update_thresholds(self, thresholds, use_gpu=True):
         if thresholds is not None:
-            self.thresholds_torch = torch.tensor(thresholds)
-            self.thresholds_np = self.thresholds_torch.numpy()
+            if torch.is_tensor(thresholds):
+                self.thresholds_torch = thresholds.clone().detach()
+                self.thresholds_np = self.thresholds_torch.cpu().numpy()
+            else:
+                self.thresholds_torch = torch.tensor(thresholds)
+                self.thresholds_np = self.thresholds_torch.cpu().numpy()
             if use_gpu:
                 self.thresholds_torch = self.thresholds_torch.cuda()
         else:
