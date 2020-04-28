@@ -9,13 +9,18 @@ class HardnessPredictorLoss(nn.Module):
     Hardness Predictor Loss as defined in:
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
-    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, num_attributes, sigma=1, use_gpu=True):
+    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, num_attributes, sigma=1, use_gpu=True,
+                 use_visibility=False, visibility_weight=1.0):
         super().__init__()
         self.use_gpu = use_gpu
         self.num_attributes = num_attributes
         self.use_deepmar_weighting = use_deepmar_weighting
+        self.use_visibility = use_visibility
+        self.visibility_weight = visibility_weight
+
         self.loss_function = F.binary_cross_entropy_with_logits
         self.logits_function = nn.Sigmoid()
+
         # Calculate attribute weight as defined in DeepMAR paper.
         self.positive_attribute_ratios = positive_attribute_ratios
         self.positive_weights = torch.tensor(np.exp((1 - positive_attribute_ratios) / sigma ** 2))
@@ -26,7 +31,7 @@ class HardnessPredictorLoss(nn.Module):
         self.batch_size = None
         self.weights = None
 
-    def forward(self, hp_net_outputs, main_net_predictions, ground_truth_labels, weights=None):
+    def forward(self, hp_net_outputs, main_net_predictions, ground_truth_labels, visibility_labels=None, weights=None):
         """
         Calculate loss
 
@@ -47,6 +52,9 @@ class HardnessPredictorLoss(nn.Module):
         # The prediction correctness is the probability that is predicted for the ground truth label.
         prediction_correctness = torch.where(ground_truth_labels.byte(), main_net_predictions, 1 - main_net_predictions)
         loss = self.loss_function(hp_broadcasted, 1 - prediction_correctness, weight=deepmar_weights)
+        if self.use_visibility:
+            loss += self.visibility_weight * self.loss_function(hp_broadcasted, 1 - visibility_labels,
+                                                                weight=deepmar_weights)
         return loss
 
     def logits(self, inputs):

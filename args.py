@@ -103,8 +103,13 @@ def argument_parser():
                         help='only train the HP-Net')
     parser.add_argument('--use-deepmar-for-hp', action='store_true',
                         help='use DeepMAR weighting for the HP loss')
-    parser.add_argument('--hp-loss-param', type=float, default=1,
+    parser.add_argument('--hp-loss-param', type=float, default=1.0,
                         help='the parameter for the HP loss function')
+    parser.add_argument('--use-bbs', action='store_true',
+                        help='use bounding boxes to train HP-Net')
+    parser.add_argument('--hp-visibility-weight', type=float, default=1.0,
+                        help='the parameter for the HP loss function')
+
 
     # HP-Loss calibration
 

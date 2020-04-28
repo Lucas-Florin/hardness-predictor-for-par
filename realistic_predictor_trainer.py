@@ -120,8 +120,9 @@ class RealisticPredictorTrainer(Trainer):
 
         self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, self.dm.num_attributes,
-                                                  use_gpu=self.use_gpu,
-                                                  sigma=self.args.hp_loss_param)
+                                                  use_gpu=self.use_gpu, sigma=self.args.hp_loss_param,
+                                                  use_visibility=self.args.hp_use_visibility,
+                                                  visibility_weight=self.args.hp_visibility_weight)
         self.f1_calibration_thresholds = None
 
 
@@ -236,6 +237,12 @@ class RealisticPredictorTrainer(Trainer):
 
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
+            if self.args.use_visibility:
+                visibility_labels = labels[:, self.dm.num_attributes:]
+                labels = labels[:, :self.dm.num_attributes]
+                assert labels.shape == visibility_labels.shape
+            else:
+                visibility_labels = None
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
             label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
@@ -271,7 +278,7 @@ class RealisticPredictorTrainer(Trainer):
             if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
 
-                loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels)
+                loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels, visibility_labels)
 
 
                 loss_hp.backward()

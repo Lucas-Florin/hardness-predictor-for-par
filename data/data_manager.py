@@ -73,10 +73,10 @@ class ImageDataManager(BaseDataManager):
         self.train = train
 
         for img_path, label in dataset.train:
-                train.append((img_path, torch.tensor(label.astype(np.float32))))
+                train.append((img_path, torch.tensor(label.astype(torch.float))))
         if train_val:
             for img_path, label in dataset.val:
-                train.append((img_path, torch.tensor(label.astype(np.float32))))
+                train.append((img_path, torch.tensor(label.astype(torch.float))))
         self.attributes = list(dataset.attributes)
         self.num_attributes = dataset.num_attributes
         self.trainloader = DataLoader(
@@ -100,7 +100,7 @@ class ImageDataManager(BaseDataManager):
         test = list()
         self.test = test
         for img_path, label in dataset.test:
-            test.append((img_path, torch.tensor(label.astype(np.float32))))
+            test.append((img_path, torch.tensor(label.astype(torch.bool))))
         test_dataset = ImageDataset(test, transform=self.transform_test)
         self.testloader_dict['test'] = DataLoader(
             test_dataset,
@@ -113,7 +113,7 @@ class ImageDataManager(BaseDataManager):
         val = list()
         self.val = val
         for img_path, label in dataset.val:
-            val.append((img_path, torch.tensor(label.astype(np.float32))))
+            val.append((img_path, torch.tensor(label.astype(torch.bool))))
         val_dataset = ImageDataset(val, transform=self.transform_test)
         self.testloader_dict['val'] = DataLoader(
             val_dataset,

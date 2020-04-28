@@ -29,7 +29,7 @@ class RAPv2(BaseDataset):
     bb_coordinate_idxs = np.array(list(range(120, 152, 4)))
     origin_coordinate_idx = 120
 
-    def __init__(self, root, verbose=True, full_attributes=False, **kwargs):
+    def __init__(self, root, verbose=True, full_attributes=False, use_bbs=False, **kwargs):
         super(RAPv2, self).__init__(root)
 
         # parse directories.
@@ -67,6 +67,14 @@ class RAPv2(BaseDataset):
         attribute_visibility_region[np.logical_or(np.char.startswith(attributes, "lb-"),
                                                   np.char.startswith(attributes, "shoes-"))] = 3
 
+        visibility_labels = np.zeros(labels.shape, dtype="bool")
+        self.num_attributes = len(attributes)
+        for i in range(self.num_attributes):
+            visibility_labels[:, i] = visibility[:, attribute_visibility_region[i]]
+        if use_bbs:
+            labels = np.concatenate([labels, visibility_labels], axis=1)
+            assert labels.shape[1] == 2 * self.num_attributes
+
         filenames = [osp.join(self.img_dir, file) for file in img_file_names]
 
         train = [(filenames[idx], label) for idx, label in zip(train_idx, labels[train_idx, :])]
@@ -78,7 +86,7 @@ class RAPv2(BaseDataset):
         self.val = val
         self.test = test
         self.attributes = np.array(attributes)
-        self.num_attributes = len(attributes)
+
         self.attribute_grouping = list(range(self.num_attributes))
         self.labels = labels
         self.visibility = visibility
