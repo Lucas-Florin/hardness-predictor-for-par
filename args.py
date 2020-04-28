@@ -246,6 +246,8 @@ def argument_parser():
                         help='gpu device ids for CUDA_VISIBLE_DEVICES')
     parser.add_argument('--use-avai-gpus', action='store_true',
                         help='use available gpus instead of specified devices (useful when using managed clusters)')
+    parser.add_argument('--keep-best-model', action='store_true',
+                        help='save the best model checkpoint separately from the latest checkpoint')
 
 
     return parser

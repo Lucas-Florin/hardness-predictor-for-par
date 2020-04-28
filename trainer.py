@@ -85,7 +85,7 @@ class Trainer(object):
                 self.checkpoint()
                 print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
                 acc = self.test()
-                self.checkpoint(best=acc > self.test_acc_logger.get_max())
+                self.checkpoint(best=acc > self.test_acc_logger.get_max() and self.args.keep_best_model)
                 self.test_acc_logger.write(epoch + 1, acc)
                 self.clear_output_cache()
 
