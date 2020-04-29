@@ -78,7 +78,7 @@ class Trainer(object):
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
                 scheduler.step()
-            self.print_elapsed_time(self.time_start)
+            self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
                 print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
@@ -134,10 +134,15 @@ class Trainer(object):
         if best:
             print("Also saved as best checkpoint. ")
 
-    def print_elapsed_time(self, start_time):
+    def print_elapsed_time(self, start_time, progress=None):
         elapsed = round(time.time() - start_time)
-        elapsed = str(datetime.timedelta(seconds=elapsed))
-        print('Training Time {}'.format(elapsed))
+        elapsed_str = str(datetime.timedelta(seconds=elapsed))
+        if progress is None:
+            print('Training Time {}'.format(elapsed_str))
+        else:
+            remaining = round(elapsed / progress - elapsed)
+            remaining_str = str(datetime.timedelta(seconds=remaining))
+            print('Training Time {} ({} remaining)'.format(elapsed_str, remaining_str))
 
     def init_environment(self, args):
         # Decide which processor (CPU or GPU) to use.

@@ -26,6 +26,7 @@ class LinearCalibrator(BaseCalibrator):
         :param probs: An array of doubles to be calibrated.
         :return: An array of the same type as probs, but with the values calibrated.
         """
+        assert self.is_initialized()
         if torch.is_tensor(probs):
             return self.calibrate_torch(probs)
         else:
@@ -43,6 +44,5 @@ class LinearCalibrator(BaseCalibrator):
         positive_multiplicator = 1 / (1 - thresholds) / 2
         pos_probs = (probs - thresholds) * positive_multiplicator + 0.5
         predictions = probs > thresholds
-        not_predictions = 1 - predictions
         return where(predictions, pos_probs, neg_probs)
 

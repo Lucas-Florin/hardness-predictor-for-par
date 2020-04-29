@@ -107,7 +107,12 @@ def argument_parser():
                         help='the parameter for the HP loss function')
 
     # HP-Loss calibration
-
+    parser.add_argument('--hp-calib', type=str, default='none', choices=['none', 'linear'],
+                        help='calibrator for the HP-Loss function')
+    parser.add_argument('--hp-calib-thr', type=str, default='f1', choices=['f1', 'mean'],
+                        help='calibrator for the HP-Loss function')
+    parser.add_argument('--f1-baseline', type=str, default='',
+                        help='load baseline F1 calibration thresholds from previous model')
 
 
     # ************************************************************
