@@ -285,6 +285,8 @@ class Trainer(object):
             for imgs, labels, img_paths in loader:
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
+                if self.args.use_bbs:
+                    labels = labels[:, :self.dm.num_attributes]
 
                 outputs = model(imgs)
                 outputs = criterion.logits(outputs)

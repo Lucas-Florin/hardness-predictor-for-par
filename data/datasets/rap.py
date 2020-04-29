@@ -31,6 +31,7 @@ class RAPv2(BaseDataset):
 
     def __init__(self, root, verbose=True, full_attributes=False, use_bbs=False, **kwargs):
         super(RAPv2, self).__init__(root)
+        self.use_bbs = use_bbs
 
         # parse directories.
         self.dataset_dir = osp.join(self.root, self.dataset_dir)

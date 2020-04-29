@@ -130,7 +130,7 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, self.dm.num_attributes,
                                                   use_gpu=self.use_gpu, sigma=self.args.hp_loss_param,
-                                                  use_visibility=self.args.hp_use_visibility,
+                                                  use_visibility=self.args.use_bbs,
                                                   visibility_weight=self.args.hp_visibility_weight)
         self.f1_calibration_thresholds = None
 
@@ -271,7 +271,7 @@ class RealisticPredictorTrainer(Trainer):
             self.optimizer_hp.zero_grad()
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
-            if self.args.use_visibility:
+            if self.args.use_bbs:
                 visibility_labels = labels[:, self.dm.num_attributes:]
                 labels = labels[:, :self.dm.num_attributes]
                 assert labels.shape == visibility_labels.shape

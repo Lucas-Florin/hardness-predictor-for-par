@@ -10,6 +10,7 @@ class BaseDataset(object):
 
     def __init__(self, root):
         self.root = osp.expanduser(root)
+        self.use_bbs = False
 
     @staticmethod
     def binarize_labels(labels, attributes):
@@ -85,7 +86,7 @@ class BaseDataset(object):
         For each Attribute get the ratio of positive samples to total number of datapoints in the dataset.
         :return: A numpy array with the ratio for each attribute.
         """
-        labels = self.labels
+        labels = self.labels if not self.use_bbs else self.labels[:, :self.num_attributes]
         attributes = self.attributes
         num_datapoints = labels.shape[0]
         total_positive = labels.sum(0)

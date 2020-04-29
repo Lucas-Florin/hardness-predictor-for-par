@@ -280,7 +280,8 @@ def image_dataset_kwargs(parsed_args):
         'color_jitter': parsed_args.color_jitter,
         'color_aug': parsed_args.color_aug,
         'train_val': parsed_args.train_val,
-        'full_attributes': parsed_args.full_attributes
+        'full_attributes': parsed_args.full_attributes,
+        'use_bbs': parsed_args.use_bbs
     }
 
 

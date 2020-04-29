@@ -12,7 +12,7 @@ class BaseDataManager(object):
     def __init__(self,
                  use_gpu,
                  dataset_name,
-                 root='data',
+                 root='datasets',
                  height=256,
                  width=128,
                  train_batch_size=32,
@@ -66,17 +66,17 @@ class ImageDataManager(BaseDataManager):
                  **kwargs
                  ):
         super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
-        dataset = init_img_dataset(root=self.root, name=dataset_name, full_attributes=kwargs["full_attributes"])
+        dataset = init_img_dataset(name=dataset_name, **kwargs)
         self.dataset = dataset
         print('=> Initializing TRAIN dataset')
         train = list()
         self.train = train
         # TODO: Change label dtype to long or bool
         for img_path, label in dataset.train:
-                train.append((img_path, torch.tensor(label.astype(torch.float))))
+                train.append((img_path, torch.tensor(label, dtype=torch.float)))
         if train_val:
             for img_path, label in dataset.val:
-                train.append((img_path, torch.tensor(label.astype(torch.float))))
+                train.append((img_path, torch.tensor(label, dtype=torch.float)))
         self.attributes = list(dataset.attributes)
         self.num_attributes = dataset.num_attributes
         self.trainloader = DataLoader(
@@ -100,7 +100,7 @@ class ImageDataManager(BaseDataManager):
         test = list()
         self.test = test
         for img_path, label in dataset.test:
-            test.append((img_path, torch.tensor(label.astype(torch.bool))))
+            test.append((img_path, torch.tensor(label, dtype=torch.bool)))
         test_dataset = ImageDataset(test, transform=self.transform_test)
         self.testloader_dict['test'] = DataLoader(
             test_dataset,
@@ -113,7 +113,7 @@ class ImageDataManager(BaseDataManager):
         val = list()
         self.val = val
         for img_path, label in dataset.val:
-            val.append((img_path, torch.tensor(label.astype(torch.bool))))
+            val.append((img_path, torch.tensor(label, dtype=torch.bool)))
         val_dataset = ImageDataset(val, transform=self.transform_test)
         self.testloader_dict['val'] = DataLoader(
             val_dataset,
