@@ -29,6 +29,7 @@ from utils.plot import plot_epoch_losses, show_img_grid
 from trainer import Trainer
 import evaluation.rejectors as rejectors
 from evaluation.result_manager import ResultManager
+from training.calibrators import NoneCalibrator, LinearCalibrator
 
 
 class RealisticPredictorTrainer(Trainer):
@@ -70,9 +71,17 @@ class RealisticPredictorTrainer(Trainer):
         elif self.args.rejector == 'f1':
             self.rejector = rejectors.F1Rejector(self.args.max_rejection_quantile)
         else:
-            self.rejector = None
-
+            raise ValueError("Unsupported rejection strategy: '{}'".format(self.args.rejector))
         print("Using rejection strategy '{}'".format(self.args.rejector))
+
+        if self.args.hp_calib == 'none':
+            self.hp_calibrator = NoneCalibrator()
+        elif self.args.hp_calib == 'linear':
+            self.hp_calibrator = LinearCalibrator()
+        else:
+            raise ValueError("Unsupported calibrator: '{}'".format(self.args.hp_calib))
+        print("Using calibrator for HP-Loss '{}'".format(self.args.hp_calib))
+
 
         # Load pretrained weights if specified in args.
         load_file = osp.join(args.save_experiment, args.load_weights)
@@ -178,6 +187,19 @@ class RealisticPredictorTrainer(Trainer):
         print("Updating rejection thresholds based on training data. ")
         self.rejector.update_thresholds(labels, predictions, hp_scores)
 
+    def update_hp_calibrator_thresholds(self, thresholds=None):
+        if self.args.hp_calib == "none":
+            return
+        if self.args.hp_calib_thr == "f1":
+            if self.hp_calibrator.is_initialized():
+                return
+            thresholds = self.get_baseline_f1_calibration_thresholds()
+        elif self.args.hp_calib_thr == "mean":
+            thresholds = 0.5 if thresholds is None else thresholds
+        else:
+            raise ValueError("Unsupported HP-Loss calibration threshold: '{}'".format(self.args.hp_calib_thr))
+        self.hp_calibrator.update_thresholds(thresholds)
+
     def init_epochs(self):
         # Initialize the epoch thresholds.
         if self.args.max_epoch < 0 and (self.args.main_net_train_epochs < 0 or self.args.hp_net_train_epochs < 0):
@@ -219,6 +241,9 @@ class RealisticPredictorTrainer(Trainer):
 
         if rejection_epoch:
             self.update_rejector_thresholds()
+        if self.args.hp_epoch_offset == self.epoch:
+            self.update_hp_calibrator_thresholds()
+
         if train_main or train_main_finetuning:
             self.model_main.train()
             losses = losses_main
@@ -231,10 +256,19 @@ class RealisticPredictorTrainer(Trainer):
         else:
             self.model_hp.eval()
 
+        positive_logits_sum = torch.zeros(self.dm.num_attributes)
+        negative_logits_sum = torch.zeros(self.dm.num_attributes)
+        positive_num = torch.zeros(self.dm.num_attributes)
+        negative_num = torch.zeros(self.dm.num_attributes)
+        if self.use_gpu:
+            positive_logits_sum = positive_logits_sum.cuda()
+            negative_logits_sum = negative_logits_sum.cuda()
+            positive_num = positive_num.cuda()
+            negative_num = negative_num.cuda()
+
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
             self.optimizer_main.zero_grad()
             self.optimizer_hp.zero_grad()
-
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             if self.args.use_visibility:
@@ -246,6 +280,13 @@ class RealisticPredictorTrainer(Trainer):
             # Run the batch through both nets.
             label_prediciton_probs = self.model_main(imgs)
             label_predicitons_logits = self.criterion_main.logits(label_prediciton_probs.detach())
+
+            labels_bool = labels > 0.5  # TODO: make nicer
+            positive_logits_sum += label_predicitons_logits[labels_bool].sum(0)
+            negative_logits_sum += label_predicitons_logits[~labels_bool].sum(0)
+            positive_num = labels_bool.sum(0)
+            negative_num = (~labels_bool).sum(0)
+
             if not self.args.use_confidence:
                 hardness_predictions = self.model_hp(imgs)
             if train_main or train_main_finetuning:
@@ -278,7 +319,7 @@ class RealisticPredictorTrainer(Trainer):
             if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
 
-                loss_hp = self.criterion_hp(hardness_predictions, label_predicitons_logits, labels, visibility_labels)
+                loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels, visibility_labels)
 
 
                 loss_hp.backward()
@@ -301,6 +342,10 @@ class RealisticPredictorTrainer(Trainer):
                 loss=losses_main,
                 hp_loss=losses_hp
               ))
+        positive_logits_sum /= positive_num
+        negative_logits_sum /= negative_num
+        self.update_hp_calibrator_thresholds((positive_logits_sum + negative_logits_sum) / 2)
+
         return losses_main.avg, losses_hp.avg
 
     def test(self, predictions=None, ground_truth=None):
@@ -342,7 +387,7 @@ class RealisticPredictorTrainer(Trainer):
 
         # Display the hardness scores for every attribute.
         print("-" * 30)
-        header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "SD", "Average Precision", "cAP", "Rejection Threshold",
+        header = ["Attribute", "Positivity Ratio", "Accuracy", "Hardness Score Mean", "Average Precision", "cAP", "Rejection Threshold",
                   "Rejection Quantile"]
         mean = hp_scores.mean(0)
         var = np.sqrt(hp_scores.var(0))
@@ -359,9 +404,9 @@ class RealisticPredictorTrainer(Trainer):
             rejection_thresholds = np.ones_like(rejection_quantiles)
         else:
             rejection_thresholds = rejection_thresholds.flatten()
-        data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, var, average_precision,
+        data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, average_precision,
                         comparative_average_precision, rejection_thresholds, rejection_quantiles))
-        data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
+        data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(),
                  average_precision.mean(), comparative_average_precision.mean(), rejection_thresholds.mean(),
                   rejection_quantiles.mean()]]
         table = tab.tabulate(data, floatfmt='.4f', headers=header)
@@ -374,6 +419,7 @@ class RealisticPredictorTrainer(Trainer):
 
         self.result_dict.update({
             "rejection_thresholds": self.rejector.attribute_thresholds,
+            "calibration_thresholds": self.hp_calibrator.thresholds_np,
             "ignored_test_samples": ignore,
             "average_precision": average_precision
         })
@@ -417,7 +463,7 @@ class RealisticPredictorTrainer(Trainer):
         return self.get_baseline_data(self.args.ap_baseline, "average_precision", "baseline average precision")
 
     def get_baseline_f1_calibration_thresholds(self):
-        return self.get_baseline_data(self.args.ap_baseline, "f1_thresholds", "baseline F1 calibration thresholds")
+        return self.get_baseline_data(self.args.f1_baseline, "f1_thresholds", "baseline F1 calibration thresholds")
 
     def get_baseline_data(self, filename, key, name):
         load_file = osp.join(self.args.save_experiment, filename)

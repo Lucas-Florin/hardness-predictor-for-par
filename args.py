@@ -112,7 +112,12 @@ def argument_parser():
 
 
     # HP-Loss calibration
-
+    parser.add_argument('--hp-calib', type=str, default='none', choices=['none', 'linear'],
+                        help='calibrator for the HP-Loss function')
+    parser.add_argument('--hp-calib-thr', type=str, default='f1', choices=['f1', 'mean'],
+                        help='calibrator for the HP-Loss function')
+    parser.add_argument('--f1-baseline', type=str, default='',
+                        help='load baseline F1 calibration thresholds from previous model')
 
 
     # ************************************************************
@@ -251,6 +256,8 @@ def argument_parser():
                         help='gpu device ids for CUDA_VISIBLE_DEVICES')
     parser.add_argument('--use-avai-gpus', action='store_true',
                         help='use available gpus instead of specified devices (useful when using managed clusters)')
+    parser.add_argument('--keep-best-model', action='store_true',
+                        help='save the best model checkpoint separately from the latest checkpoint')
 
 
     return parser
