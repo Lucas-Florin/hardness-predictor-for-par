@@ -399,7 +399,7 @@ class RealisticPredictorTrainer(Trainer):
             rejection_thresholds = rejection_thresholds.flatten()
         data = list(zip(self.dm.attributes, self.positivity_ratio, self.acc_atts, mean, average_precision,
                         comparative_average_precision, rejection_thresholds, rejection_quantiles))
-        data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(), hp_scores.var(),
+        data += [["Total", self.positivity_ratio.mean(), self.acc_atts.mean(), mean.mean(),
                  average_precision.mean(), comparative_average_precision.mean(), rejection_thresholds.mean(),
                   rejection_quantiles.mean()]]
         table = tab.tabulate(data, floatfmt='.4f', headers=header)
