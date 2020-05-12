@@ -176,6 +176,7 @@ class Trainer(object):
         self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(self.args))
         self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
         self.attributes = self.dm.attributes
+        self.use_bbs = self.args.use_bbs_gt or self.args.use_bbs_feedback
         if self.args.group_atts:
             # Each group has exactly one positive attribute.
             self.attribute_grouping = self.dm.dataset.attribute_grouping
@@ -285,7 +286,7 @@ class Trainer(object):
             for imgs, labels, img_paths in loader:
                 if self.use_gpu:
                     imgs, labels = imgs.cuda(), labels.cuda()
-                if self.args.use_bbs:
+                if self.use_bbs:
                     labels = labels[:, :self.dm.num_attributes]
 
                 outputs = model(imgs)

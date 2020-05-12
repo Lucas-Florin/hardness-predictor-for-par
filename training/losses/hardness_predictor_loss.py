@@ -53,6 +53,7 @@ class HardnessPredictorLoss(nn.Module):
         prediction_correctness = torch.where(ground_truth_labels.byte(), main_net_predictions, 1 - main_net_predictions)
         loss = self.loss_function(hp_broadcasted, 1 - prediction_correctness, weight=deepmar_weights)
         if self.use_visibility:
+            assert visibility_labels is not None
             loss += self.visibility_weight * self.loss_function(hp_broadcasted, 1 - visibility_labels,
                                                                 weight=deepmar_weights)
         return loss

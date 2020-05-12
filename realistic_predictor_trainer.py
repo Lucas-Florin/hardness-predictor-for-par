@@ -130,7 +130,7 @@ class RealisticPredictorTrainer(Trainer):
         self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, self.dm.num_attributes,
                                                   use_gpu=self.use_gpu, sigma=self.args.hp_loss_param,
-                                                  use_visibility=self.args.use_bbs,
+                                                  use_visibility=self.args.use_bbs_gt,
                                                   visibility_weight=self.args.hp_visibility_weight)
         self.f1_calibration_thresholds = None
 
@@ -256,6 +256,7 @@ class RealisticPredictorTrainer(Trainer):
         else:
             self.model_hp.eval()
 
+        # For saving results to compute mean calibration thresholds.
         positive_logits_sum = torch.zeros(self.dm.num_attributes)
         negative_logits_sum = torch.zeros(self.dm.num_attributes)
         positive_num = torch.zeros(self.dm.num_attributes)
@@ -271,7 +272,7 @@ class RealisticPredictorTrainer(Trainer):
             self.optimizer_hp.zero_grad()
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
-            if self.args.use_bbs:
+            if self.use_bbs:
                 visibility_labels = labels[:, self.dm.num_attributes:]
                 labels = labels[:, :self.dm.num_attributes]
                 assert labels.shape == visibility_labels.shape
@@ -305,6 +306,8 @@ class RealisticPredictorTrainer(Trainer):
                 else:
                     # Make a detached version of the hp scores for computing the main loss.
                     main_net_weights = hardness_predictions_logits
+                    if self.args.use_bbs_feedback:
+                        main_net_weights *= visibility_labels
                 if train_main_finetuning:
                     select = self.rejector(hardness_predictions_logits)
                     main_net_weights = main_net_weights * select
@@ -318,7 +321,7 @@ class RealisticPredictorTrainer(Trainer):
 
             if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
-
+                # The label predictions are calibrated.
                 loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels, visibility_labels)
 
 
@@ -342,6 +345,8 @@ class RealisticPredictorTrainer(Trainer):
                 loss=losses_main,
                 hp_loss=losses_hp
               ))
+
+        # Update HP calibrator thresholds (mean thresholds are only used if the option is selected in args)
         positive_logits_sum /= positive_num
         negative_logits_sum /= negative_num
         self.update_hp_calibrator_thresholds((positive_logits_sum + negative_logits_sum) / 2)

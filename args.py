@@ -105,8 +105,10 @@ def argument_parser():
                         help='use DeepMAR weighting for the HP loss')
     parser.add_argument('--hp-loss-param', type=float, default=1.0,
                         help='the parameter for the HP loss function')
-    parser.add_argument('--use-bbs', action='store_true',
-                        help='use bounding boxes to train HP-Net')
+    parser.add_argument('--use-bbs-gt', action='store_true',
+                        help='use bounding boxes as ground truth to train the HP-Net')
+    parser.add_argument('--use-bbs-feedback', action='store_true',
+                        help='use bounding boxes for hardness score feedback')
     parser.add_argument('--hp-visibility-weight', type=float, default=1.0,
                         help='the parameter for the HP loss function')
 
@@ -281,7 +283,7 @@ def image_dataset_kwargs(parsed_args):
         'color_aug': parsed_args.color_aug,
         'train_val': parsed_args.train_val,
         'full_attributes': parsed_args.full_attributes,
-        'use_bbs': parsed_args.use_bbs
+        'use_bbs': parsed_args.use_bbs_gt or parsed_args.use_bbs_feedback
     }
 
 
