@@ -285,8 +285,8 @@ class RealisticPredictorTrainer(Trainer):
             labels_bool = labels > 0.5  # TODO: make nicer
             positive_logits_sum += label_predicitons_logits[labels_bool].sum(0)
             negative_logits_sum += label_predicitons_logits[~labels_bool].sum(0)
-            positive_num = labels_bool.sum(0)
-            negative_num = (~labels_bool).sum(0)
+            positive_num += labels_bool.sum(0, dtype=torch.float)
+            negative_num += (~labels_bool).sum(0, dtype=torch.float)
 
             if not self.args.use_confidence:
                 hardness_predictions = self.model_hp(imgs)
@@ -418,7 +418,7 @@ class RealisticPredictorTrainer(Trainer):
         print(table)
         print("Mean average precision of hardness prediction over attributes: {:.2%}".format(average_precision.mean()))
         print("Comparative mean average precision: {:.2%}".format(comparative_average_precision.mean()))
-        csv_path = osp.join(self.args.save_experiment, "result_table.csv")
+        csv_path = osp.join(self.args.save_experiment, self.ts + "rp_result_table.csv")
         np.savetxt(csv_path, np.transpose(data), fmt="%s", delimiter="\t")
         print("Saved Table at " + csv_path)
 

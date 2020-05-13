@@ -107,11 +107,6 @@ class BaselineTrainer(Trainer):
 
         self.model.train()
 
-        if fixbase or self.args.always_fixbase:
-            open_specified_layers(self.model, self.args.open_layers)
-        else:
-            open_all_layers(self.model)
-
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
 
             if self.use_gpu:
