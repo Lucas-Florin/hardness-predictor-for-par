@@ -2,15 +2,10 @@ python realistic_predictor_trainer.py \
     -d pa100k \
     --gpu-devices 0 \
     --max-epoch 180 \
-    --train-batch-size 128 \
-    --eval-split val \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
     --stepsize 60 120 \
+    --train-batch-size 8 \
+    --eval-split test \
+    --rejector-thresholds-split val \
+    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
     --loss-func scel \
-    --use-macc \
-    --f1-calib \
     --no-hp-feedback \
-    --random-translation \
-    --color-jitter \
-    --random-erase
-    --use-deepmar-for-hp

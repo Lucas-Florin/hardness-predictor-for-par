@@ -1,9 +1,11 @@
 python baseline_trainer.py \
     -d pa100k \
     --gpu-devices 0 \
-    --max-epoch 1 \
+    --max-epoch 180 \
     --stepsize 60 120 \
+    --train-batch-size 8 \
     --eval-split test \
-    --eval-freq 20 \
+    --eval-freq 30 \
     --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
-    --loss-func scel
+    --loss-func scel \
+    --weight-decay 0.0025

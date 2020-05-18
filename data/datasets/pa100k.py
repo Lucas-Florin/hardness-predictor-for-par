@@ -45,8 +45,6 @@ class PA100K(BaseDataset):
         test = [(osp.join(self.img_dir, filename), label)
                 for filename, label in zip(data["test_images_name"], test_labels)]
 
-        print((data["train_images_name"].shape))
-
         filenames = data["train_images_name"].tolist() + data["val_images_name"].tolist() + data["test_images_name"].tolist()
         filenames = [osp.join(self.img_dir, file) for file in filenames]
 
