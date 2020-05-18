@@ -285,8 +285,8 @@ class RealisticPredictorTrainer(Trainer):
             labels_bool = labels > 0.5  # TODO: make nicer
             positive_logits_sum += label_predicitons_logits[labels_bool].sum(0)
             negative_logits_sum += label_predicitons_logits[~labels_bool].sum(0)
-            positive_num = labels_bool.sum(0)
-            negative_num = (~labels_bool).sum(0)
+            positive_num += labels_bool.sum(0, dtype=torch.float)
+            negative_num += (~labels_bool).sum(0, dtype=torch.float)
 
             if not self.args.use_confidence:
                 hardness_predictions = self.model_hp(imgs)
