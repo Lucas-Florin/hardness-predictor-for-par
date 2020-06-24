@@ -141,6 +141,8 @@ def argument_parser():
     parser.add_argument('--hp-model', type=str, default='resnet50')
     parser.add_argument('--pretrained', action='store_true',
                         help='load pretrained weights')
+    parser.add_argument('--pretrained-hp', action='store_true',
+                        help='load pretrained weights for HP-Net')
     parser.add_argument('--hp-net-simple', action='store_true',
                         help='predict hardness scores for entire pictures, not for specific attributes')
 

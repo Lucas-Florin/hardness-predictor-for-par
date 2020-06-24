@@ -55,7 +55,7 @@ class RealisticPredictorTrainer(Trainer):
         num_hp_net_outputs = 1 if self.args.hp_net_simple else self.dm.num_attributes
         # Init the HP-Net
         self.model_hp = models.init_model(name="hp_net_" + self.args.hp_model, num_classes=num_hp_net_outputs,
-                                          pretrained=self.args.pretrained)
+                                          pretrained=self.args.pretrained_hp)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_hp)))
 
         if self.args.rejector == "none":
@@ -300,7 +300,7 @@ class RealisticPredictorTrainer(Trainer):
                     else:
                         decision_thresholds = None
                     hardness_predictions_logits = 1 - metrics.get_confidence(label_predicitons_logits,
-                                                                             decision_thresholds)
+                                                                             decision_thresholds).detach()
                 if self.args.no_hp_feedback or not train_hp:
                     main_net_weights = label_prediciton_probs.new_ones(label_prediciton_probs.shape)
                 else:
