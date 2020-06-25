@@ -9,4 +9,6 @@ import torch.utils.model_zoo as model_zoo
 
 
 def resnet50_lib(num_classes, loss=None, pretrained=False, **kwargs):
-    return torchvision.models.resnet50(pretrained=pretrained, num_classes=num_classes)
+    model = torchvision.models.resnet50(pretrained=pretrained)
+    model.fc = nn.Linear(2048, num_classes)
+    return model
