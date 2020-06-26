@@ -44,8 +44,8 @@ class BaselineTrainer(Trainer):
 
     def init_model(self):
         print('Initializing model: {}'.format(args.model))
-        self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
-                                       pretrained=self.args.pretrained, use_gpu=self.use_gpu)
+        self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
+                                       pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
         print('Model size: {:.3f} M'.format(count_num_param(self.model)))
 
         # Load pretrained weights if specified in args.
@@ -60,10 +60,10 @@ class BaselineTrainer(Trainer):
                 else:
                     print("WARNING: Could not load args. ")
             else:
-                print("WARNING: Could not load pretraining weights")
+                print("WARNING: Could not load pretrained weights")
 
         # Load model onto GPU if GPU is used.
-        self.model = nn.DataParallel(self.model).cuda() if self.use_gpu else self.model
+        self.model = self.model.cuda() if self.use_gpu else self.model
 
         # Select Loss function.
         if args.loss_func == "deepmar":
@@ -83,9 +83,11 @@ class BaselineTrainer(Trainer):
         self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
         self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
 
+        self.model = nn.DataParallel(self.model) if self.use_gpu else self.model
+
         # Set default for max_epoch if it was not passed as an argument in the console.
         if self.args.max_epoch < 0:
-            self.args.max_epoch = 60
+            self.args.max_epoch = 30
 
         self.model_list = [self.model]
         self.optimizer_list = [self.optimizer]
@@ -116,6 +118,7 @@ class BaselineTrainer(Trainer):
             loss = self.criterion(outputs, labels)
             self.optimizer.zero_grad()
             loss.backward()
+            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
             self.optimizer.step()
 
             losses.update(loss.item(), labels.size(0))

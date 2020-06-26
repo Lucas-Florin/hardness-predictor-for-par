@@ -77,7 +77,10 @@ class Trainer(object):
             loss = self.train()
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
-                scheduler.step()
+                if self.args.optim == 'plateau':
+                    scheduler.step(metrics=loss)
+                else:
+                    scheduler.step()
             self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:

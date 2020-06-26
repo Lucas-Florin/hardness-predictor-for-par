@@ -19,7 +19,7 @@ def argument_parser():
                         help='number of data loading workers (tips: 4 or 8 times number of gpus)')
     parser.add_argument('--height', type=int, default=256,
                         help='height of an image')
-    parser.add_argument('--width', type=int, default=128,
+    parser.add_argument('--width', type=int, default=192,
                         help='width of an image')
     parser.add_argument('--full-attributes', action='store_true',
                         help='use all attributes available, not only the ones selected in the original paper')
@@ -37,27 +37,18 @@ def argument_parser():
     # ************************************************************
     # Optimization options
     # ************************************************************
+    # TODO: remove unnecessary parameter options.
     parser.add_argument('--optim', type=str, default='adam',
                         help='optimization algorithm (see optimizers.py)')
     parser.add_argument('--lr', default=0.0001, type=float,
                         help='initial learning rate')
     parser.add_argument('--weight-decay', default=5e-04, type=float,
                         help='weight decay')
+    parser.add_argument('--optim-group-pretrained', action="store_true",
+                        help='group parameters by pretrained and fresh')
     # sgd
     parser.add_argument('--momentum', default=0.9, type=float,
                         help='momentum factor for sgd and rmsprop')
-    parser.add_argument('--sgd-dampening', default=0, type=float,
-                        help='sgd\'s dampening for momentum')
-    parser.add_argument('--sgd-nesterov', action='store_true',
-                        help='whether to enable sgd\'s Nesterov momentum')
-    # rmsprop
-    parser.add_argument('--rmsprop-alpha', default=0.99, type=float,
-                        help='rmsprop\'s smoothing constant')
-    # adam/amsgrad
-    parser.add_argument('--adam-beta1', default=0.9, type=float,
-                        help='exponential decay rate for adam\'s first moment')
-    parser.add_argument('--adam-beta2', default=0.999, type=float,
-                        help='exponential decay rate for adam\'s second moment')
 
     # ************************************************************
     # Training hyperparameters
@@ -79,7 +70,7 @@ def argument_parser():
                              'training the main-Net. ')
 
     # Batch size
-    parser.add_argument('--train-batch-size', default=128, type=int,
+    parser.add_argument('--train-batch-size', default=64, type=int,
                         help='training batch size')
     parser.add_argument('--test-batch-size', default=100, type=int,
                         help='test batch size')
@@ -139,10 +130,8 @@ def argument_parser():
     # ************************************************************
     parser.add_argument('-m', '--model', type=str, default='resnet50')
     parser.add_argument('--hp-model', type=str, default='resnet50')
-    parser.add_argument('--pretrained', action='store_true',
-                        help='load pretrained weights')
-    parser.add_argument('--pretrained-hp', action='store_true',
-                        help='load pretrained weights for HP-Net')
+    parser.add_argument('--no-pretrained', action='store_true',
+                        help='do not use pretrained weights')
     parser.add_argument('--hp-net-simple', action='store_true',
                         help='predict hardness scores for entire pictures, not for specific attributes')
 
@@ -297,13 +286,9 @@ def optimizer_kwargs(parsed_args):
     return {
         'optim': parsed_args.optim,
         'lr': parsed_args.lr,
+        'group_pretrained': parsed_args.optim_group_pretrained,
         'weight_decay': parsed_args.weight_decay,
-        'momentum': parsed_args.momentum,
-        'sgd_dampening': parsed_args.sgd_dampening,
-        'sgd_nesterov': parsed_args.sgd_nesterov,
-        'rmsprop_alpha': parsed_args.rmsprop_alpha,
-        'adam_beta1': parsed_args.adam_beta1,
-        'adam_beta2': parsed_args.adam_beta2,
+        'momentum': parsed_args.momentum
     }
 
 

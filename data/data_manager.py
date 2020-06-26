@@ -79,6 +79,7 @@ class ImageDataManager(BaseDataManager):
                 train.append((img_path, torch.tensor(label, dtype=torch.float)))
         self.attributes = list(dataset.attributes)
         self.num_attributes = dataset.num_attributes
+        # TODO: drop last?
         self.trainloader = DataLoader(
             ImageDataset(train, transform=self.transform_train),
             batch_size=self.train_batch_size, shuffle=True, num_workers=self.workers,

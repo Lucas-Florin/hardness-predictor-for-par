@@ -3,7 +3,7 @@ import random
 import math
 
 import torch
-from torchvision.transforms import *
+import torchvision.transforms as T
 
 
 class Random2DTranslation(object):
@@ -121,29 +121,28 @@ def build_transforms(height,
                      color_jitter=False,  # randomly change the brightness, contrast and saturation
                      color_aug=False,  # randomly alter the intensities of RGB channels
                      **kwargs):
+    # TODO: remove asserts.
+    assert height == 256
+    assert width == 192
     # use imagenet mean and std as default
     imagenet_mean = [0.485, 0.456, 0.406]
     imagenet_std = [0.229, 0.224, 0.225]
-    normalize = Normalize(mean=imagenet_mean, std=imagenet_std)
+    normalize = T.Normalize(mean=imagenet_mean, std=imagenet_std)
 
-    # build train transformations
-    transform_train = []
-    transform_train += [Random2DTranslation(height, width)]
-    transform_train += [RandomHorizontalFlip()]
-    if color_jitter:
-        transform_train += [ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)]
-    transform_train += [ToTensor()]
-    if color_aug:
-        transform_train += [ColorAugmentation()]
-    transform_train += [normalize]
-    if random_erase:
-        transform_train += [RandomErasing()]
-    transform_train = Compose(transform_train)
+    # TODO: remove options from args or implement options here.
+    transform_train = T.Compose([
+        T.Resize((height, width)),
+        T.Pad(10),
+        T.RandomCrop((height, width)),
+        T.RandomHorizontalFlip(),
+        T.ToTensor(),
+        normalize,
+    ])
 
     # build test transformations
-    transform_test = Compose([
-        Resize((height, width)),
-        ToTensor(),
+    transform_test = T.Compose([
+        T.Resize((height, width)),
+        T.ToTensor(),
         normalize,
     ])
     return transform_train, transform_test

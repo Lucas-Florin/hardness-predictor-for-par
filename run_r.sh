@@ -1,9 +1,12 @@
 python baseline_trainer.py \
     -d rap \
+    -m resnet50_strong \
     --gpu-devices 7 \
-    --max-epoch 180 \
-    --stepsize 60 120 \
+    --max-epoch 30 \
     --eval-split test \
-    --eval-freq 20 \
     --save-experiment=./storage/baseline_rap/ \
-    --loss-func deepmar
+    --loss-func deepmar \
+    --optim sgd \
+    --optim-group-pretrained \
+    --lr 0.1 \
+    --lr-scheduler plateau
