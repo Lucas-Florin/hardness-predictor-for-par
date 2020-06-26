@@ -247,8 +247,8 @@ def argument_parser():
     # ************************************************************
     parser.add_argument('--print-freq', type=int, default=100,
                         help='print frequency')
-    parser.add_argument('--seed', type=int, default=1,
-                        help='manual seed')
+    parser.add_argument('--fix-seed', action='store_true',
+                        help='fixed seed for reproducibility')
     parser.add_argument('--resume', type=str, default='', metavar='PATH',
                         help='resume from a checkpoint')
     #parser.add_argument('--save-log', type=str, default='log',

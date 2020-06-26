@@ -5,6 +5,6 @@ python realistic_predictor_trainer.py \
     --eval-split test \
     --rejector-thresholds-split val \
     --save-experiment=./storage/rp_rap/ \
-    --load-weights=2020-04-28_02-06-40_checkpoint.pth.tar \
+    --load-weights=2020-06-24_16-35-14_checkpoint.pth.tar \
     --evaluate \
-    --ap-baseline=2020-03-28_20-27-02_checkpoint.pth.tar
+    --ap-baseline=2020-03-31_12-56-57_checkpoint.pth.tar
