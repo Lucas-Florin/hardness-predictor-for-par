@@ -16,13 +16,11 @@ class ResNet50Strong(nn.Module):
         self.backbone.fc = nn.Linear(2048, num_classes)
         self.bn = nn.BatchNorm1d(num_classes)
         # TODO: last Avg Pooling from backbone dimension.
-        self.model = nn.Sequential(
-            self.backbone,
-            self.bn
-        )
 
     def forward(self, x):
-        return self.model(x)
+        x = self.backbone(x)
+        x = self.bn(x)
+        return x
 
     def get_params_finetuning(self):
         return list(self.backbone.parameters())[:-2]
