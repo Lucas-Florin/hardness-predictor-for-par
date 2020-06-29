@@ -12,16 +12,12 @@ class BaseDataManager(object):
     def __init__(self,
                  use_gpu,
                  dataset_name,
-                 root='datasets',
-                 height=256,
-                 width=128,
-                 train_batch_size=32,
-                 test_batch_size=100,
-                 workers=4,
-                 train_sampler='',
-                 random_erase=False,  # use random erasing for data augmentation
-                 color_jitter=False,  # randomly change the brightness, contrast and saturation
-                 color_aug=False,  # randomly alter the intensities of RGB channels
+                 root,
+                 height,
+                 width,
+                 train_batch_size,
+                 test_batch_size,
+                 workers,
                  **kwargs
                  ):
         self.use_gpu = use_gpu
@@ -32,14 +28,9 @@ class BaseDataManager(object):
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
         self.workers = workers
-        self.train_sampler = train_sampler
-        self.random_erase = random_erase
-        self.color_jitter = color_jitter
-        self.color_aug = color_aug
 
         transform_train, transform_test = build_transforms(
-            self.height, self.width, random_erase=self.random_erase, color_jitter=self.color_jitter,
-            color_aug=self.color_aug
+            self.height, self.width
         )
         self.transform_train = transform_train
         self.transform_test = transform_test
