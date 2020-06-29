@@ -15,7 +15,6 @@ class ResNet50Strong(nn.Module):
         self.backbone = torchvision.models.resnet50(pretrained=pretrained)
         self.backbone.fc = nn.Linear(2048, num_classes)
         self.bn = nn.BatchNorm1d(num_classes)
-        # TODO: last Avg Pooling from backbone dimension.
 
     def forward(self, x):
         x = self.backbone(x)

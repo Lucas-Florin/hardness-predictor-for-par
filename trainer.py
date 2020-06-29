@@ -77,7 +77,7 @@ class Trainer(object):
             loss = self.train()
             self.epoch_losses[epoch, :] = loss
             for scheduler in self.scheduler_list:
-                if self.args.optim == 'plateau':
+                if self.args.lr_scheduler == 'plateau':
                     scheduler.step(metrics=loss)
                 else:
                     scheduler.step()
