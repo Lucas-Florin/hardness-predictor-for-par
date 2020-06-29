@@ -37,10 +37,9 @@ def argument_parser():
     # ************************************************************
     # Optimization options
     # ************************************************************
-    # TODO: remove unnecessary parameter options.
-    parser.add_argument('--optim', type=str, default='adam',
+    parser.add_argument('--optim', type=str, default='sgd',
                         help='optimization algorithm (see optimizers.py)')
-    parser.add_argument('--lr', default=0.0001, type=float,
+    parser.add_argument('--lr', default=0.1, type=float,
                         help='initial learning rate')
     parser.add_argument('--weight-decay', default=5e-04, type=float,
                         help='weight decay')
