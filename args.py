@@ -24,15 +24,6 @@ def argument_parser():
     parser.add_argument('--full-attributes', action='store_true',
                         help='use all attributes available, not only the ones selected in the original paper')
 
-    # ************************************************************
-    # Data augmentation
-    # ************************************************************
-    parser.add_argument('--random-erase', action='store_true',
-                        help='use random erasing for data augmentation')
-    parser.add_argument('--color-jitter', action='store_true',
-                        help='randomly change the brightness, contrast and saturation')
-    parser.add_argument('--color-aug', action='store_true',
-                        help='randomly alter the intensities of RGB channels')
 
     # ************************************************************
     # Optimization options
@@ -268,9 +259,6 @@ def image_dataset_kwargs(parsed_args):
         'train_batch_size': parsed_args.train_batch_size,
         'test_batch_size': parsed_args.test_batch_size,
         'workers': parsed_args.workers,
-        'random_erase': parsed_args.random_erase,
-        'color_jitter': parsed_args.color_jitter,
-        'color_aug': parsed_args.color_aug,
         'train_val': parsed_args.train_val,
         'full_attributes': parsed_args.full_attributes,
         'use_bbs': parsed_args.use_bbs_gt or parsed_args.use_bbs_feedback
