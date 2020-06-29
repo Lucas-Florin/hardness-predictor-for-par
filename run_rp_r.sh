@@ -1,15 +1,16 @@
 taskset -c 20-25 \
 python realistic_predictor_trainer.py \
     -d rap \
+    --hp-model resnet50_nh_strong \
     --gpu-devices 4 \
-    --max-epoch 10 \
-    --stepsize 60 120 \
+    --max-epoch 30 \
+    --stepsize 16 22 27 \
     --eval-split test \
     --rejector-thresholds-split val \
     --save-experiment=./storage/rp_rap/ \
     --loss-func deepmar \
     --no-hp-feedback \
-    --ap-baseline=../rp_rap/2020-03-28_20-27-02_checkpoint.pth.tar \
+    --ap-baseline=../rp_rap/_checkpoint.pth.tar \
     --use-deepmar-for-hp \
-    --pretrained-hp \
-    --fix-seed
+    --fix-seed \
+    --hp-net-lr-multiplier 1.0

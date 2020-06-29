@@ -8,3 +8,4 @@ python baseline_trainer.py \
     --save-experiment=./storage/baseline_rap/ \
     --loss-func deepmar \
     --optim-group-pretrained \
+    --fix-seed

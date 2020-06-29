@@ -46,8 +46,8 @@ class RealisticPredictorTrainer(Trainer):
 
     def init_model(self):
         print('Initializing main model: {}'.format(args.model))
-        self.model_main = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes, loss={'xent'},
-                                            pretrained=self.args.pretrained, use_gpu=self.use_gpu)
+        self.model_main = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
+                                            pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_main)))
 
         print('Initializing HP model: {}'.format(args.hp_model))
@@ -55,7 +55,7 @@ class RealisticPredictorTrainer(Trainer):
         num_hp_net_outputs = 1 if self.args.hp_net_simple else self.dm.num_attributes
         # Init the HP-Net
         self.model_hp = models.init_model(name="hp_net_" + self.args.hp_model, num_classes=num_hp_net_outputs,
-                                          pretrained=self.args.pretrained_hp)
+                                          pretrained=not self.args.no_pretrained)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_hp)))
 
         if self.args.rejector == "none":
@@ -108,12 +108,12 @@ class RealisticPredictorTrainer(Trainer):
                     else:
                         print("WARNING: Could not load rejection thresholds. ")
             else:
-                print("WARNING: Could not load pretraining weights")
+                print("WARNING: Could not load pretrained weights")
         self.new_eval_split = self.args.eval_split != self.loaded_args.eval_split
         # Load model onto GPU if GPU is used.
-        self.model_main = nn.DataParallel(self.model_main).cuda() if self.use_gpu else self.model_main
+        self.model_main = self.model_main.cuda() if self.use_gpu else self.model_main
         self.model = self.model_main
-        self.model_hp = nn.DataParallel(self.model_hp).cuda() if self.use_gpu else self.model_hp
+        self.model_hp = self.model_hp.cuda() if self.use_gpu else self.model_hp
 
         self.pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
         # Select Loss function.
@@ -147,6 +147,11 @@ class RealisticPredictorTrainer(Trainer):
         self.optimizer_hp = init_optimizer(self.model_hp, **op_args)
         sc_args["stepsize"] = [i + self.args.hp_epoch_offset for i in sc_args["stepsize"]]
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
+
+
+        self.model_main = nn.DataParallel(self.model_main) if self.use_gpu else self.model_main
+        self.model = self.model_main
+        self.model_hp = nn.DataParallel(self.model_hp) if self.use_gpu else self.model_hp
 
         if not self.args.evaluate:
             self.init_epochs()
@@ -315,6 +320,7 @@ class RealisticPredictorTrainer(Trainer):
                 loss_main = self.criterion_main(label_prediciton_probs, labels, main_net_weights)
 
                 loss_main.backward()
+                nn.utils.clip_grad_norm_(self.model_main.parameters(), max_norm=10.0)
                 self.optimizer_main.step()
 
                 losses_main.update(loss_main.item(), labels.size(0))
@@ -324,8 +330,8 @@ class RealisticPredictorTrainer(Trainer):
                 # The label predictions are calibrated.
                 loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels, visibility_labels)
 
-
                 loss_hp.backward()
+                nn.utils.clip_grad_norm_(self.model_hp.parameters(), max_norm=10.0)
                 self.optimizer_hp.step()
 
                 losses_hp.update(loss_hp.item(), labels.size(0))
