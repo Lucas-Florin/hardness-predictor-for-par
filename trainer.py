@@ -83,7 +83,9 @@ class Trainer(object):
                     scheduler.step(metrics=loss)
                 else:
                     scheduler.step()
+
             self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)
+            print('Learning rate: ', [g['lr'] for g in self.optimizer.param_groups])
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
                 print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
