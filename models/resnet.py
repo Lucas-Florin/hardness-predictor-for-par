@@ -9,7 +9,6 @@ class ResNet50(nn.Module):
         super().__init__()
         self.backbone = torchvision.models.resnet50(pretrained=pretrained)
         self.backbone.fc = nn.Linear(2048, num_classes)
-        self.backbone.avgpool = nn.AdaptiveAvgPool2d(1)
         self.bn = nn.BatchNorm1d(num_classes)
 
     def forward(self, x):

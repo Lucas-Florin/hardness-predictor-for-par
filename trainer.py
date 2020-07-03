@@ -71,6 +71,8 @@ class Trainer(object):
 
         print('=> Start training')
         self.epoch_losses = np.zeros(shape=(args.max_epoch, len(self.criterion_list)))
+        if self.args.fix_seed:
+            self.fix_seed()
 
         # Train
         for epoch in range(args.start_epoch, args.max_epoch):
@@ -175,11 +177,14 @@ class Trainer(object):
             warnings.warn('Currently using CPU, however, GPU is highly recommended')
 
         if self.args.fix_seed:
-            print("Fixed seed 0 for reproducibility. ")
-            torch.manual_seed(0)
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
-            np.random.seed(0)
+            self.fix_seed()
+
+    def fix_seed(self):
+        print("Fixed seed 0 for reproducibility. ")
+        torch.manual_seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        np.random.seed(0)
 
     def init_data(self):
         print('Initializing image data manager')
