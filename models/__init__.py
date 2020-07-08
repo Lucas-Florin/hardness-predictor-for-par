@@ -9,11 +9,9 @@ __model_factory = {
     # image classification models
     'resnet50': ResNet50,
 
-    'hp_net_resnet50': HP_RES50,
-    'hp_net_resnet50_nh': HP_RES50_nh,
+    'hp_net_resnet50': HP_ResNet50,
+    'hp_net_resnet50_strong': HP_ResNet50_strong,
     'hp_net_resnet50_nh_strong': ResNet50,
-    'hp_net_squeezenet1_0': HP_Squeezenet,
-    'hp_net_densenet121': HP_Densenet
 }
 
 
