@@ -273,8 +273,8 @@ class RealisticPredictorTrainer(Trainer):
             negative_num = negative_num.cuda()
 
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
-            self.optimizer_main.zero_grad()
-            self.optimizer_hp.zero_grad()
+
+
             if self.use_gpu:
                 imgs, labels = imgs.cuda(), labels.cuda()
             if self.use_bbs:
@@ -318,7 +318,7 @@ class RealisticPredictorTrainer(Trainer):
                     main_net_weights = main_net_weights * select
                 # Compute main loss, gradient and optimize main net.
                 loss_main = self.criterion_main(label_prediciton_probs, labels, main_net_weights)
-
+                self.optimizer_main.zero_grad()
                 loss_main.backward()
                 nn.utils.clip_grad_norm_(self.model_main.parameters(), max_norm=10.0)
                 self.optimizer_main.step()
@@ -329,7 +329,7 @@ class RealisticPredictorTrainer(Trainer):
                 # Compute HP loss, gradient and optimize HP net.
                 # The label predictions are calibrated.
                 loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels, visibility_labels)
-
+                self.optimizer_hp.zero_grad()
                 loss_hp.backward()
                 nn.utils.clip_grad_norm_(self.model_hp.parameters(), max_norm=10.0)
                 self.optimizer_hp.step()

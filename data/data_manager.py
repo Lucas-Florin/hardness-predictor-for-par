@@ -74,7 +74,7 @@ class ImageDataManager(BaseDataManager):
         self.trainloader = DataLoader(
             ImageDataset(train, transform=self.transform_train),
             batch_size=self.train_batch_size, shuffle=True, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=True
+            pin_memory=self.use_gpu, drop_last=False
         )
 
         self.testloader_dict = dict()

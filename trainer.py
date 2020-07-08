@@ -181,12 +181,12 @@ class Trainer(object):
         if self.args.fix_seed:
             self.fix_seed()
 
-    def fix_seed(self):
+    def fix_seed(self, seed=0):
         print("Fixed seed 0 for reproducibility. ")
-        torch.manual_seed(0)
+        torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-        np.random.seed(0)
+        np.random.seed(seed)
 
     def init_data(self):
         print('Initializing image data manager')
