@@ -1,11 +1,12 @@
+taskset -c 20-24 \
 python baseline_trainer.py \
     -d pa100k \
-    --gpu-devices 0 \
-    --max-epoch 180 \
-    --stepsize 60 120 \
-    --train-batch-size 8 \
+    --gpu-devices 4 \
+    --max-epoch 30 \
+    --stepsize 15 20 25 \
+    --train-batch-size 32 \
     --eval-split test \
-    --eval-freq 30 \
-    --save-experiment=/net/merkur/storage/deeplearning/users/floluc/baseline_pa/ \
-    --loss-func scel \
-    --weight-decay 0.0025
+    --save-experiment=./storage/baseline_pa/ \
+    --loss-func deepmar \
+    --optim-group-pretrained \
+    --fix-seed
