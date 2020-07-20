@@ -4,6 +4,6 @@ python baseline_trainer.py \
     --gpu-devices 2 \
     --eval-split test \
     --save-experiment=./storage/baseline_rap/ \
-    --load-weights=2020-07-03_15-20-07_checkpoint.pth.tar \
+    --load-weights=2020-07-08_20-03-59_checkpoint.pth.tar \
     --evaluate
     --no-cache

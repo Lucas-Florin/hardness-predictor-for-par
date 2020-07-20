@@ -1,11 +1,10 @@
-taskset -c 20-24 \
+taskset -c 30-34 \
 python realistic_predictor_trainer.py \
     -d rap \
-    --hp-model resnet50_nh_strong \
-    --gpu-devices 4 \
+    --gpu-devices 6 \
     --eval-split test \
     --rejector-thresholds-split val \
-    --save-experiment=./storage/baseline_rap/ \
-    --load-weights=2020-07-03_11-10-40_checkpoint.pth.tar \
+    --save-experiment=./storage/rp_rap/ \
+    --load-weights=2020-07-09_00-24-24_checkpoint.pth.tar \
     --evaluate \
-    --ap-baseline=2020-03-31_12-56-57_checkpoint.pth.tar
+    --ap-baseline=2020-07-09_00-24-24_checkpoint.pth.tar
