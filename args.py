@@ -112,7 +112,7 @@ def argument_parser():
                         help='stepsize to decay learning rate')
     parser.add_argument('--gamma', default=0.1, type=float,
                         help='learning rate decay')
-    parser.add_argument('--hp-net-lr-multiplier', default=0.1, type=float,
+    parser.add_argument('--hp-net-lr-multiplier', default=1.0, type=float,
                         help='initial learning rate multiplier for the HP-Net w.r.t. the main model')
 
     # ************************************************************

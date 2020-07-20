@@ -1,17 +1,15 @@
-from .resnet import *
-from .HP_Net import *
-
-
-# TODO: Rely more on library definitions.
+from .resnet import ResNet50
+from .HP_Net import HP_ResNet50, HP_ResNet50_strong
 
 
 __model_factory = {
     # image classification models
     'resnet50': ResNet50,
 
-    'hp_net_resnet50': HP_ResNet50,
-    'hp_net_resnet50_strong': HP_ResNet50_strong,
-    'hp_net_resnet50_nh_strong': ResNet50,
+    # Hardness Predictor models
+    'hp_net_resnet50': ResNet50,
+    'hp_net_resnet50_fc_head_strong': HP_ResNet50_strong,
+    'hp_net_resnet50_fc_head': HP_ResNet50,
 }
 
 
