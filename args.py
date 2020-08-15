@@ -91,7 +91,7 @@ def argument_parser():
     parser.add_argument('--use-bbs-feedback', action='store_true',
                         help='use bounding boxes for hardness score feedback')
     parser.add_argument('--hp-visibility-weight', type=float, default=1.0,
-                        help='the parameter for the HP loss function')
+                        help='the weighting factor fro the bounding boxes ground truth')
 
 
     # HP-Loss calibration
@@ -224,7 +224,7 @@ def argument_parser():
     # ************************************************************
     # Miscs
     # ************************************************************
-    parser.add_argument('--print-freq', type=int, default=100,
+    parser.add_argument('--print-freq', type=int, default=500,
                         help='print frequency')
     parser.add_argument('--fix-seed', action='store_true',
                         help='fixed seed for reproducibility')

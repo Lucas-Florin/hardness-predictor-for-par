@@ -41,17 +41,17 @@ class HardnessPredictorLoss(nn.Module):
         :return: sigmoid cross-entropy loss
         """
         deepmar_weights = torch.where(ground_truth_labels == 1, self.positive_weights, self.negative_weights)
-        if weights is not None:
-            deepmar_weights *= weights
-        if self.use_gpu:
-            deepmar_weights = deepmar_weights.cuda()
-        if not self.use_deepmar_weighting:
-            deepmar_weights = None
+        if weights is not None or self.use_deepmar_weighting:
+            if weights is None:
+                weights = hp_net_outputs.new_ones(hp_net_outputs.shape)
+            if self.use_deepmar_weighting:
+                weights *= deepmar_weights
+
         # In case there is only one hardness score for each image, broadcast it into the shape of main_net_predictions.
         hp_broadcasted = self.broadcast(hp_net_outputs)
         # The prediction correctness is the probability that is predicted for the ground truth label.
         prediction_correctness = torch.where(ground_truth_labels.byte(), main_net_predictions, 1 - main_net_predictions)
-        loss = self.loss_function(hp_broadcasted, 1 - prediction_correctness, weight=deepmar_weights)
+        loss = self.loss_function(hp_broadcasted, 1 - prediction_correctness, weight=weights)
         if self.use_visibility:
             assert visibility_labels is not None
             loss += self.visibility_weight * self.loss_function(hp_broadcasted, 1 - visibility_labels,
