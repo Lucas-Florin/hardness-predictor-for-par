@@ -60,9 +60,10 @@ class RealisticPredictorAnalyzer:
         """
         split = self.args.eval_split
         ignored_test_datapoints = None
+        self.result_manager.print_stored()
 
         labels, prediction_probs, predictions, hp_scores = self.result_manager.get_outputs(split)
-        _, prediction_probs_train, _, hp_scores_train = self.result_manager.get_outputs("train")
+        #_, prediction_probs_train, _, hp_scores_train = self.result_manager.get_outputs("train")
         _, prediction_probs_val, _, hp_scores_val = self.result_manager.get_outputs("val")
         if self.result_manager.check_output_dict("test"):
             _, prediction_probs_test, _, hp_scores_test = self.result_manager.get_outputs("test")
@@ -114,7 +115,6 @@ class RealisticPredictorAnalyzer:
         #ignored_attributes = None
         acc_atts = metrics.mean_attribute_accuracies(predictions, labels, ignore=ignored_test_datapoints)
         average_precision = metrics.hp_average_precision(labels, predictions, hp_scores)
-        mean_average_precision = metrics.hp_mean_average_precision(labels, predictions, hp_scores)
         print('Results ----------')
         #if ignored_attributes is None:
         print(metrics.get_metrics_table(predictions, labels, ignore=ignored_test_datapoints))
@@ -128,8 +128,8 @@ class RealisticPredictorAnalyzer:
         """
         print('------------------')
         print('Mean Attribute Accuracies:')
-        header = ["Attribute", "Accuracy", "Positivity Ratio", "Average Precision", "Mean Average Precision"]
-        table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio, average_precision, mean_average_precision),
+        header = ["Attribute", "Accuracy", "Positivity Ratio", "Average Precision"]
+        table = tab.tabulate(zip(attributes, acc_atts, positivity_ratio, average_precision),
                              floatfmt='.2%', headers=header)
         print(table)
         print("Mean over all attributes of mean attribute accuracy of label prediction: {:.2%}".format(acc_atts.mean()))
@@ -149,7 +149,7 @@ class RealisticPredictorAnalyzer:
                 # If a valid attribute is given, the hardness scores for that attribute are selected, else the mean
                 # over all attributes is taken.
                 hp_scores = hp_scores[:, att_idxs]
-                hp_scores_train = hp_scores_train[:, att_idxs]
+                #hp_scores_train = hp_scores_train[:, att_idxs]
                 hp_scores_val = hp_scores_val[:, att_idxs]
                 if hp_scores_test is not None:
                     hp_scores_test = hp_scores_test[:, att_idxs]
@@ -197,8 +197,6 @@ class RealisticPredictorAnalyzer:
         if args.num_save_hard + args.num_save_easy > 0:
             assert len(self.args.select_atts) == 1
             # This part only gets executed if the corresponding arguments are passed at the terminal.
-            print('Initializing image data manager')
-            dm = ImageDataManager(use_gpu, **image_dataset_kwargs(args))
             hp_scores = hp_scores.flatten()
             hard_att_labels = hard_att_labels.flatten()
             sorted_idxs = hp_scores.argsort()
@@ -207,10 +205,13 @@ class RealisticPredictorAnalyzer:
             elif args.show_neg_samples:
                 sorted_idxs = sorted_idxs[np.logical_not(hard_att_labels[sorted_idxs])]
             # Select easy and hard examples as specified in the terminal.
-            if args.num_save_hard <= 0:
-                hard_idxs = sorted_idxs[0:args.num_save_easy]
+            if args.num_save_easy > 0:
+                hard_idxs = sorted_idxs[0:args.num_save_easy * 3]
+                hard_idxs = np.random.choice(hard_idxs, args.num_save_easy, replace=False)
             else:
-                hard_idxs = np.concatenate((sorted_idxs[0:args.num_save_easy], sorted_idxs[-args.num_save_hard:]))
+                hard_idxs = sorted_idxs[-args.num_save_hard * 3:]
+                hard_idxs = np.random.choice(hard_idxs, args.num_save_hard, replace=False)
+
             filename = osp.join(args.save_experiment,  ts + "hard_images.png")
             title = "Examples by hardness for " + (args.load_weights if args.load_weights else ts)
             # Display the image examples.
