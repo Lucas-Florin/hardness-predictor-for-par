@@ -38,7 +38,7 @@ def argument_parser():
                         help='group parameters by pretrained and fresh')
     # sgd
     parser.add_argument('--momentum', default=0.9, type=float,
-                        help='momentum factor for sgd and rmsprop')
+                        help='momentum factor for SGD')
 
     # ************************************************************
     # Training hyperparameters
@@ -60,9 +60,9 @@ def argument_parser():
                              'training the main-Net. ')
 
     # Batch size
-    parser.add_argument('--train-batch-size', default=64, type=int,
+    parser.add_argument('--train-batch-size', default=32, type=int,
                         help='training batch size')
-    parser.add_argument('--test-batch-size', default=100, type=int,
+    parser.add_argument('--test-batch-size', default=32, type=int,
                         help='test batch size')
 
     # Training Data
@@ -91,7 +91,7 @@ def argument_parser():
     parser.add_argument('--use-bbs-feedback', action='store_true',
                         help='use bounding boxes for hardness score feedback')
     parser.add_argument('--hp-visibility-weight', type=float, default=1.0,
-                        help='the weighting factor fro the bounding boxes ground truth')
+                        help='the weighting factor for the bounding boxes ground truth')
 
 
     # HP-Loss calibration
@@ -108,7 +108,7 @@ def argument_parser():
     # ************************************************************
     parser.add_argument('--lr-scheduler', type=str, default='multi_step',
                         help='learning rate scheduler (see lr_schedulers.py)')
-    parser.add_argument('--stepsize', default=[20, 40], nargs='+', type=int,
+    parser.add_argument('--stepsize', default=[15, 20, 25], nargs='+', type=int,
                         help='stepsize to decay learning rate')
     parser.add_argument('--gamma', default=0.1, type=float,
                         help='learning rate decay')
@@ -136,8 +136,6 @@ def argument_parser():
                         help='save resulting model after evaluation')
     parser.add_argument('--group-atts', action='store_true',
                         help='group binary attributes into non-binary ones')
-    #parser.add_argument('--use-macc', action='store_true',
-    #                    help='use mean accuracy instead of normal accuracy')
     parser.add_argument('--use-raw-acc', action='store_true',
                         help='use raw accuracy instead of mean accuracy')
     parser.add_argument('--f1-calib', action='store_true',
@@ -172,7 +170,7 @@ def argument_parser():
                         help='reject this portion of the hardest (mean hardness score) attributes (training dataset)')
     parser.add_argument('--reject-hard-attributes-threshold', default=1.0, type=float,
                         help='reject attributes that have a mean hardness score higher than this threshold')
-    parser.add_argument('--rejector-thresholds-split', type=str, default='train', choices=['test', 'val', 'train'],
+    parser.add_argument('--rejector-thresholds-split', type=str, default='val', choices=['test', 'val', 'train'],
                         help='name of the desired split for determining the rejector thresholds (train/test/val)')
 
     # ************************************************************
@@ -232,7 +230,7 @@ def argument_parser():
                         help='resume from a checkpoint')
     #parser.add_argument('--save-log', type=str, default='log',
     #                    help='path to save log files')
-    parser.add_argument('--save-experiment', type=str, default='experiments/experiment')
+    parser.add_argument('--save-experiment', type=str, default='./experiments/')
     parser.add_argument('--use-cpu', action='store_true',
                         help='use cpu')
     parser.add_argument('--gpu-devices', default='0', type=str,
