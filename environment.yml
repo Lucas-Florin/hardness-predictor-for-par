@@ -1,0 +1,14 @@
+name: par-hp
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python>=3.9
+  - pytorch>=1.9.0
+  - torchvision
+  - cudatoolkit=10.2
+  - numpy>=1.21.2
+  - scipy>=1.7.1
+  - tabulate>=0.8.9
+  - matplotlib>=3.4.3
+  - tikzplotlib>=0.9.12
