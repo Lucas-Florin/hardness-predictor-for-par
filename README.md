@@ -61,3 +61,7 @@ After training a hardness predictor you can see easy and hard to classify exampl
 ./show_hard_examples_pa.sh
 ```
 
+## Citation
+L. Florin, A. Specker, A. Schumann and J. Beyerer, "Hardness Prediction for More Reliable Attribute-based Person Re-identification," 2021 IEEE 4th International Conference on Multimedia Information Processing and Retrieval (MIPR), 2021, pp. 418-424, doi: 10.1109/MIPR51284.2021.00077.
+
+Paper: https://ieeexplore.ieee.org/abstract/document/9565485
