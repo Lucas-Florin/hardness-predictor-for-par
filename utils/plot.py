@@ -8,7 +8,6 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.patches as patches
-import tikzplotlib as tikz
 import os.path as osp
 from data.dataset_loader import read_image
 import evaluation.metrics as metrics
@@ -197,7 +196,6 @@ def show_accuracy_over_hardness(filename, attribute_names, labels, predictions, 
 
     if save_plot:
         plt.savefig(filename + ".png", format="png")
-        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
@@ -232,7 +230,6 @@ def show_positivity_over_hardness(filename, attribute_names, labels, predictions
     ax.legend(attribute_names)
     if save_plot:
         plt.savefig(filename + ".png", format="png")
-        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
@@ -275,7 +272,6 @@ def plot_hardness_score_distribution(filename, attribute_names, hp_scores_train,
 
     if save_plot:
         plt.savefig(filename + ".png", format="png")
-        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
@@ -302,7 +298,6 @@ def plot_positivity_ratio_over_attributes(attribute_names, positivity_ratios, fi
     plt.tight_layout()
     if save_plot:
         plt.savefig(filename + ".png", format="png")
-        tikz.save(filename + ".tex")
         print("Saved positivity ratio by hardness at " + filename)
     plt.show()
 
