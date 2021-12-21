@@ -45,7 +45,8 @@ class BaselineTrainer(Trainer):
     def init_model(self):
         print('Initializing model: {}'.format(args.model))
         self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
-                                       pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
+                                       pretrained=not self.args.no_pretrained,
+                                       image_size=(self.args.height, self.args.width))
         print('Model size: {:.3f} M'.format(count_num_param(self.model)))
 
         # Load pretrained weights if specified in args.
