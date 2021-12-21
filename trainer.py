@@ -81,7 +81,7 @@ class Trainer(object):
             for scheduler in self.scheduler_list:
                 if self.args.lr_scheduler == 'plateau':
                     scheduler.step(metrics=loss)
-                else:
+                elif self.args.lr_scheduler != '1cycle':
                     scheduler.step()
 
             self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)

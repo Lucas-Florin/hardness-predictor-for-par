@@ -82,7 +82,8 @@ class BaselineTrainer(Trainer):
         self.f1_calibration_thresholds = None
 
         self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
-        self.scheduler = init_lr_scheduler(self.optimizer, **lr_scheduler_kwargs(args))
+        self.scheduler = init_lr_scheduler(
+            self.optimizer, steps_per_epoch=len(self.trainloader), **lr_scheduler_kwargs(args))
 
         self.model = nn.DataParallel(self.model) if self.use_gpu else self.model
 
@@ -121,6 +122,8 @@ class BaselineTrainer(Trainer):
             loss.backward()
             nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
             self.optimizer.step()
+            if self.args.lr_scheduler == '1cycle':
+                self.scheduler.step()
 
             losses.update(loss.item(), labels.size(0))
             acc, acc_atts = accuracy(self.criterion.logits(outputs), labels)
