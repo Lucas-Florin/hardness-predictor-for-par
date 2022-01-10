@@ -106,8 +106,7 @@ class BaselineTrainer(Trainer):
         :return: Time of execution end.
         """
         losses = AverageMeter()
-        accs = AverageMeter()
-        accs_atts = AverageMeter()
+        losses_list = list()
 
         self.model.train()
 
@@ -127,17 +126,16 @@ class BaselineTrainer(Trainer):
                 self.scheduler.step()
 
             losses.update(loss.detach().item(), labels.size(0))
-            acc, acc_atts = accuracy(self.criterion.logits(outputs.detach()), labels)
-            accs.update(acc)
-            accs_atts.update(acc_atts)
+            losses_list.append(loss.detach().item())
 
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t'
-                      'Loss: {loss.avg:.4f}\t'
+                      'Loss: {:.4f}\t'
                       'LR: {lr}'.format(
                     self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                    loss=losses, lr=self.scheduler.get_last_lr()
+                    np.mean(losses_list), lr=self.scheduler.get_last_lr()
                 ))
+                losses_list = list()
         print('Epoch: [{0}][{1}/{2}]\t'
               'Loss {loss.avg:.4f}'.format(
             self.epoch + 1, batch_idx + 1, len(self.trainloader),
