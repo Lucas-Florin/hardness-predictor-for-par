@@ -120,7 +120,8 @@ class BaselineTrainer(Trainer):
             loss = self.criterion(outputs, labels)
             self.optimizer.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+            if self.args.grad_clip_norm > 0:
+                nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.args.grad_clip_norm)
             self.optimizer.step()
             if self.args.lr_scheduler == '1cycle':
                 self.scheduler.step()
@@ -132,9 +133,10 @@ class BaselineTrainer(Trainer):
 
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t'
-                      'Loss {loss.avg:.4f}'.format(
+                      'Loss: {loss.avg:.4f}\t'
+                      'LR: {lr}'.format(
                     self.epoch + 1, batch_idx + 1, len(self.trainloader),
-                    loss=losses
+                    loss=losses, lr=self.scheduler.get_last_lr()
                 ))
         print('Epoch: [{0}][{1}/{2}]\t'
               'Loss {loss.avg:.4f}'.format(

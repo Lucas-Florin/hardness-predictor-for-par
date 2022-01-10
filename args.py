@@ -36,9 +36,12 @@ def argument_parser():
                         help='weight decay')
     parser.add_argument('--optim-group-pretrained', action="store_true",
                         help='group parameters by pretrained and fresh')
-    # sgd
+    # SGD
     parser.add_argument('--momentum', default=0.9, type=float,
                         help='momentum factor for SGD')
+    # Gradient Step
+    parser.add_argument('--clip-grad-norm', default=10.0, type=float, 
+                        help='clip gradients to a norm. Set to -1 for no clipping')
 
     # ************************************************************
     # Training hyperparameters

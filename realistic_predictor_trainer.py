@@ -320,7 +320,8 @@ class RealisticPredictorTrainer(Trainer):
                 loss_main = self.criterion_main(label_prediciton_probs, labels, main_net_weights)
                 self.optimizer_main.zero_grad()
                 loss_main.backward()
-                nn.utils.clip_grad_norm_(self.model_main.parameters(), max_norm=10.0)
+                if self.args.grad_clip_norm > 0:
+                    nn.utils.clip_grad_norm_(self.model_main.parameters(), max_norm=self.args.grad_clip_norm)
                 self.optimizer_main.step()
 
                 losses_main.update(loss_main.item(), labels.size(0))
@@ -331,7 +332,8 @@ class RealisticPredictorTrainer(Trainer):
                 loss_hp = self.criterion_hp(hardness_predictions, self.hp_calibrator(label_predicitons_logits), labels, visibility_labels)
                 self.optimizer_hp.zero_grad()
                 loss_hp.backward()
-                nn.utils.clip_grad_norm_(self.model_hp.parameters(), max_norm=10.0)
+                if self.args.grad_clip_norm > 0:
+                    nn.utils.clip_grad_norm_(self.model_hp.parameters(), max_norm=self.args.grad_clip_norm)
                 self.optimizer_hp.step()
 
                 losses_hp.update(loss_hp.item(), labels.size(0))
