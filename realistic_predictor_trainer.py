@@ -324,7 +324,7 @@ class RealisticPredictorTrainer(Trainer):
                     nn.utils.clip_grad_norm_(self.model_main.parameters(), max_norm=self.args.grad_clip_norm)
                 self.optimizer_main.step()
 
-                losses_main.update(loss_main.item(), labels.size(0))
+                losses_main.update(loss_main.detach().item(), labels.size(0))
 
             if train_hp and not self.args.use_confidence:
                 # Compute HP loss, gradient and optimize HP net.
@@ -336,7 +336,7 @@ class RealisticPredictorTrainer(Trainer):
                     nn.utils.clip_grad_norm_(self.model_hp.parameters(), max_norm=self.args.grad_clip_norm)
                 self.optimizer_hp.step()
 
-                losses_hp.update(loss_hp.item(), labels.size(0))
+                losses_hp.update(loss_hp.detach().item(), labels.size(0))
             # Print progress.
             if (batch_idx + 1) % args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t' 

@@ -126,8 +126,8 @@ class BaselineTrainer(Trainer):
             if self.args.lr_scheduler == '1cycle':
                 self.scheduler.step()
 
-            losses.update(loss.item(), labels.size(0))
-            acc, acc_atts = accuracy(self.criterion.logits(outputs), labels)
+            losses.update(loss.detach().item(), labels.size(0))
+            acc, acc_atts = accuracy(self.criterion.logits(outputs.detach()), labels)
             accs.update(acc)
             accs_atts.update(acc_atts)
 
