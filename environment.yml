@@ -13,3 +13,5 @@ dependencies:
   - scipy>=1.7.1
   - tabulate>=0.8.9
   - matplotlib>=3.4.3
+  - scikit-learn
+  - notebook
