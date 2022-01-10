@@ -51,7 +51,7 @@ class BaselineTrainer(Trainer):
 
         # Load pretrained weights if specified in args.
         self.loaded_args = self.args
-        load_file = osp.join(args.save_experiment, args.load_weights)
+        load_file = osp.join(args.load_weights)
         if args.load_weights:
             # TODO: implement result dict
             if check_isfile(load_file):
