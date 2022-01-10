@@ -209,6 +209,21 @@ class VisionTransformer(nn.Module):
         logits = self.classifier(feat[:, 0])
         return logits
 
+    def get_params_finetuning(self):
+        params = (
+            list(self.embedding.parameters()) 
+            + [self.cls_token] 
+            + list(self.transformer.norm.parameters())
+            + list(self.transformer.encoder_layers.parameters())
+        )
+        return params
+
+    def get_params_fresh(self):
+        return (
+            list(self.classifier.parameters()) 
+            + list(self.transformer.pos_embedding.parameters())
+        )
+
 
 if __name__ == '__main__':
     model = VisionTransformer(num_layers=2)
