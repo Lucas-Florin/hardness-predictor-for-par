@@ -234,6 +234,7 @@ def argument_parser():
     #parser.add_argument('--save-log', type=str, default='log',
     #                    help='path to save log files')
     parser.add_argument('--save-experiment', type=str, default='./experiments/')
+    parser.add_argument('--experiment-name', type=str, default='')    
     parser.add_argument('--use-cpu', action='store_true',
                         help='use cpu')
     parser.add_argument('--gpu-devices', default='0', type=str,

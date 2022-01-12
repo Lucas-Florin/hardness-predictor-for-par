@@ -162,7 +162,7 @@ class Trainer(object):
             self.use_gpu = False
 
         # Start logger.
-        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_")
+        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_") + args.experiment_name
 
         self.log_name = self.ts + 'test' + '.log' if args.evaluate else self.ts + 'train' + '.log'
         sys.stdout = Logger(osp.join(args.save_experiment, self.log_name))
