@@ -15,3 +15,6 @@ dependencies:
   - matplotlib>=3.4.3
   - scikit-learn
   - notebook
+  - pip
+  - pip:
+    - timm==0.3.2

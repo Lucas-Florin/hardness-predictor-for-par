@@ -19,7 +19,8 @@ def init_optimizer(model,
     # Construct optimizer
     if optim == 'adam':
         return torch.optim.Adam(param_groups, lr=lr, weight_decay=weight_decay)
-
+    if optim == 'adamw':
+        return torch.optim.AdamW(param_groups, lr=lr, weight_decay=weight_decay)
     elif optim == 'sgd':
         return torch.optim.SGD(param_groups, lr=lr, momentum=momentum, weight_decay=weight_decay)
 
