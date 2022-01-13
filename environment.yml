@@ -17,4 +17,4 @@ dependencies:
   - notebook
   - pip
   - pip:
-    - timm==0.3.2
+    - timm>=0.3.2

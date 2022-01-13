@@ -4,7 +4,7 @@ python baseline_trainer.py \
     --height 224 \
     --width 224 \
     --model pvt_small \
-    --train-batch-size 32 \
+    --train-batch-size 64 \
     --gpu-devices 0 \
     --max-epoch 30 \
     --eval-freq 5 \
