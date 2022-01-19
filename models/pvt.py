@@ -241,10 +241,10 @@ class PyramidVisionTransformer(nn.Module):
         return x
 
     def get_params_finetuning(self):
-        return self.head.parameters()
+        return list(self.parameters())[:-2]
 
     def get_params_fresh(self):
-        return list(self.parameters())[:-2]
+        return self.head.parameters()
 
 
 def _conv_filter(state_dict, patch_size=16):

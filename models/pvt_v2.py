@@ -300,6 +300,12 @@ class PyramidVisionTransformerV2(nn.Module):
 
         return x
 
+    def get_params_finetuning(self):
+        return list(self.parameters())[:-2]
+
+    def get_params_fresh(self):
+        return self.head.parameters()
+
 
 class DWConv(nn.Module):
     def __init__(self, dim=768):
