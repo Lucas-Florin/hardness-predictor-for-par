@@ -19,6 +19,9 @@ def init_lr_scheduler(
     elif lr_scheduler == 'plateau':
         return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=gamma, patience=4)
 
+    elif lr_scheduler == 'cosine':
+        return torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
+
     elif lr_scheduler == '1cycle':
         return torch.optim.lr_scheduler.OneCycleLR(
             optimizer, 
