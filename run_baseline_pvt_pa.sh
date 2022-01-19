@@ -9,6 +9,9 @@ python baseline_trainer.py \
     --max-epoch 30 \
     --eval-freq 5 \
     --save-experiment="./experiments/pvt_baseline_pa/" \
+    --load-weights="./experiments/pretrained_pvt/pvt_small.pth" \
+    --optim-group-pretrained \
     --optim adamw \
     --weight-decay 0.05 \
     --lr 0.001 \
+    --experiment-name=""

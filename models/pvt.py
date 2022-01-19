@@ -215,7 +215,7 @@ class PyramidVisionTransformer(nn.Module):
             pos_drop = getattr(self, f"pos_drop{i + 1}")
             block = getattr(self, f"block{i + 1}")
             x, (H, W) = patch_embed(x)
-
+            # TODO: what happens with the position embdedding? Are gradients porpagated properly?
             if i == self.num_stages - 1:
                 cls_tokens = self.cls_token.expand(B, -1, -1)
                 x = torch.cat((cls_tokens, x), dim=1)
@@ -239,6 +239,12 @@ class PyramidVisionTransformer(nn.Module):
         x = self.head(x)
 
         return x
+
+    def get_params_finetuning(self):
+        return self.head.parameters()
+
+    def get_params_fresh(self):
+        return list(self.parameters())[:-2]
 
 
 def _conv_filter(state_dict, patch_size=16):
