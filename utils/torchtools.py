@@ -63,7 +63,7 @@ def open_specified_layers(model, open_layers):
     - model (nn.Module): neural net model.
     - open_layers (list): list of layer names.
     """
-    if isinstance(model, nn.DataParallel):
+    if isinstance(model, nn.DataParallel) or isinstance(model, nn.parallel.DistributedDataParallel):
         model = model.module
 
     for layer in open_layers:
@@ -83,7 +83,7 @@ def open_specified_layers(model, open_layers):
 def count_num_param(model):
     num_param = sum(p.numel() for p in model.parameters()) / 1e+06
 
-    if isinstance(model, nn.DataParallel):
+    if isinstance(model, nn.DataParallel) or isinstance(model, nn.parallel.DistributedDataParallel):
         model = model.module
 
     if hasattr(model, 'classifier') and isinstance(model.classifier, nn.Module):
@@ -151,4 +151,4 @@ def load_pretrained_weights(models, weight_path, return_discarded_layers=False):
     if return_discarded_layers:
         return checkpoint, discarded_layers
     else: 
-    return checkpoint
+        return checkpoint
