@@ -107,7 +107,7 @@ def accuracy(output, target):
         return acc, acc_atts
 
 
-def load_pretrained_weights(models, weight_path):
+def load_pretrained_weights(models, weight_path, return_discarded_layers=False):
     """Load pretrianed weights to model
 
     Incompatible layers (unmatched in name or size) will be ignored
@@ -148,4 +148,7 @@ def load_pretrained_weights(models, weight_path):
             print('Successfully loaded pretrained weights from "{}"'.format(weight_path))
             if len(discarded_layers) > 0:
                 print("* The following layers are discarded due to unmatched keys or layer size: {}".format(discarded_layers))
+    if return_discarded_layers:
+        return checkpoint, discarded_layers
+    else: 
     return checkpoint

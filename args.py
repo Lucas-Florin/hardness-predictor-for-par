@@ -36,6 +36,8 @@ def argument_parser():
                         help='weight decay')
     parser.add_argument('--optim-group-pretrained', action="store_true",
                         help='group parameters by pretrained and fresh')
+    parser.add_argument('--unmatched-params-are-fresh', action="store_true",
+                        help='parameters that were not matched during model loading are treated as fresh parameters')
     # SGD
     parser.add_argument('--momentum', default=0.9, type=float,
                         help='momentum factor for SGD')

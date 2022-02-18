@@ -218,7 +218,7 @@ class VisionTransformer(nn.Module):
         )
         return params
 
-    def get_params_fresh(self):
+    def get_params_fresh(self, unmatched_parameters=None):
         return (
             list(self.classifier.parameters()) 
             + list(self.transformer.pos_embedding.parameters())

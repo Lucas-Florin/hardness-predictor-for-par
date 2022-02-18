@@ -242,8 +242,15 @@ class PyramidVisionTransformer(nn.Module):
     def get_params_finetuning(self):
         return list(self.parameters())[:-2]
 
-    def get_params_fresh(self):
-        return self.head.parameters()
+    def get_params_fresh(self, unmatched_parameters=None):
+        if unmatched_parameters is None:
+            return self.head.parameters()
+        else: 
+            parameters = list(self.head.parameters())
+            for param_name in unmatched_parameters:
+                if not param_name[:5] == 'head.':
+                    parameters.extend(list(getattr(self, param_name).parameters()))
+            
 
 
 def _conv_filter(state_dict, patch_size=16):

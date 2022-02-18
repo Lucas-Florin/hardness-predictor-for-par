@@ -52,12 +52,13 @@ class BaselineTrainer(Trainer):
         # Load pretrained weights if specified in args.
         self.loaded_args = self.args
         load_file = osp.join(args.load_weights)
+        discarded_layers = None
         if args.load_weights:
             # TODO: implement result dict
             if check_isfile(load_file):
-                cp = load_pretrained_weights([self.model], load_file)
-                if "args" in cp:
-                    self.loaded_args = cp["args"]
+                checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True)
+                if "args" in checkpoint:
+                    self.loaded_args = checkpoint["args"]
                 else:
                     print("WARNING: Could not load args. ")
             else:
@@ -80,8 +81,10 @@ class BaselineTrainer(Trainer):
             self.criterion = None
 
         self.f1_calibration_thresholds = None
-
-        self.optimizer = init_optimizer(self.model, **optimizer_kwargs(args))
+        
+        self.optimizer = init_optimizer(self.model, 
+                                        unmatched_parameters=discarded_layers if self.args.unmatched_params_are_fresh else None,
+                                        **optimizer_kwargs(args))
         self.scheduler = init_lr_scheduler(
             self.optimizer, steps_per_epoch=len(self.trainloader), **lr_scheduler_kwargs(args))
 

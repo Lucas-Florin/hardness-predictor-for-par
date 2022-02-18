@@ -19,7 +19,7 @@ class ResNet50(nn.Module):
     def get_params_finetuning(self):
         return list(self.backbone.parameters())[:-2]
 
-    def get_params_fresh(self):
+    def get_params_fresh(self, unmatched_parameters=None):
         return list(self.backbone.fc.parameters()) + list(self.bn.parameters())
 
 

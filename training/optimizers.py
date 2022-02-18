@@ -8,11 +8,12 @@ def init_optimizer(model,
                    group_pretrained,
                    weight_decay,  # weight decay
                    momentum,  # momentum factor for sgd and rmsprop
+                   unmatched_parameters=None
                    ):
 
     if group_pretrained:
         param_groups = [{'params': model.get_params_finetuning(), 'lr': lr * 0.1},
-                        {'params': model.get_params_fresh(), 'lr': lr}]
+                        {'params': model.get_params_fresh(unmatched_parameters), 'lr': lr}]
     else:
         param_groups = model.parameters()
 

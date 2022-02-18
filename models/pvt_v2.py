@@ -303,7 +303,7 @@ class PyramidVisionTransformerV2(nn.Module):
     def get_params_finetuning(self):
         return list(self.parameters())[:-2]
 
-    def get_params_fresh(self):
+    def get_params_fresh(self, unmatched_parameters=None):
         return self.head.parameters()
 
 
