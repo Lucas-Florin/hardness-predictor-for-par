@@ -105,7 +105,7 @@ class PatchEmbed(nn.Module):
 
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
         super().__init__()
-        img_size = to_2tuple(img_size)
+        img_size = to_2tuple(img_size) if type(img_size) == int else img_size
         patch_size = to_2tuple(patch_size)
 
         self.img_size = img_size
@@ -128,7 +128,7 @@ class PatchEmbed(nn.Module):
 
 
 class PyramidVisionTransformer(nn.Module):
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, embed_dims=[64, 128, 256, 512],
+    def __init__(self, image_size=(224, 224), patch_size=16, in_chans=3, num_classes=1000, embed_dims=[64, 128, 256, 512],
                  num_heads=[1, 2, 4, 8], mlp_ratios=[4, 4, 4, 4], qkv_bias=False, qk_scale=None, drop_rate=0.,
                  attn_drop_rate=0., drop_path_rate=0., norm_layer=nn.LayerNorm,
                  depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1], num_stages=4):
@@ -141,7 +141,7 @@ class PyramidVisionTransformer(nn.Module):
         cur = 0
 
         for i in range(num_stages):
-            patch_embed = PatchEmbed(img_size=img_size if i == 0 else img_size // (2 ** (i + 1)),
+            patch_embed = PatchEmbed(img_size=image_size if i == 0 else [dim // (2 ** (i + 1)) for dim in image_size],
                                      patch_size=patch_size if i == 0 else 2,
                                      in_chans=in_chans if i == 0 else embed_dims[i - 1],
                                      embed_dim=embed_dims[i])
@@ -215,7 +215,6 @@ class PyramidVisionTransformer(nn.Module):
             pos_drop = getattr(self, f"pos_drop{i + 1}")
             block = getattr(self, f"block{i + 1}")
             x, (H, W) = patch_embed(x)
-            # TODO: what happens with the position embdedding? Are gradients porpagated properly?
             if i == self.num_stages - 1:
                 cls_tokens = self.cls_token.expand(B, -1, -1)
                 x = torch.cat((cls_tokens, x), dim=1)
