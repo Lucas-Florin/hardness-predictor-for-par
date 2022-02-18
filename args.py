@@ -73,7 +73,7 @@ def argument_parser():
                         help='use validation split for training too')
 
     # Loss Function
-    parser.add_argument('--loss-func', type=str, default='scel', choices=['scel', 'sscel', 'deepmar'],
+    parser.add_argument('--loss-func', type=str, default='deepmar', choices=['scel', 'sscel', 'deepmar'],
                         help='name of the desired loss function')
     parser.add_argument('--loss-func-param', type=float, default=1,
                         help='the parameter for the main loss function')
