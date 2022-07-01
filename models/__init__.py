@@ -1,7 +1,7 @@
 from .resnet import ResNet50
 from .HP_Net import HP_ResNet50, HP_ResNet50_strong
 from .vit import VisionTransformer
-from .pvt_adapter import pvt_v2_b2
+from .adapter import pvt_v2_b2, swin_t
 from .pvt import pvt_small
 
 
@@ -16,6 +16,7 @@ __model_factory = {
     'vit': VisionTransformer,
     'pvt_small': pvt_small,
     'pvt_v2_b2': pvt_v2_b2,
+    'swin_t': swin_t,
 
 }
 
