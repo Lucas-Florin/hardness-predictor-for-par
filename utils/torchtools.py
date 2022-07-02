@@ -121,6 +121,8 @@ def load_pretrained_weights(models, weight_path, return_discarded_layers=False):
         state_dicts = [checkpoint['state_dict']]
     elif 'state_dicts' in checkpoint:
         state_dicts = checkpoint['state_dicts']
+    elif 'model' in checkpoint:
+        state_dicts = [checkpoint['model']]
     else:
         state_dicts = [checkpoint]
     num_models = min(len(models), len(state_dicts))

@@ -583,3 +583,15 @@ class SwinTransformer(nn.Module):
         flops += self.num_features * self.patches_resolution[0] * self.patches_resolution[1] // (2 ** self.num_layers)
         flops += self.num_features * self.num_classes
         return flops
+    
+    def get_params_finetuning(self):
+        return list(self.parameters())[:-2]
+
+    def get_params_fresh(self, unmatched_parameters=None):
+        if unmatched_parameters is None:
+            return self.head.parameters()
+        else: 
+            parameters = list(self.head.parameters())
+            for param_name in unmatched_parameters:
+                if not param_name[:5] == 'head.':
+                    parameters.extend(list(getattr(self, param_name).parameters()))
