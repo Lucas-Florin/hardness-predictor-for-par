@@ -1,18 +1,18 @@
-taskset -c 0-4 \
+taskset -c 10-14 \
 python baseline_trainer.py \
-    -d rap \
+    -d pa100k \
     --height 224 \
     --width 224 \
     --model swin_t \
     --train-batch-size 64 \
-    --gpu-devices 0 \
+    --gpu-devices 2 \
     --max-epoch 10 \
-    --eval-freq 4 \
-    --save-experiment="./experiments/swin_baseline_rap/" \
+    --eval-freq 1 \
+    --save-experiment="./experiments/swin_baseline_pa/" \
     --load-weights="./experiments/pretrained_swin/swin_tiny_patch4_window7_224.pth" \
     --optim-group-pretrained \
     --optim adamw \
-    --weight-decay 0.015 \
+    --weight-decay 0.05 \
     --lr 0.001 \
     --lr-scheduler cosine \
     --experiment-name="_"
