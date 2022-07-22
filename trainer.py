@@ -84,29 +84,30 @@ class Trainer(object):
                 elif self.args.lr_scheduler != '1cycle':
                     scheduler.step()
 
-            self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)
-            print('Learning rate: ', [g['lr'] for g in self.optimizer.param_groups])
+            # print('Learning rate: ', [g['lr'] for g in self.optimizer.param_groups])
             if (epoch + 1) > self.args.start_eval and self.args.eval_freq > 0 \
                     and (epoch + 1) % self.args.eval_freq == 0 or (epoch + 1) == self.args.max_epoch:
-                print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
-                self.checkpoint()
-                print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
-                acc = self.test()
-                self.checkpoint(best=acc > self.test_acc_logger.get_max() and self.args.keep_best_model)
-                self.test_acc_logger.write(epoch + 1, acc)
+                if self.args.verbose: print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2 ** 20 / 1000))
+                self.checkpoint(verbose=self.args.verbose)
+                print('=> Evaluating on {} {} ...'.format(args.dataset_name, self.args.eval_split))
+                performance = self.test()
+                self.checkpoint(best=performance > self.test_acc_logger.get_max() and self.args.keep_best_model, verbose=self.args.verbose)
+                self.test_acc_logger.write(epoch + 1, performance)
                 self.clear_output_cache()
 
+            self.print_elapsed_time(self.time_start, progress=(epoch + 1) / args.max_epoch)
             self.epoch += 1
 
         if self.args.max_epoch == 0:
-            self.checkpoint()
+            self.checkpoint(verbose=self.args.verbose)
             print('=> Evaluating {} on {} ...'.format(args.dataset_name, self.args.eval_split))
             self.test()
-            self.checkpoint()
+            self.checkpoint(verbose=self.args.verbose)
 
         # Calculate elapsed time.
         self.print_elapsed_time(self.time_start)
         print("Max. memory allocated: {} Gb".format(torch.cuda.max_memory_allocated() // 2**20 / 1000))
+        if self.args.verbose: print('Performance is the harmonic mean of the mean accuraccy and the F1 score. ')
         self.test_acc_logger.show_summary()
 
         if args.plot_epoch_loss:
@@ -119,7 +120,7 @@ class Trainer(object):
         self.result_manager = ResultManager(self.result_dict)
         self.acc_atts = None
 
-    def checkpoint(self, ts=None, best=False):
+    def checkpoint(self, ts=None, best=False, verbose=True):
         if ts is None:
             ts = self.ts
         filename = ts + 'checkpoint.pth.tar'
@@ -137,9 +138,10 @@ class Trainer(object):
         save_checkpoint(state, osp.join(self.args.save_experiment, filename))
         if best:
             save_checkpoint(state, osp.join(self.args.save_experiment, filename_best))
-        print("Saved model checkpoint at " + filename)
-        if best:
-            print("Also saved as best checkpoint. ")
+        if verbose: 
+            print("Saved model checkpoint at " + filename)
+            if best:
+                print("Also saved as best checkpoint. ")
 
     def print_elapsed_time(self, start_time, progress=None):
         elapsed = round(time.time() - start_time)
@@ -162,7 +164,9 @@ class Trainer(object):
             self.use_gpu = False
 
         # Start logger.
-        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_") + args.experiment_name
+        self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_") 
+        if len(self.args.experiment_name) > 0:
+            self.ts += args.experiment_name + "_"
 
         self.log_name = self.ts + 'test' + '.log' if args.evaluate else self.ts + 'train' + '.log'
         sys.stdout = Logger(osp.join(args.save_experiment, self.log_name))
@@ -170,7 +174,7 @@ class Trainer(object):
         # Print out the arguments taken from Terminal (or defaults).
         print('==========\nArgs:{}\n=========='.format(args))
 
-        print("Timestamp: " + self.ts)
+        print("Timestamp: \n" + self.ts)
         # Warn if not using GPU.
         if self.use_gpu:
             print('Currently using GPU {}'.format(args.gpu_devices))
@@ -182,14 +186,14 @@ class Trainer(object):
             self.fix_seed()
 
     def fix_seed(self, seed=0):
-        print("Fixed seed 0 for reproducibility. ")
+        if self.args.verbose: print("Fixed seed 0 for reproducibility. ")
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         np.random.seed(seed)
 
     def init_data(self):
-        print('Initializing image data manager')
+        print(f'Initializing dataset: {self.args.dataset_name}')
         self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(self.args))
         self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
         self.attributes = self.dm.attributes
@@ -228,25 +232,27 @@ class Trainer(object):
         self.acc_atts = acc_atts
         positivity_ratio = self.dm.dataset.get_positive_attribute_ratio()
         self.positivity_ratio = positivity_ratio
-        print('Results ----------')
+        # print('Results ----------')
         print(metrics.get_metrics_table(predictions, labels, ignore))
-        print('------------------')
-        csv_path = osp.join(self.args.save_experiment, self.ts + "general_metrics.csv")
-        np.savetxt(csv_path, 100*np.array((metrics.get_metrics(predictions, labels, ignore), )),
-                   fmt="%s", delimiter="\t")
-        print("Saved Table at " + csv_path)
-        print(acc_name + ':')
-        if self.args.f1_calib and not self.args.group_atts:
-            header = ["Attribute", "Accuracy", "Positivity Ratio", "F1-Calibration Threshold"]
-            table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio,
-                                     self.f1_calibration_thresholds.flatten()),
-                                 floatfmt='.2%', headers=header)
-        else:
-            header = ["Attribute", "Accuracy", "Positivity Ratio"]
-            table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
-        print(table)
-        print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
-        print('------------------')
+        # print('------------------')
+        # csv_path = osp.join(self.args.save_experiment, self.ts + "general_metrics.csv")
+        # np.savetxt(100*np.array((metrics.get_metrics(predictions, labels, ignore), )),
+        #            fmt="%s", delimiter="\t")
+        print('{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t'.format(*[i * 100 for i in metrics.get_metrics(predictions, labels, ignore)]))
+        # print("Saved Table at " + csv_path)
+        if self.args.verbose:
+            print(acc_name + ':')
+            if self.args.f1_calib and not self.args.group_atts:
+                header = ["Attribute", "Accuracy", "Positivity Ratio", "F1-Calibration Threshold"]
+                table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio,
+                                        self.f1_calibration_thresholds.flatten()),
+                                    floatfmt='.2%', headers=header)
+            else:
+                header = ["Attribute", "Accuracy", "Positivity Ratio"]
+                table = tab.tabulate(zip(self.attributes, acc_atts, positivity_ratio), floatfmt='.2%', headers=header)
+            print(table)
+            print("Mean over attributes: {:.2%}".format(acc_atts.mean()))
+            print('------------------')
         self.result_dict.update({
 
             "args": self.loaded_args if self.args.evaluate else self.args,
@@ -257,7 +263,10 @@ class Trainer(object):
         })
         self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels,
                                            predictions=predictions)
-        return metrics.f1measure(predictions, labels, ignore)
+        return 1/2 * (
+            metrics.f1measure(predictions, labels, ignore)
+            + metrics.mean_accuracy(predictions, labels, ignore)
+        ) 
 
     def init_f1_calibration_threshold(self):
         if self.f1_calibration_thresholds is not None and (self.epoch + 1 == self.args.max_epoch
@@ -272,12 +281,12 @@ class Trainer(object):
         :param loader:
         :return:
         """
-        print("Computing F1-calibration thresholds on " + self.args.f1_calib_split)
+        if self.args.verbose: print("Computing F1-calibration thresholds on " + self.args.f1_calib_split)
         split = self.args.f1_calib_split
         if self.args.evaluate and self.result_manager.check_output_dict(split) and not self.args.no_cache:
             labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
-            print("Computing label predictions. ")
+            if self.args.verbose: print("Computing label predictions. ")
             prediction_probs, labels, _ = self.get_full_output(split=split)
             self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels)
 
@@ -318,7 +327,7 @@ class Trainer(object):
         if self.args.evaluate and self.result_manager.check_output_dict(split) and not self.args.no_cache:
             labels, prediction_probs, _, _ = self.result_manager.get_outputs(split)
         else:
-            print("Computing label predictions. ")
+            if self.args.verbose: print("Computing label predictions. ")
             prediction_probs, labels, _ = self.get_full_output(split=split)
             self.result_manager.update_outputs(split, prediction_probs=prediction_probs, labels=labels)
         if self.args.f1_calib:
@@ -328,14 +337,14 @@ class Trainer(object):
         if self.args.group_atts:
             # Each group has exactly one positive attribute.
             label_predictions = metrics.group_attributes(label_predictions, self.attribute_grouping)
-            print("Grouping attributes. ")
+            if self.args.verbose: print("Grouping attributes. ")
         return labels, prediction_probs, label_predictions
 
     def save_result_dict(self):
         pickle_path = osp.join(self.args.save_experiment, "result_dict.pickle")
         pickle_file = open(pickle_path, "wb")
         assert self.result_dict is self.result_manager.result_dict
-        print(self.result_manager.print_stored())
+        # print(self.result_manager.print_stored())
         pickle.dump(self.result_dict, pickle_file)
         pickle_file.close()
-        print("Saved Results at " + pickle_path)
+        if self.args.verbose: print("Saved Results at " + pickle_path)

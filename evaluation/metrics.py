@@ -181,13 +181,13 @@ def get_metrics_table(output, target, ignore=None):
     """
     metrics = get_metrics(output, target, ignore)
     metric_names = [
-        "Mean Accuracy",
-        "Accuracy",
-        "Precision",
-        "Recall",
+        "mA",
+        "Acc",
+        "Prec",
+        "Rec",
         "F1"
     ]
-    table = tab.tabulate(zip(metric_names, metrics), floatfmt='.2%')
+    table = tab.tabulate([metrics], floatfmt='.2%', headers=metric_names)
     return table
 
 

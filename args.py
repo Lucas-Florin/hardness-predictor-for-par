@@ -231,6 +231,8 @@ def argument_parser():
                         help='print frequency')
     parser.add_argument('--fix-seed', action='store_true',
                         help='fixed seed for reproducibility')
+    parser.add_argument('--verbose', action='store_true',
+                        help='print more details to log')
     parser.add_argument('--resume', type=str, default='', metavar='PATH',
                         help='resume from a checkpoint')
     #parser.add_argument('--save-log', type=str, default='log',
@@ -265,7 +267,8 @@ def image_dataset_kwargs(parsed_args):
         'workers': parsed_args.workers,
         'train_val': parsed_args.train_val,
         'full_attributes': parsed_args.full_attributes,
-        'use_bbs': parsed_args.use_bbs_gt or parsed_args.use_bbs_feedback
+        'use_bbs': parsed_args.use_bbs_gt or parsed_args.use_bbs_feedback,
+        'verbose': parsed_args.verbose,
     }
 
 

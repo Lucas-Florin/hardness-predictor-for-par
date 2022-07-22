@@ -69,5 +69,7 @@ class AccLogger(object):
     def show_summary(self):
         print('=> Performance Evolution')
         headers = ["Epoch", "Performance"]
-        table = tab.tabulate(zip(self.epochs, self.performance), floatfmt='.2%', headers=headers)
-        print(table)
+        print(tab.tabulate(zip(self.epochs, self.performance), floatfmt='.2%', headers=headers))
+        print('Best epoch: ')
+        best_epoch = np.argmax(self.performance)
+        print(tab.tabulate([[self.epochs[best_epoch], self.performance[best_epoch]]], floatfmt='.2%', tablefmt="plain"))

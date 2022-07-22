@@ -54,12 +54,13 @@ class ImageDataManager(BaseDataManager):
                  use_gpu,
                  dataset_name,
                  train_val,
+                 verbose=True,
                  **kwargs
                  ):
         super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
-        dataset = init_img_dataset(name=dataset_name, **kwargs)
+        dataset = init_img_dataset(name=dataset_name, verbose=verbose, **kwargs)
         self.dataset = dataset
-        print('=> Initializing TRAIN dataset')
+        if verbose: print('=> Initializing TRAIN dataset')
         train = list()
         self.train = train
         # TODO: Change label dtype to long or bool
@@ -87,7 +88,7 @@ class ImageDataManager(BaseDataManager):
         )
         self.split_dict["train"] = train_dataset
 
-        print('=> Initializing TEST dataset')
+        if verbose: print('=> Initializing TEST dataset')
 
         test = list()
         self.test = test
@@ -101,7 +102,7 @@ class ImageDataManager(BaseDataManager):
         )
         self.split_dict["test"] = test_dataset
 
-        print('=> Initializing VAL dataset')
+        if verbose: print('=> Initializing VAL dataset')
         val = list()
         self.val = val
         for img_path, label in dataset.val:

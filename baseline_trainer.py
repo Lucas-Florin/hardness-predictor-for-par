@@ -47,7 +47,7 @@ class BaselineTrainer(Trainer):
         self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
                                        pretrained=not self.args.no_pretrained,
                                        image_size=(self.args.height, self.args.width))
-        print('Model size: {:.3f} M'.format(count_num_param(self.model)))
+        if self.args.verbose: print('Model size: {:.3f} M'.format(count_num_param(self.model)))
 
         # Load pretrained weights if specified in args.
         self.loaded_args = self.args
@@ -56,11 +56,11 @@ class BaselineTrainer(Trainer):
         if args.load_weights:
             # TODO: implement result dict
             if check_isfile(load_file):
-                checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True)
+                checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True, verbose=self.args.verbose)
                 if "args" in checkpoint:
                     self.loaded_args = checkpoint["args"]
                 else:
-                    print("WARNING: Could not load args. ")
+                    if self.args.verbose: print("WARNING: Could not load args. ")
             else:
                 print("WARNING: Could not load pretrained weights")
 
