@@ -43,7 +43,7 @@ class BaselineTrainer(Trainer):
 
 
     def init_model(self):
-        print('Initializing model: {}'.format(args.model))
+        print('Initializing model: {}'.format(self.args.model))
         self.model = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
                                        pretrained=not self.args.no_pretrained,
                                        image_size=(self.args.height, self.args.width))
@@ -51,9 +51,9 @@ class BaselineTrainer(Trainer):
 
         # Load pretrained weights if specified in args.
         self.loaded_args = self.args
-        load_file = osp.join(args.load_weights)
+        load_file = osp.join(self.args.load_weights)
         discarded_layers = None
-        if args.load_weights:
+        if self.args.load_weights:
             # TODO: implement result dict
             if check_isfile(load_file):
                 checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True, verbose=self.args.verbose)
@@ -68,13 +68,13 @@ class BaselineTrainer(Trainer):
         self.model = self.model.cuda() if self.use_gpu else self.model
 
         # Select Loss function.
-        if args.loss_func == "deepmar":
+        if self.args.loss_func == "deepmar":
             pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
-            self.criterion = DeepMARLoss(pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
-                                         sigma=args.loss_func_param)
-        elif args.loss_func == "scel":
+            self.criterion = DeepMARLoss(pos_ratio, self.args.train_batch_size, use_gpu=self.use_gpu,
+                                         sigma=self.args.loss_func_param)
+        elif self.args.loss_func == "scel":
             self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
-        elif args.loss_func == "sscel":
+        elif self.args.loss_func == "sscel":
             attribute_grouping = self.dm.dataset.attribute_grouping
             self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=self.use_gpu)
         else:
@@ -84,9 +84,9 @@ class BaselineTrainer(Trainer):
         
         self.optimizer = init_optimizer(self.model, 
                                         unmatched_parameters=discarded_layers if self.args.unmatched_params_are_fresh else None,
-                                        **optimizer_kwargs(args))
+                                        **optimizer_kwargs(self.args))
         self.scheduler = init_lr_scheduler(
-            self.optimizer, steps_per_epoch=len(self.trainloader), **lr_scheduler_kwargs(args))
+            self.optimizer, steps_per_epoch=len(self.trainloader), **lr_scheduler_kwargs(self.args))
 
         self.model = nn.DataParallel(self.model) if self.use_gpu else self.model
 
@@ -131,7 +131,7 @@ class BaselineTrainer(Trainer):
             losses.update(loss.detach().item(), labels.size(0))
             losses_list.append(loss.detach().item())
 
-            if (batch_idx + 1) % args.print_freq == 0:
+            if (batch_idx + 1) % self.args.print_freq == 0:
                 print('Epoch: [{0}][{1}/{2}]\t'
                       'Loss: {3:.4f}\t'
                       'LR: {lr}'.format(
