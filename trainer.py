@@ -238,7 +238,7 @@ class Trainer(object):
         # csv_path = osp.join(self.args.save_experiment, self.ts + "general_metrics.csv")
         # np.savetxt(100*np.array((metrics.get_metrics(predictions, labels, ignore), )),
         #            fmt="%s", delimiter="\t")
-        print('{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t'.format(*[i * 100 for i in metrics.get_metrics(predictions, labels, ignore)]))
+        print('{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}'.format(*[i * 100 for i in metrics.get_metrics(predictions, labels, ignore)]))
         # print("Saved Table at " + csv_path)
         if self.args.verbose:
             print(acc_name + ':')
