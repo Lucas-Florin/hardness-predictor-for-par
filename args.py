@@ -23,6 +23,14 @@ def argument_parser():
                         help='width of an image')
     parser.add_argument('--full-attributes', action='store_true',
                         help='use all attributes available, not only the ones selected in the original paper')
+    
+    ## Data Augmentation
+    parser.add_argument('--randaugment', action='store_true', 
+                        help='use RandAugment')
+    parser.add_argument('--randaugment-num', type=int, default=3, 
+                        help='number of RandAugment transforms selected for each image')
+    parser.add_argument('--randaugment-mag', type=int, default=4, 
+                        help='magnitude of RandAugment transforms selected for each image')
 
 
     # ************************************************************
@@ -269,6 +277,10 @@ def image_dataset_kwargs(parsed_args):
         'full_attributes': parsed_args.full_attributes,
         'use_bbs': parsed_args.use_bbs_gt or parsed_args.use_bbs_feedback,
         'verbose': parsed_args.verbose,
+        'randaugment': parsed_args.randaugment,
+        'randaugment_num': parsed_args.randaugment_num,
+        'randaugment_mag': parsed_args.randaugment_mag,
+        
     }
 
 

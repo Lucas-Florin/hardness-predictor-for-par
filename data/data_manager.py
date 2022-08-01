@@ -30,7 +30,7 @@ class BaseDataManager(object):
         self.workers = workers
 
         transform_train, transform_test = build_transforms(
-            self.height, self.width
+            self.height, self.width, **kwargs
         )
         self.transform_train = transform_train
         self.transform_test = transform_test
