@@ -47,7 +47,7 @@ class RealisticPredictorTrainer(Trainer):
     def init_model(self):
         print('Initializing main model: {}'.format(args.model))
         self.model_main = models.init_model(name=self.args.model, num_classes=self.dm.num_attributes,
-                                            pretrained=not self.args.no_pretrained, use_gpu=self.use_gpu)
+                                            pretrained=not self.args.no_pretrained)
         print('Model size: {:.3f} M'.format(count_num_param(self.model_main)))
 
         print('Initializing HP model: {}'.format(args.hp_model))
@@ -88,7 +88,7 @@ class RealisticPredictorTrainer(Trainer):
         self.loaded_args = self.args
         if args.load_weights:
             if check_isfile(load_file):
-                cp = load_pretrained_weights([self.model_main, self.model_hp], load_file)
+                cp = load_pretrained_weights([self.model_main, self.model_hp], load_file, device=self.device)
                 if "args" in cp:
                     self.loaded_args = cp["args"]
                 else:
@@ -111,25 +111,25 @@ class RealisticPredictorTrainer(Trainer):
                 print("WARNING: Could not load pretrained weights")
         self.new_eval_split = self.args.eval_split != self.loaded_args.eval_split
         # Load model onto GPU if GPU is used.
-        self.model_main = self.model_main.cuda() if self.use_gpu else self.model_main
+        self.model_main = self.model_main.to(self.device)
         self.model = self.model_main
-        self.model_hp = self.model_hp.cuda() if self.use_gpu else self.model_hp
+        self.model_hp = self.model_hp.to(self.device)
 
         self.pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
         # Select Loss function.
         # Select Loss function.
         if args.loss_func == "deepmar":
 
-            self.criterion = DeepMARLoss(self.pos_ratio, args.train_batch_size, use_gpu=self.use_gpu,
+            self.criterion = DeepMARLoss(self.pos_ratio, args.train_batch_size, device=self.device,
                                          sigma=args.loss_func_param)
         elif args.loss_func == "scel":
-            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
+            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes)
         else:
             self.criterion = None
 
         self.criterion_main = self.criterion
         self.criterion_hp = HardnessPredictorLoss(self.args.use_deepmar_for_hp, self.pos_ratio, self.dm.num_attributes,
-                                                  use_gpu=self.use_gpu, sigma=self.args.hp_loss_param,
+                                                  device=self.device, sigma=self.args.hp_loss_param,
                                                   use_visibility=self.args.use_bbs_gt,
                                                   visibility_weight=self.args.hp_visibility_weight)
         self.f1_calibration_thresholds = None
@@ -149,9 +149,9 @@ class RealisticPredictorTrainer(Trainer):
         self.scheduler_hp = init_lr_scheduler(self.optimizer_hp, **sc_args)
 
 
-        self.model_main = nn.DataParallel(self.model_main) if self.use_gpu else self.model_main
+        self.model_main = nn.DataParallel(self.model_main, device_ids=[int(i) for i in self.gpu_devices]) if self.use_gpu and len(self.gpu_devices) > 1 else self.model_main
         self.model = self.model_main
-        self.model_hp = nn.DataParallel(self.model_hp) if self.use_gpu else self.model_hp
+        self.model_hp = nn.DataParallel(self.model_hp, device_ids=[int(i) for i in self.gpu_devices]) if self.use_gpu and len(self.gpu_devices) > 1 else self.model_hp
 
         if not self.args.evaluate:
             self.init_epochs()
@@ -203,7 +203,7 @@ class RealisticPredictorTrainer(Trainer):
             thresholds = 0.5 if thresholds is None else thresholds
         else:
             raise ValueError("Unsupported HP-Loss calibration threshold: '{}'".format(self.args.hp_calib_thr))
-        self.hp_calibrator.update_thresholds(thresholds)
+        self.hp_calibrator.update_thresholds(thresholds, device=self.device)
 
     def init_epochs(self):
         # Initialize the epoch thresholds.
@@ -266,17 +266,14 @@ class RealisticPredictorTrainer(Trainer):
         negative_logits_sum = torch.zeros(self.dm.num_attributes)
         positive_num = torch.zeros(self.dm.num_attributes)
         negative_num = torch.zeros(self.dm.num_attributes)
-        if self.use_gpu:
-            positive_logits_sum = positive_logits_sum.cuda()
-            negative_logits_sum = negative_logits_sum.cuda()
-            positive_num = positive_num.cuda()
-            negative_num = negative_num.cuda()
+        positive_logits_sum = positive_logits_sum.to(self.device)
+        negative_logits_sum = negative_logits_sum.to(self.device)
+        positive_num = positive_num.to(self.device)
+        negative_num = negative_num.to(self.device)
 
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
-
-
-            if self.use_gpu:
-                imgs, labels = imgs.cuda(), labels.cuda()
+            
+            imgs, labels = imgs.to(self.device), labels.to(self.device)
             if self.use_bbs:
                 visibility_labels = labels[:, self.dm.num_attributes:]
                 labels = labels[:, :self.dm.num_attributes]

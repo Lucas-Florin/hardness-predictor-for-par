@@ -10,7 +10,7 @@ from .transforms import build_transforms
 class BaseDataManager(object):
 
     def __init__(self,
-                 use_gpu,
+                 device,
                  dataset_name,
                  root,
                  height,
@@ -20,7 +20,8 @@ class BaseDataManager(object):
                  workers,
                  **kwargs
                  ):
-        self.use_gpu = use_gpu
+        self.device = str(device)
+        self.use_gpu = self.device != 'cpu'
         self.source_names = dataset_name
         self.root = root
         self.height = height
@@ -51,13 +52,13 @@ class ImageDataManager(BaseDataManager):
     """
 
     def __init__(self,
-                 use_gpu,
+                 device,
                  dataset_name,
                  train_val,
                  verbose=True,
                  **kwargs
                  ):
-        super(ImageDataManager, self).__init__(use_gpu, dataset_name, **kwargs)
+        super(ImageDataManager, self).__init__(device, dataset_name, **kwargs)
         dataset = init_img_dataset(name=dataset_name, verbose=verbose, **kwargs)
         self.dataset = dataset
         if verbose: print('=> Initializing TRAIN dataset')
@@ -75,7 +76,7 @@ class ImageDataManager(BaseDataManager):
         self.trainloader = DataLoader(
             ImageDataset(train, transform=self.transform_train),
             batch_size=self.train_batch_size, shuffle=True, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
+            pin_memory=self.use_gpu, pin_memory_device=self.device, drop_last=False
         )
 
         self.testloader_dict = dict()
@@ -84,7 +85,7 @@ class ImageDataManager(BaseDataManager):
         self.testloader_dict['train'] = DataLoader(
             train_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
+            pin_memory=self.use_gpu, pin_memory_device=self.device, drop_last=False
         )
         self.split_dict["train"] = train_dataset
 
@@ -98,7 +99,7 @@ class ImageDataManager(BaseDataManager):
         self.testloader_dict['test'] = DataLoader(
             test_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
+            pin_memory=self.use_gpu, pin_memory_device=self.device, drop_last=False
         )
         self.split_dict["test"] = test_dataset
 
@@ -111,7 +112,7 @@ class ImageDataManager(BaseDataManager):
         self.testloader_dict['val'] = DataLoader(
             val_dataset,
             batch_size=self.test_batch_size, shuffle=False, num_workers=self.workers,
-            pin_memory=self.use_gpu, drop_last=False
+            pin_memory=self.use_gpu, pin_memory_device=self.device, drop_last=False
         )
         self.split_dict["val"] = val_dataset
 

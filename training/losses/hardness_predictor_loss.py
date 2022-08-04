@@ -9,10 +9,10 @@ class HardnessPredictorLoss(nn.Module):
     Hardness Predictor Loss as defined in:
     Pei Wang, Nuno Vasconcelos 2018: Towards Realistic Predictors.
     """
-    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, num_attributes, sigma=1, use_gpu=True,
+    def __init__(self, use_deepmar_weighting, positive_attribute_ratios, num_attributes, sigma=1, device='cpu',
                  use_visibility=False, visibility_weight=1.0):
         super().__init__()
-        self.use_gpu = use_gpu
+        self.device = device
         self.num_attributes = num_attributes
         self.use_deepmar_weighting = use_deepmar_weighting
         self.use_visibility = use_visibility
@@ -25,9 +25,8 @@ class HardnessPredictorLoss(nn.Module):
         self.positive_attribute_ratios = positive_attribute_ratios
         self.positive_weights = torch.tensor(np.exp((1 - positive_attribute_ratios) / sigma ** 2))
         self.negative_weights = torch.tensor(np.exp(positive_attribute_ratios / sigma ** 2))
-        if self.use_gpu:
-            self.positive_weights = self.positive_weights.cuda()
-            self.negative_weights = self.negative_weights.cuda()
+        self.positive_weights = self.positive_weights.to(device)
+        self.negative_weights = self.negative_weights.to(device)
         self.batch_size = None
         self.weights = None
 

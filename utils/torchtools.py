@@ -107,7 +107,7 @@ def accuracy(output, target):
         return acc, acc_atts
 
 
-def load_pretrained_weights(models, weight_path, return_discarded_layers=False, verbose=True):
+def load_pretrained_weights(models, weight_path, return_discarded_layers=False, verbose=True, device='cpu'):
     """Load pretrianed weights to model
 
     Incompatible layers (unmatched in name or size) will be ignored
@@ -116,7 +116,7 @@ def load_pretrained_weights(models, weight_path, return_discarded_layers=False, 
     - model (nn.Module): network model, which must not be nn.DataParallel
     - weight_path (str): path to pretrained weights
     """
-    checkpoint = torch.load(weight_path)
+    checkpoint = torch.load(weight_path, map_location=device)
     if 'state_dict' in checkpoint:
         state_dicts = [checkpoint['state_dict']]
     elif 'state_dicts' in checkpoint:

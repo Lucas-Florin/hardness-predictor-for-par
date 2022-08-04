@@ -4,7 +4,7 @@ channels:
   - pytorch
 dependencies:
   - python>=3.9
-  - pytorch>=1.10.0
+  - pytorch>=1.12
   - torchvision>=0.11.1
   - cudatoolkit=11.3
   - tensorflow>=2.4.1

@@ -56,7 +56,8 @@ class BaselineTrainer(Trainer):
         if self.args.load_weights:
             # TODO: implement result dict
             if check_isfile(load_file):
-                checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True, verbose=self.args.verbose)
+                checkpoint, discarded_layers = load_pretrained_weights([self.model], load_file, return_discarded_layers=True, 
+                                                                       verbose=self.args.verbose, device=self.device)
                 if "args" in checkpoint:
                     self.loaded_args = checkpoint["args"]
                 else:
@@ -65,18 +66,18 @@ class BaselineTrainer(Trainer):
                 print("WARNING: Could not load pretrained weights")
 
         # Load model onto GPU if GPU is used.
-        self.model = self.model.cuda() if self.use_gpu else self.model
+        self.model = self.model.to(self.device)
 
         # Select Loss function.
         if self.args.loss_func == "deepmar":
             pos_ratio = self.dm.dataset.get_positive_attribute_ratio()
-            self.criterion = DeepMARLoss(pos_ratio, self.args.train_batch_size, use_gpu=self.use_gpu,
+            self.criterion = DeepMARLoss(pos_ratio, self.args.train_batch_size, device=self.device,
                                          sigma=self.args.loss_func_param)
         elif self.args.loss_func == "scel":
-            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes, use_gpu=self.use_gpu)
+            self.criterion = SigmoidCrossEntropyLoss(num_classes=self.dm.num_attributes)
         elif self.args.loss_func == "sscel":
             attribute_grouping = self.dm.dataset.attribute_grouping
-            self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping, use_gpu=self.use_gpu)
+            self.criterion = SplitSoftmaxCrossEntropyLoss(attribute_grouping)
         else:
             self.criterion = None
 
@@ -88,7 +89,7 @@ class BaselineTrainer(Trainer):
         self.scheduler = init_lr_scheduler(
             self.optimizer, steps_per_epoch=len(self.trainloader), **lr_scheduler_kwargs(self.args))
 
-        self.model = nn.DataParallel(self.model) if self.use_gpu else self.model
+        self.model = nn.DataParallel(self.model, device_ids=[int(i) for i in self.gpu_devices]) if self.use_gpu and len(self.gpu_devices) > 1 else self.model
 
         # Set default for max_epoch if it was not passed as an argument in the console.
         if self.args.max_epoch < 0:
@@ -115,8 +116,7 @@ class BaselineTrainer(Trainer):
 
         for batch_idx, (imgs, labels, _) in enumerate(self.trainloader):
 
-            if self.use_gpu:
-                imgs, labels = imgs.cuda(), labels.cuda()
+            imgs, labels = imgs.to(self.device), labels.to(self.device)
 
             outputs = self.model(imgs)
             loss = self.criterion(outputs, labels)

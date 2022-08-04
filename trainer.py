@@ -155,13 +155,15 @@ class Trainer(object):
 
     def init_environment(self, args):
         # Decide which processor (CPU or GPU) to use.
-        if not args.use_avai_gpus:
-            os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-            os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
-
+        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        
+        # if not args.use_avai_gpus:
+        #     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
+        self.gpu_devices = args.gpu_devices.strip().split()
         self.use_gpu = torch.cuda.is_available()
         if args.use_cpu:
             self.use_gpu = False
+        self.device = torch.device(f'cuda:{self.gpu_devices[0]}' if self.use_gpu else 'cpu')
 
         # Start logger.
         self.ts = time.strftime("%Y-%m-%d_%H-%M-%S_") 
@@ -194,7 +196,7 @@ class Trainer(object):
 
     def init_data(self):
         print(f'Initializing dataset: {self.args.dataset_name}')
-        self.dm = ImageDataManager(self.use_gpu, **image_dataset_kwargs(self.args))
+        self.dm = ImageDataManager(self.device, **image_dataset_kwargs(self.args))
         self.trainloader, self.testloader_dict = self.dm.return_dataloaders()
         self.attributes = self.dm.attributes
         self.use_bbs = self.args.use_bbs_gt or self.args.use_bbs_feedback
@@ -310,8 +312,7 @@ class Trainer(object):
         with torch.no_grad():
             predictions, ground_truth, imgs_path_list = list(), list(), list()
             for imgs, labels, img_paths in loader:
-                if self.use_gpu:
-                    imgs, labels = imgs.cuda(), labels.cuda()
+                imgs, labels = imgs.to(self.device), labels.to(self.device)
                 if self.use_bbs:
                     labels = labels[:, :self.dm.num_attributes]
 
